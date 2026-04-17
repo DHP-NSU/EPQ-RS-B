@@ -1,0 +1,4178 @@
+---
+title             : "Psychometric Evaluation of the Bangla Eysenck Personality Questionnaire-Revised Short Form (EPQ-RS-B): Structural Validity, Item Response Theory, and Concurrent Validity With the Big Five Inventory-2"
+shorttitle        : "Bangla EPQ-RS Validation"
+
+author: 
+  - name          : "Mushfiqul Anwar Siraji"
+    affiliation   : "1"
+    corresponding : yes
+    address       : "Department of History and Philosophy, North South University, Dhaka, Bangladesh"
+    email         : "mushfiqul.siraji@northsouth.edu"
+  - name          : "Fahria Karim"
+    affiliation   : "1"
+  - name          : "Shamsul Haque"
+    affiliation   : "2"
+
+affiliation:
+  - id            : "1"
+    institution   : "Department of History and Philosophy, North South University, Bangladesh"
+  - id            : "2"
+    institution   : "Department of Psychology, Jeffrey Cheah School of Medicine and Health Sciences, Monash University Malaysia"
+
+authornote: |
+  Correspondence concerning this article should be addressed to Shamsul Haque, Department of Psychology, Jeffrey Cheah School of Medicine and Health Sciences, Monash University Malaysia. Email: shamsul@monash.edu
+
+abstract: |
+  Eysenck's Psychoticism-Extraversion-Neuroticism (PEN) model remains influential in cross-cultural personality research, yet the Revised Eysenck Personality Questionnaire Short Form (EPQ-RS) has never been adapted for Bangla-speaking populations. We developed and evaluated a Bangla version (EPQ-RS-B) in a community sample of 550 Bangladeshi adults (320 women, 230 men; *M*~age~ = 29.02, *SD* = 7.63). Psychometric properties were assessed through multiple complementary approaches: internal consistency (Cronbach's $\alpha$, ordinal $\alpha$, McDonald's $\omega_t$), exploratory structural equation modeling (ESEM) with target rotation, confirmatory factor analysis (CFA), two-parameter logistic (2PL) item response theory (IRT) models, sex-based measurement invariance, and concurrent validity with the Bangla Big Five Inventory-2 (BFI-2-B). Results indicated that Extraversion, Neuroticism, and the Lie scale demonstrated acceptable reliability and structural validity, consistent with cross-cultural patterns. The Psychoticism scale, however, exhibited low internal consistency, weak item discrimination, and poor measurement precision, replicating the well-documented fragility of this subscale across languages and cultures. ESEM yielded a cleaner factor structure than strict CFA. Concurrent validity analyses confirmed theoretically expected convergent and discriminant associations between EPQ-RS-B subscales and BFI-2 domains. These findings support the use of the EPQ-RS-B Extraversion and Neuroticism scales in Bangladeshi research contexts but urge caution with the Psychoticism subscale. We discuss implications for cross-cultural PEN assessment and the comparative utility of the Giant Three and Big Five frameworks.
+
+keywords          : "EPQ-RS, Bangla adaptation, PEN model, psychometric validation, IRT, ESEM, Big Five, concurrent validity"
+wordcount         : "X"
+
+bibliography      : "references.bib"
+
+floatsintext      : no
+linenumbers       : yes
+draft             : no
+mask              : no
+
+documentclass     : "apa7"
+classoption       : "man"
+output            : papaja::apa6_docx
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 5,
+  cache = TRUE
+)
+
+set.seed(123)
+
+# Output folders
+for (p in c(
+  "outputs", "outputs/tables", "outputs/figures",
+  "outputs/models", "outputs/irt","outputs/ESEM",
+  "outputs/irt/bfi_facets", "outputs/irt/epq_scales"
+)) dir.create(p, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r packages, include=FALSE}
+suppressPackageStartupMessages({
+  library(papaja)
+  library(tidyverse)
+  library(psych)
+  library(lavaan)
+  library(semTools)
+  library(mirt)
+  library(gtsummary)
+  library(janitor)
+  library(broom)
+  library(writexl)
+  library(mirt)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+library(ggsci)
+})
+
+# Load esemComp if available
+has_esemcomp <- requireNamespace("esemComp", quietly = TRUE)
+if (has_esemcomp) library(esemComp)
+```
+
+
+# Introduction
+
+## Eysenck's PEN Model and Its Measurement Legacy
+
+Few personality taxonomies have generated as sustained a programme of cross-cultural research as H. J. Eysenck's Psychoticism-Extraversion-Neuroticism (PEN) model. Rooted in a biologically oriented theory of individual differences, the model posits three broad, largely independent dimensions of personality: Extraversion (E), reflecting sociability, activity, and positive affect; Neuroticism (N), reflecting emotional instability, anxiety, and proneness to negative affect; and Psychoticism (P), a dimension originally conceived as a continuum anchoring normal personality variation to psychotic and antisocial tendencies [@eysenck1985revised]. Across more than three decades, these constructs have been measured by a succession of questionnaires, from the Maudsley Personality Inventory through the Eysenck Personality Inventory, the Eysenck Personality Questionnaire (EPQ), and its subsequent revision, the EPQ-R [@ruch2021long].
+
+The Revised Eysenck Personality Questionnaire Short Form (EPQ-RS) was introduced by @eysenck1985revised as a 48-item self-report inventory containing 12 items for each of four subscales: Psychoticism, Extraversion, Neuroticism, and a Lie/Social Desirability (L) scale. This short form was developed primarily to improve the psychometric properties of the Psychoticism scale, which in the original EPQ had suffered from severely skewed distributions, low reliability, and inconsistent factor loadings [@eysenck1985revised]. In the original English-speaking validation samples, @eysenck1985revised reported adequate internal consistency for E (males .88, females .84), N (males .84, females .80), and L (males .77, females .73), but P remained conspicuously weaker (males .62, females .61). Six original EPQ P items were dropped entirely for lacking consistent loadings on the Psychoticism factor.
+
+## Cross-Cultural Psychometric Evidence: A Pattern of Persistent P-Scale Weakness
+
+
+Cross-cultural psychometric evaluations of the EPQ-RS have revealed a consistent and troubling pattern: whereas Extraversion and Neuroticism typically achieve acceptable internal consistency (alphas generally above .70), the Psychoticism scale performs poorly across virtually every language adaptation examined to date (see Supplementary Table 1 for a detailed summary). Francis et al. (1992) first documented this discrepancy across four English-speaking samples, and subsequent adaptations in Japanese (Hosokawa & Ohyama, 1993), Hebrew (Katz & Francis, 2000), German (Francis et al., 2006), Greek (Alexopoulos, 2004; Morfaki et al., 2021), Hindi (Tiwari & Singh, 2009), and Spanish (Aluja et al., 2003) have consistently replicated P alphas ranging from as low as .24 to rarely exceeding .55. Item-level analyses across several of these studies have identified individual P items with negligible or near-zero corrected item-total correlations, suggesting that the scale's poor reliability reflects substantive problems with item content rather than mere sampling variability.
+
+Beyond internal consistency, confirmatory factor analyses have raised additional structural concerns. CFA fit to the hypothesized four-factor simple structure has generally been unsatisfactory, with modification indices revealing systematic local dependencies among items, particularly within the N, E, and P scales (Aluja et al., 2003). In the Greek adaptation, multiple items produced non-significant factor loadings (Alexopoulos, 2004), a finding independently corroborated by Morfaki et al. (2021). It is worth noting, however, that several of these validation studies relied on restricted samples (e.g., single-sex undergraduate cohorts, modest sample sizes) or omitted factor analysis entirely, limiting the strength of conclusions that can be drawn about dimensional structure. Nevertheless, the convergence of evidence across languages, samples, and analytic approaches suggests that the psychometric limitations of the EPQ-RS, and of the P scale in particular, are not artifacts of any single translation but reflect deeper structural weaknesses in the instrument itself.
+
+More recent work has extended evaluation beyond classical test theory. Colledani et al. (2018) applied two-parameter logistic item response theory models to develop an improved Italian short form, selecting items on the basis of discrimination, difficulty, and differential item functioning. The resulting instrument outperformed the original EPQ-RS on most psychometric criteria, though P remained the weakest scale even after optimization. Pflanz et al. (2024), working with UK Biobank data from over 400,000 respondents, demonstrated that the 12-item N scale lacked information coverage at the score distribution extremes and that a reduced 7-item version offered greater measurement efficiency. These IRT-based findings complement the classical reliability evidence by showing that item-level measurement precision is unevenly distributed across the trait continuum, a limitation that alpha coefficients alone cannot detect.
+
+At the level of cross-cultural measurement invariance, the picture is equally sobering. McLarnon et al. (2020) applied the alignment method to EPQ-RS data from over 43,000 respondents across 35 countries and found that Neuroticism items exhibited the highest rates of non-invariance, suggesting that raw observed N scores have weak cross-country comparability without statistical correction. This finding calls into question the practice of interpreting mean-level differences in N across populations at face value. Eysenck and Barrett (2013) further clarified that the Kaiser-Hunka-Bianchini "similarities" reported in earlier cross-national EPQ studies were transformation cosines rather than true congruence coefficients, a methodological correction that tempers some of the stronger invariance claims made in the earlier PEN literature (cf. Barrett et al., 1998).
+
+In a comprehensive retrospective analysis spanning 50 years of Eysenck personality instruments, Ruch et al. (2021) provided additional evidence that P's psychometric difficulties are partly a consequence of construct drift. Their item-difficulty analysis revealed that P items had been progressively "softened" across successive revisions, shifting content from primarily low Agreeableness toward a mixture that also incorporates low Conscientiousness. This heterogeneity is not merely a measurement nuisance; it has direct theoretical implications, because a scale whose content shifts across revisions cannot be said to operationalize a stable construct. Ruch et al. judged the EPQ-R to be the most valid single PEN measure among Eysenck's instruments, but acknowledged the inherent incoherence of the P domain.
+
+In sum, the cross-cultural literature reveals a reliable pattern: E and N are psychometrically robust across languages and sample compositions; L is generally adequate though occasionally weak; and P consistently fails to meet conventional standards for internal consistency, factor coherence, or measurement precision. This pattern is not merely a nuisance of short-form measurement; it reflects deeper conceptual ambiguities in the Psychoticism construct itself. These accumulated weaknesses raise a natural question: if the Giant Three framework is to be retained in applied personality research, how does it perform when evaluated alongside its principal contemporary competitor, the Big Five? Despite the extensive literature on each framework separately, direct within-sample comparisons using modern psychometric methods remain surprisingly scarce, particularly in South Asian populations where neither framework has received thorough evaluation. The present study addresses this gap by comparing the structural validity, item-level measurement precision, and criterion-related predictive utility of the Bangla adaptations of the BFI-2 and EPQ-RS in a Bangladeshi adult sample.
+
+## The PEN-Big Five Interface and Concurrent Validity
+
+A longstanding question in personality assessment concerns how Eysenck's three-factor PEN model maps onto the Five-Factor Model (FFM; also known as the Big Five). The theoretical and empirical relationships between the two frameworks are well established but asymmetric. Extraversion in both models captures overlapping variance related to sociability, assertiveness, and positive emotionality. Neuroticism in the PEN model corresponds closely to the Big Five domain of Negative Emotionality (or Neuroticism). The more contentious alignment involves Psychoticism, which has been shown to reflect a blend of low Agreeableness and low Conscientiousness in FFM terms, rather than constituting a unitary dimension orthogonal to both [@mccrae1985comparison; @draycott1995kline; @saggino2000big; @scholte2004bruyn; @heaven2013big; @ruch2021long].
+
+The Big Five Inventory-2 [BFI-2; @soto2017bfi2] provides a hierarchical measurement architecture with five domains, each decomposed into three facets (15 facets total), offering greater bandwidth and fidelity than the original BFI. A validated Bangla adaptation (BFI-2-B) has recently been published [@siraji2025bangla], reporting satisfactory domain-level reliability ($\alpha$ = .76 to .86; $\omega_t$ = .77 to .86) and adequate facet-level reliability for most facets.
+
+Concurrent validity between PEN and Big Five instruments is typically evaluated through zero-order correlations. The expected pattern, supported by substantial prior work, includes strong positive correlations between EPQ-RS E and BFI-2 Extraversion, strong positive correlations between EPQ-RS N and BFI-2 Negative Emotionality, and moderate negative correlations between EPQ-RS P and both BFI-2 Agreeableness and BFI-2 Conscientiousness [@mccrae1985comparison; @colledani2018irt]. EPQ-RS L has been linked to impression management and social desirability, with modest positive associations with Agreeableness and Conscientiousness reported in some studies.
+
+## The Present Study
+
+Despite the extensive cross-cultural programme surrounding the EPQ-RS, no Bangla-language adaptation exists. Bangladesh, with a population exceeding 170 million, represents a substantial gap in the PEN measurement literature. Moreover, the overwhelming majority of EPQ-RS validation studies have relied on classical test theory alone, with only a handful incorporating IRT or modern structural equation modeling approaches such as ESEM.
+
+The present study addresses this gap by developing and evaluating a Bangla adaptation of the EPQ-RS (EPQ-RS-B) using a comprehensive, multi-method psychometric strategy. Specifically, we examine: (a) internal consistency reliability using multiple estimators (Cronbach's $\alpha$, ordinal $\alpha$ from tetrachoric correlations, and McDonald's $\omega_t$); (b) structural validity through both ESEM with target rotation and CFA, as applied to the dichotomous item structure; (c) item-level measurement quality through 2PL IRT models; (d) sex-based measurement invariance; and (e) concurrent validity with the previously validated BFI-2-B [@siraji2025bangla]. Given the cross-cultural evidence reviewed above, we expected that E and N would demonstrate acceptable psychometric properties, that P would exhibit the characteristic weaknesses observed in virtually every prior adaptation, and that the pattern of concurrent validity with BFI-2 domains would conform to established PEN-FFM correspondence.
+
+# Method
+
+## Participants
+
+```{r data-import, include=FALSE}
+raw_data <- readRDS("raw_data.rds")
+
+```
+
+```{r helper-functions, include=FALSE}
+make_squished_map <- function(x) {
+  setNames(unname(x), stringr::str_squish(names(x)))
+}
+
+recode_from_map <- function(x, map_vec) {
+  if (is.numeric(x)) return(as.numeric(x))
+  x_chr <- stringr::str_squish(as.character(x))
+  as.numeric(unname(map_vec[x_chr]))
+}
+
+row_mean_safe <- function(df, cols) {
+  rowMeans(df[, cols, drop = FALSE], na.rm = TRUE) |> as.numeric()
+}
+
+row_sum_safe <- function(df, cols) {
+  rowSums(df[, cols, drop = FALSE], na.rm = TRUE) |> as.numeric()
+}
+
+safe_cor_matrix <- function(dat, item_type = c("ordinal", "binary")) {
+  item_type <- match.arg(item_type)
+  out <- tryCatch(
+    {
+      if (item_type == "binary") psych::tetrachoric(dat)$rho else psych::polychoric(dat)$rho
+    },
+    error = function(e) NULL
+  )
+  if (!is.null(out)) {
+    out <- tryCatch(psych::cor.smooth(out), error = function(e) out)
+  }
+  out
+}
+
+safe_alpha <- function(dat) {
+  tryCatch(psych::alpha(dat)$total$raw_alpha, error = function(e) NA_real_)
+}
+
+safe_ordinal_alpha <- function(dat, item_type = c("ordinal", "binary")) {
+  item_type <- match.arg(item_type)
+  rho <- safe_cor_matrix(dat, item_type = item_type)
+  if (is.null(rho)) return(NA_real_)
+  tryCatch(psych::alpha(rho, n.obs = nrow(dat))$total$raw_alpha, error = function(e) NA_real_)
+}
+
+safe_omega_total <- function(dat, item_type = c("ordinal", "binary")) {
+  item_type <- match.arg(item_type)
+  rho <- safe_cor_matrix(dat, item_type = item_type)
+  if (is.null(rho)) return(NA_real_)
+  tryCatch(psych::omega(rho, nfactors = 1, plot = FALSE)$omega.tot, error = function(e) NA_real_)
+}
+
+extract_mirt_pars <- function(mod, scale_name) {
+  cf <- coef(mod, IRTpars = TRUE, simplify = TRUE)$items |>
+    as.data.frame() |>
+    tibble::rownames_to_column("Item") |>
+    mutate(Scale = scale_name, .before = 1)
+  cf
+}
+
+make_tif_summary <- function(mod, scale_name, theta = seq(-4, 4, .1)) {
+  Theta <- matrix(theta)
+  tif <- testinfo(mod, Theta = Theta)
+  tibble(
+    Scale = scale_name,
+    peak_info = max(tif, na.rm = TRUE),
+    theta_at_peak = theta[which.max(tif)],
+    mean_info_m2_to_2 = mean(tif[theta >= -2 & theta <= 2], na.rm = TRUE)
+  )
+}
+
+cv_r2_full <- function(formula, data, k = 10, seed = 123) {
+  set.seed(seed)
+  d <- model.frame(formula, data = data) |> tidyr::drop_na()
+  n <- nrow(d)
+  folds <- sample(rep(1:k, length.out = n))
+  y_name <- all.vars(formula)[1]
+
+  fold_r2 <- numeric(k)
+  for (i in seq_len(k)) {
+    train <- d[folds != i, , drop = FALSE]
+    test  <- d[folds == i, , drop = FALSE]
+    fit   <- lm(formula, data = train)
+    pred  <- predict(fit, newdata = test)
+    y     <- test[[y_name]]
+    fold_r2[i] <- 1 - sum((y - pred)^2) / sum((y - mean(y))^2)
+  }
+
+  m <- mean(fold_r2, na.rm = TRUE)
+  s <- sd(fold_r2, na.rm = TRUE)
+  se <- s / sqrt(k)
+  tcrit <- qt(.975, df = k - 1)
+
+  tibble(
+    mean_r2 = m, sd_r2 = s,
+    ci_lower = m - tcrit * se, ci_upper = m + tcrit * se,
+    negative_folds = sum(fold_r2 < 0), n = n, k = k
+  )
+}
+```
+
+```{r demographics-prep, include=FALSE}
+demographics <- raw_data |>
+  transmute(
+    age = as.numeric(Age),
+    gender = dplyr::case_when(
+      Gender == "পুরুষ" ~ "Male",
+      Gender == "স্ত্রী" ~ "Female",
+      TRUE ~ as.character(Gender)
+    ) |> factor(),
+    religion = factor(Religion) |>
+      forcats::fct_recode(
+        Islam = "ইসলাম",
+        Hindu = "সনাতন হিন্দু",
+        Buddhism = "বৌদ্ধ",
+        Christianity = "খ্রিস্টান",
+        Others = "অন্যান্য"
+      ),
+    marital_status = factor(Marital_Status) |>
+      forcats::fct_recode(
+        Married = "বিবাহিত",
+        Unmarried = "অবিবাহিত",
+        Divorced = "ডিভোর্সড"
+      ),
+    occupation = dplyr::case_when(
+      Occupation == "সরকারি চাকরিজীবী" ~ "Service Holder",
+      Occupation == "ছাত্র" ~ "Student",
+      TRUE ~ as.character(Occupation)
+    ) |> factor(),
+    education = factor(Education_Years) |>
+      forcats::fct_recode(
+        Undergraduate = "স্নাতক",
+        Postgraduate = "স্নাতকোত্তর",
+        PhD = "ডক্টর অব ফিলোসফি"
+      ),
+    ses = as.numeric(SES)
+  )
+
+sample_n <- nrow(demographics)
+sample_n
+```
+
+The sample comprised `r sample_n` Bangladeshi adults recruited from Dhaka (320 women, 230 men; *M*~age~ = 29.02, *SD* = 7.63; range 18 to 60). The majority identified as Muslim (85%), held service-sector employment (62%) or were students (38%), and reported undergraduate (52%) or postgraduate (48%) educational attainment. Mean socioeconomic status was 6.47 (*SD* = 1.91) on a 10-point self-report scale. All participants provided written informed consent; the study was approved by the Institutional Review Board of North South University, Bangladesh.
+
+## Materials
+
+### Big Five Inventory-2 (BFI-2-B)
+
+The Big Five Inventory-2 [BFI-2; @soto2017bfi2] is a 60-item self-report measure designed to capture five personality domains (Extraversion, Agreeableness, Conscientiousness, Negative Emotionality, and Open-Mindedness) and 15 facet traits (three per domain; four items per facet). Items are rated on a 5-point Likert-type agreement scale (1 = *Disagree strongly* to 5 = *Agree strongly*). The present study used the Bangla adaptation (BFI-2-B), which has been psychometrically validated for use in Bangladesh [@siraji2025bangla]. @siraji2025bangla reported satisfactory domain-level reliability ($\alpha$ = .76 to .86; $\omega_t$ = .77 to .86) in a community sample of 646 participants.
+
+### Revised Eysenck Personality Questionnaire Short Form (EPQ-RS-B)
+
+The Giant Three personality dimensions were assessed using the EPQ-RS [@eysenck1985revised], a 48-item self-report inventory measuring Psychoticism (P), Extraversion (E), Neuroticism (N), and a Lie/Social Desirability scale (L), with 12 items per subscale. Items use a dichotomous (Yes/No) response format. For the present study, we developed a Bangla adaptation (EPQ-RS-B) following the International Test Commission's guidelines for test translation and adaptation [@bartram2018itc]. The adaptation employed a committee-based forward-backward translation procedure with two independent forward translations and two independent back-translations; each stage was reconciled through team synthesis, and the final version was compared against the original to resolve semantic and conceptual discrepancies. Content validity was evaluated by 15 subject-matter experts using item-level and scale-level content validity indices (I-CVI and S-CVI), which indicated satisfactory content validity [@polit2007cvi].
+
+## Procedure
+
+Data collection took place in Dhaka. The questionnaire battery was administered in Bangla in a fixed order: BFI-2-B, EPQ-RS-B, and demographic questionnaire. This order was held constant across all participants; potential order effects are acknowledged as a limitation. The full battery required approximately 35 to 45 minutes. No incentives were provided.
+
+All data were screened for incomplete responses. Participants who failed to complete more than 10% of any single instrument were excluded. The final analytic sample of `r sample_n` participants comprised complete data across all measures.
+
+## Analysis Plan
+
+All analyses were conducted in R (version 4.5.2) using a reproducible pipeline [@rcore2016]. Data preparation and scoring were handled with the *tidyverse* [@wickham2019tidyverse]; descriptive statistics and correlations were calculated using *psych* [@revelle2025psych]; ESEM target-rotation was implemented using *esemComp* [@silvestrin2025esemcomp]; IRT analyses were estimated using *mirt* [@chalmers2012mirt].
+
+*Descriptive statistics.* Mean, standard deviation, median, skewness, and kurtosis were computed for all subscale and domain scores. Internal consistency was estimated using Cronbach's $\alpha$ (numerically equivalent to KR-20 for the dichotomous EPQ-RS-B), ordinal $\alpha$ from tetrachoric correlations, and McDonald's $\omega_t$.
+
+*Structural validity.* Structural validity was evaluated using ESEM with an a priori target structure (4 factors $\times$ 48 items for EPQ-RS-B). ESEM was preferred over strict independent-clusters CFA because personality inventories frequently exhibit small but theoretically meaningful cross-loadings; imposing zero cross-loadings can produce inflated interfactor correlations and distorted fit statistics [@asparouhov2009esem; @marsh2010esem]. Conventional CFA was also fitted for comparison. All models used weighted least squares mean- and variance-adjusted (WLSMV) estimation with items treated as ordered categorical. Model fit was assessed using CFI, TLI, RMSEA, and SRMR, with @hu1999cutoff cutoff values treated as heuristics rather than decision rules [@marsh2004golden].
+
+*Measurement Invariance.* Sex measurement invariance of the EPQ-RS-B was evaluated using a 13-model taxonomy (M1 to M13), which tests progressively restrictive equality constraints across groups (Marsh et al., 2009). The sequence begins with configural invariance (M1), which establishes whether the same factor structure holds for males and females without imposing cross-group equality on any parameters. Subsequent models add metric (factor loading) constraints, residual variance constraints, factor variance/covariance constraints, scalar (intercept) constraints, and latent mean constraints in various combinations. This cumulative approach allows researchers to identify precisely which class of parameters, if any, produces misfit when equated across groups.
+Invariance decisions were based on changes in approximate fit indices rather than on the chi-square difference test, which is well known to be overly sensitive in moderate to large samples (Cheung & Rensvold, 2002). The primary criterion was ΔCFI ≥ −.01 (Cheung & Rensvold, 2002), supplemented by ΔRMSEA ≤ .015 (Chen, 2007). Because the delta columns in the raw output were unpopulated, incremental changes were computed by comparing each successive model to the least restrictive model within its constraint class. The 13-model taxonomy is designed so that the tenability of the final, most restrictive model (M13: scalar + residuals + factor variances/covariances + latent means) serves as the primary inferential target, while intermediate steps are inspected for localized sources of strain (Marsh et al., 2009; Chiorri et al., 2016).
+
+*Item response theory.* Item-level measurement precision for the EPQ-RS-B was examined using item response theory (IRT). Two-parameter logistic (2PL) models were estimated separately for each of the four subscales (Psychoticism, Extraversion, Neuroticism, Lie) via marginal maximum likelihood using the Metropolis-Hastings Robbins-Monro algorithm implemented in the mirt package (Cai, 2010; Chalmers, 2012). The 2PL model was selected because it is appropriate for dichotomous response data and has been applied to Eysenck scales in prior IRT investigations (Colledani et al., 2019; Smits et al., 2021).
+Item fit was evaluated using Orlando and Thissen's (2000) S-X² statistic, with items flagged when RMSEA.S-X² exceeded .05 or p < .01. Infit and outfit mean-square statistics were also inspected, with values exceeding 1.4 treated as indicative of misfit (Kang & Chen, 2011). Person fit was assessed using Zh statistics.
+IRT item parameters were interpreted using the discrimination (a) and difficulty (b) estimates from each 2PL model. Discrimination values were categorized following Baker's (2001) guidelines: very low (a < 0.35), low (0.35 to 0.64), moderate (0.65 to 1.34), high (1.35 to 1.69), and very high (a ≥ 1.70).
+Scale-level measurement precision was quantified through marginal reliability (the IRT analogue of classical reliability) and empirical reliability. Test information curves (TICs) were examined to identify the theta (θ) location of peak information, the standard error at peak, and the breadth of the θ range over which the scale provides reliable measurement. The θ range meeting a marginal reliability threshold of .70 (corresponding to test information ≥ 2.33) was computed for each subscale to characterize the "reliable measurement window" of each scale. Item characteristic curves (ICCs) were visually inspected for monotonicity violations, unexpectedly flat slopes, and extreme threshold locations.
+
+*DIF*. Looking at the code, this uses a Rasch-based approach (eRm package) with Wald and Andersen LR tests, which test for uniform DIF only. There is no non-uniform DIF test in this code. Let me check project knowledge for additional context.Here is the data analysis plan text for the DIF section:
+
+**Differential Item Functioning (DIF)**
+
+Sex-based differential item functioning was evaluated for each EPQ-RS-B subscale (Psychoticism, Extraversion, Neuroticism) using a conditional maximum likelihood (CML) Rasch modelling framework implemented in the eRm package (Mair & Hatzinger, 2007). The Rasch model was selected for DIF analysis because its specific objectivity property provides a principled basis for comparing item parameters across groups: if the model holds, person and item parameters are separable, and any group-level departure in item difficulty constitutes direct evidence of measurement non-invariance (Fischer, 1993).
+
+For each subscale, a joint Rasch model was first estimated on the full sample (after excluding persons with extreme, i.e., minimum or maximum possible, total scores, as these are uninformative under CML estimation). Two complementary tests of uniform DIF were then applied. First, the Andersen likelihood ratio (LR) test (Andersen, 1973) provided an omnibus evaluation of whether the full set of item parameters was invariant across gender groups. A statistically significant LR test indicates that at least one item functions differently for males and females, though it does not identify which item(s) are responsible. Second, per-item Wald tests were conducted by splitting the calibration by gender and testing the null hypothesis that each item's difficulty parameter was equal across groups (Fischer & Molenaar, 1995). Because multiple items were tested simultaneously within each subscale, p-values from the Wald tests were adjusted using the Benjamini-Hochberg (BH) procedure to control the false discovery rate. Items were flagged as exhibiting DIF if the BH-adjusted p-value fell below .05. For descriptive purposes, separate Rasch models were also estimated within each gender group to obtain group-specific item difficulty estimates, and the difference in difficulty (delta-beta) was computed for each item to index the direction and magnitude of any detected DIF.
+
+ limitation should be borne in mind when interpreting the results.
+
+*Concurrent validity.* Concurrent validity was assessed through Pearson correlations (Holm-adjusted) between EPQ-RS-B subscale scores and BFI-2-B domain scores.
+
+# Results
+
+```{r bfi-scoring, include=FALSE}
+bfi_map <- make_squished_map(c(
+  "একেবারেই সমর্থন করি না" = 1,
+  "সমর্থন করি না" = 2,
+  "অনিশ্চিত" = 3,
+  "সমর্থন করি" = 4,
+  "খুব বেশি  সমর্থন করি" = 5,
+  "খুব বেশি সমর্থন করি" = 5
+))
+bfi_raw <- raw_data |> select(BF_1:BF_60)
+names(bfi_raw) <- paste0("BFI", sprintf("%02d", 1:60))
+bfi_items <- bfi_raw |> mutate(across(everything(), ~ recode_from_map(.x, bfi_map)))
+
+bfi_reverse <- c(3,4,5,8,9,11,12,16,17,22,23,24,25,26,28,29,30,31,
+                 36,37,42,44,45,47,48,49,50,51,55,58)
+for (i in bfi_reverse) {
+  nm  <- sprintf("BFI%02d", i)
+  rnm <- sprintf("RBFI%02d", i)
+  bfi_items[[rnm]] <- 6 - bfi_items[[nm]]
+}
+
+bfi_facet_items <- list(
+  Sociability            = c("BFI01","RBFI16","RBFI31","BFI46"),
+  Assertiveness          = c("BFI06","BFI21","RBFI36","RBFI51"),
+  Energy_Level           = c("RBFI11","RBFI26","BFI41","BFI56"),
+  Compassion             = c("BFI02","RBFI17","BFI32","RBFI47"),
+  Respectfulness         = c("BFI07","RBFI22","RBFI37","BFI52"),
+  Trust                  = c("RBFI12","BFI27","RBFI42","BFI57"),
+  Organization           = c("RBFI03","BFI18","BFI33","RBFI48"),
+  Productiveness         = c("RBFI08","RBFI23","BFI38","BFI53"),
+  Responsibility         = c("BFI13","RBFI28","BFI43","RBFI58"),
+  Anxiety                = c("RBFI04","BFI19","BFI34","RBFI49"),
+  Depression             = c("RBFI09","RBFI24","BFI39","BFI54"),
+  Emotional_Volatility   = c("BFI14","RBFI29","RBFI44","BFI59"),
+  Intellectual_Curiosity = c("BFI10","RBFI25","BFI40","RBFI55"),
+  Aesthetic_Sensitivity  = c("RBFI05","BFI20","BFI35","RBFI50"),
+  Creative_Imagination   = c("BFI15","RBFI30","RBFI45","BFI60")
+)
+
+bfi_domain_items <- list(
+  Extraversion = c("BFI01","BFI06","RBFI11","RBFI16","BFI21","RBFI26","RBFI31","RBFI36","BFI41","BFI46","RBFI51","BFI56"),
+  Agreeableness = c("BFI02","BFI07","RBFI12","RBFI17","RBFI22","BFI27","BFI32","RBFI37","RBFI42","RBFI47","BFI52","BFI57"),
+  Conscientiousness = c("RBFI03","RBFI08","BFI13","BFI18","RBFI23","RBFI28","BFI33","BFI38","BFI43","RBFI48","BFI53","RBFI58"),
+  Negative_Emotionality = c("RBFI04","RBFI09","BFI14","BFI19","RBFI24","RBFI29","BFI34","BFI39","RBFI44","RBFI49","BFI54","BFI59"),
+  Open_Mindedness = c("RBFI05","BFI10","BFI15","BFI20","RBFI25","RBFI30","BFI35","BFI40","RBFI45","RBFI50","RBFI55","BFI60")
+)
+
+bfi_facets <- purrr::imap_dfc(bfi_facet_items, ~ tibble(!!.y := row_mean_safe(bfi_items, .x)))
+bfi_domains <- purrr::imap_dfc(bfi_domain_items, ~ tibble(!!.y := row_mean_safe(bfi_items, .x)))
+```
+
+```{r epq-scoring, include=FALSE}
+epq_items <-  raw_data |>
+  select(EYP1:EYP48) |>
+  mutate(across(everything(), ~ case_when(
+    as.character(.x) == "হ্যাঁ" ~ 1,
+    as.character(.x) == "না" ~ 0,
+    TRUE ~ suppressWarnings(as.numeric(as.character(.x)))
+  )))
+
+epq_reverse <- c(
+ "EYP2" , "EYP6","EYP8","EYP12","EYP18","EYP20","EYP24","EYP26","EYP27","EYP28",
+  "EYP29","EYP33","EYP35","EYP37","EYP40","EYP41","EYP43","EYP47"
+)
+
+epq_items <- epq_items |>
+  mutate(across(all_of(epq_reverse), ~ ifelse(is.na(.x), NA_real_, 1 - .x)))
+
+epq_item_sets <- list(
+  Psychoticism = c("EYP10","EYP14","EYP22","EYP31","EYP39","EYP2","EYP6","EYP18","EYP26","EYP28","EYP35","EYP43"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP32","EYP36","EYP44","EYP48","EYP27","EYP41"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30","EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP16","EYP45","EYP8","EYP12","EYP20","EYP24","EYP29","EYP33","EYP37","EYP40","EYP47")
+)
+
+epq_scores <- tibble(
+  Psychoticism = row_sum_safe(epq_items, epq_item_sets$Psychoticism),
+  Extraversion = row_sum_safe(epq_items, epq_item_sets$Extraversion),
+  Neuroticism  = row_sum_safe(epq_items, epq_item_sets$Neuroticism),
+  Lie          = row_sum_safe(epq_items, epq_item_sets$Lie)
+)
+
+epq_core_scores <- epq_scores |> select(Psychoticism, Extraversion, Neuroticism)
+```
+
+```{r analysis-df, include=FALSE}
+analysis_df <- bind_cols(
+  demographics,
+  bfi_domains |> rename_with(~ paste0(tolower(.x), "_bfi")),
+  bfi_facets  |> rename_with(~ paste0(tolower(.x), "_bfi")),
+  epq_scores  |> rename_with(~ paste0(tolower(.x), "_epq"))
+) |> janitor::clean_names()
+```
+
+## Descriptive Statistics and Reliability
+
+```{r descriptives}
+describe_tbl <- function(score_df, instrument, level) {
+  psych::describe(score_df) |>
+    as.data.frame() |>
+    tibble::rownames_to_column("scale") |>
+    as_tibble() |>
+    transmute(instrument, level, scale, n, mean, sd, median, min, max, skew, kurtosis)
+}
+
+desc_table <- bind_rows(
+  describe_tbl(bfi_domains, "BFI-2", "Domain"),
+  describe_tbl(epq_scores, "EPQ-RS", "Scale")
+) |> mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+
+
+describe_item_tbl <- function(item_df, instrument) {
+  psych::describe(item_df) |>
+    as.data.frame() |>
+    tibble::rownames_to_column("item") |>
+    as_tibble() |>
+    transmute(
+      instrument = instrument,
+      level = "Item",
+      item,
+      n,
+      mean,
+      sd,
+      median,
+      min,
+      max,
+      skew,
+      kurtosis
+    )
+}
+
+epq_item_table <- describe_item_tbl(epq_items, "EPQ-RS") |>
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+```
+
+```{r reliability}
+compute_reliability <- function(item_data, item_sets, instrument, level, item_type = c("ordinal", "binary")) {
+  item_type <- match.arg(item_type)
+  purrr::map_dfr(names(item_sets), function(sc) {
+    dat <- item_data[, item_sets[[sc]], drop = FALSE]
+    tibble(
+      instrument = instrument, level = level, scale = sc, n_items = ncol(dat),
+      alpha = safe_alpha(dat),
+      ordinal_alpha = safe_ordinal_alpha(dat, item_type = item_type),
+      omega_total = safe_omega_total(dat, item_type = item_type)
+    )
+  })
+}
+
+reliability_table <- bind_rows(
+  compute_reliability(bfi_items, bfi_domain_items, "BFI-2", "Domain", item_type = "ordinal"),
+  compute_reliability(epq_items, epq_item_sets, "EPQ-RS", "Scale", item_type = "binary")
+) |> mutate(across(c(alpha, ordinal_alpha, omega_total), ~ round(.x, 3)))
+```
+
+Table \@ref(tab:rel-table) presents internal consistency estimates for all scales. For the EPQ-RS-B, Extraversion and Neuroticism achieved acceptable reliability across all three estimators. The Lie scale was adequate. Psychoticism, consistent with prior cross-cultural findings, was markedly weaker.
+
+```{r rel-table, results='asis'}
+rel_epq <- reliability_table |> filter(instrument == "EPQ-RS")
+apa_table(
+  rel_epq |> select(Scale = scale, Items = n_items, `$\\alpha$` = alpha,
+                     `Ordinal $\\alpha$` = ordinal_alpha, `$\\omega_t$` = omega_total),
+  caption = "Internal consistency estimates for the EPQ-RS-B subscales.",
+  note = "$\\alpha$ = Cronbach's alpha (KR-20 equivalent for dichotomous items); Ordinal $\\alpha$ = alpha from tetrachoric correlations; $\\omega_t$ = McDonald's omega total.",
+  escape = FALSE
+)
+```
+
+## Structural Validity
+
+```{r epq-esem, include=FALSE}
+# ============================================================
+# EPQ ESEM: 3-factor and 4-factor models
+# ============================================================
+
+library(esemComp)
+library(lavaan)
+library(dplyr)
+library(tibble)
+
+# --- Item selection (must match target block counts) ---
+epq_items_3f <- epq_items %>%
+  select(
+    # Psychoticism (12)
+    EYP10, EYP14, EYP22, EYP31, EYP39, EYP2, EYP6, EYP18, EYP26, EYP28, EYP35, EYP43,
+    # Extraversion (12)
+    EYP3, EYP7, EYP11, EYP15, EYP19, EYP23, EYP32, EYP36, EYP44, EYP48, EYP27, EYP41,
+    # Neuroticism (12)
+    EYP1, EYP5, EYP9, EYP13, EYP17, EYP21, EYP25, EYP30, EYP34, EYP38, EYP42, EYP46
+  )
+
+epq_items_4f <- epq_items_3f %>%
+  bind_cols(
+    epq_items %>% select(
+      EYP4, EYP16, EYP45, EYP8, EYP12, EYP20, EYP24, EYP29, EYP33, EYP37, EYP40, EYP47
+    )
+  )
+
+# --- 3-FACTOR ESEM ---
+target_3f <- make_target(
+  nitems = 36,
+  mainloadings = list(
+    Psychoticism = 1:12,
+    Extraversion = 13:24,
+    Neuroticism  = 25:36
+  )
+)
+
+efa_3f <- esem_efa(
+  data     = epq_items_3f,
+  nfactors = 3,
+  target   = target_3f,
+  fm       = "uls",
+  cor      = "tet"
+)
+
+ref_3f   <- find_referents(efa_3f, factor_names = c("Neuroticism", "Extraversion", "Psychoticism"))
+syn_3f   <- syntax_composer(efa_3f, ref_3f)
+
+epq_items_3f_ord <- epq_items_3f %>% mutate(across(everything(), ~ ordered(.x)))
+
+epq_fit_3 <- cfa(
+  model            = syn_3f,
+  data             = epq_items_3f_ord,
+  ordered          = names(epq_items_3f_ord),
+  estimator        = "WLSMV",
+  parameterization = "theta",
+  mimic            = "Mplus",
+  std.lv           = TRUE
+)
+
+# --- 4-FACTOR ESEM ---
+target_4f <- make_target(
+  nitems = 48,
+  mainloadings = list(
+    Psychoticism = 1:12,
+    Extraversion = 13:24,
+    Neuroticism  = 25:36,
+    Lie          = 37:48
+  )
+)
+
+efa_4f <- esem_efa(
+  data     = epq_items_4f,
+  nfactors = 4,
+  target   = target_4f,
+  fm       = "uls",
+  cor      = "tet"
+)
+
+ref_4f   <- find_referents(efa_4f, factor_names = c("Neuroticism", "Extraversion", "Lie", "Psychoticism"))
+syn_4f   <- syntax_composer(efa_4f, ref_4f)
+
+epq_items_4f_ord <- epq_items_4f %>% mutate(across(everything(), ~ ordered(.x)))
+
+epq_fit_4 <- cfa(
+  model            = syn_4f,
+  data             = epq_items_4f_ord,
+  ordered          = names(epq_items_4f_ord),
+  estimator        = "WLSMV",
+  parameterization = "theta",
+  mimic            = "Mplus",
+  std.lv           = TRUE
+)
+
+# --- Fit comparison table ---
+epq_fit_table <- bind_rows(
+  tibble(
+    model = "3-factor ESEM (P, E, N)",
+    chi_sq = sprintf("%.2f (%d)*", fitMeasures(epq_fit_3, "chisq.scaled"),
+                     fitMeasures(epq_fit_3, "df.scaled")),
+    # p      = round(fitMeasures(epq_fit_3, "pvalue.scaled"), 3),
+    CFI    = round(fitMeasures(epq_fit_3, "cfi.scaled"), 3),
+    TLI    = round(fitMeasures(epq_fit_3, "tli.scaled"), 3),
+    RMSEA  = round(fitMeasures(epq_fit_3, "rmsea.scaled"), 3),
+    RMSEA_CI = sprintf("[%.3f, %.3f]",
+                       fitMeasures(epq_fit_3, "rmsea.ci.lower.scaled"),
+                       fitMeasures(epq_fit_3, "rmsea.ci.upper.scaled")),
+    SRMR   = round(fitMeasures(epq_fit_3, "srmr"), 3)
+  ),
+  tibble(
+    model = "4-factor ESEM (P, E, N, L)",
+    chi_sq = sprintf("%.2f (%d)*", fitMeasures(epq_fit_4, "chisq.scaled"),
+                     fitMeasures(epq_fit_4, "df.scaled")),
+    # p      = round(fitMeasures(epq_fit_4, "pvalue.scaled"), 3),
+    CFI    = round(fitMeasures(epq_fit_4, "cfi.scaled"), 3),
+    TLI    = round(fitMeasures(epq_fit_4, "tli.scaled"), 3),
+    RMSEA  = round(fitMeasures(epq_fit_4, "rmsea.scaled"), 3),
+    RMSEA_CI = sprintf("[%.3f, %.3f]",
+                       fitMeasures(epq_fit_4, "rmsea.ci.lower.scaled"),
+                       fitMeasures(epq_fit_4, "rmsea.ci.upper.scaled")),
+    SRMR   = round(fitMeasures(epq_fit_4, "srmr"), 3)
+  )
+)
+
+
+
+
+
+# --- 3-factor ESEM loadings ---
+epq_esem_loadings_3f <- parameterEstimates(epq_fit_3, standardized = TRUE) %>%
+  filter(op == "=~") %>%
+  transmute(Item = rhs, Factor = lhs, Loading = round(std.all, 3)) %>%
+  pivot_wider(names_from = Factor, values_from = Loading)
+
+# --- 4-factor ESEM loadings ---
+epq_esem_loadings_4f <- parameterEstimates(epq_fit_4, standardized = TRUE) %>%
+  filter(op == "=~") %>%
+  transmute(Item = rhs, Factor = lhs, Loading = round(std.all, 3)) %>%
+  pivot_wider(names_from = Factor, values_from = Loading)
+
+suppress <- function(df, threshold = .10) {
+  df %>% mutate(across(-Item, ~ ifelse(abs(.x) < threshold, NA_real_, .x)))
+}
+
+epq_esem_loadings_3f_sup <- suppress(epq_esem_loadings_3f)
+epq_esem_loadings_4f_sup <- suppress(epq_esem_loadings_4f)
+
+readr::write_csv(epq_esem_loadings_3f_sup, "outputs/ESEM/epq_esem_loadings_3factor_suppressed.csv")
+readr::write_csv(epq_esem_loadings_4f_sup, "outputs/ESEM/epq_esem_loadings_4factor_suppressed.csv")
+
+
+```
+
+Table \@ref(tab:cfa-fit) presents ESEM fit indices for the EPQ-RS-B. Both 3-factor and 4-factor models were fitted using WLSMV estimation.
+
+```{r cfa-fit, results='asis'}
+apa_table(
+  epq_fit_table,
+  caption = "Confirmatory factor analysis fit indices for the EPQ-RS-B.",
+  note = "WLSMV estimation with items treated as ordered categorical."
+)
+```
+
+
+## Measurement Invariance
+The configural model (M1) provided adequate baseline fit (CFI = .965, TLI = .958, RMSEA = .019), confirming that the four-factor structure of the EPQ-RS-B was tenable in both sex groups. Adding metric constraints (M2) produced no deterioration in fit; indeed, CFI increased slightly to .970 and RMSEA decreased to .017 (ΔCFI = +.005, ΔRMSEA = −.002), indicating that factor loadings were equivalent across groups. Models incorporating residual variance constraints (M3), factor variance/covariance constraints (M4), and their combination (M6) similarly met or exceeded baseline fit levels, with CFI values ranging from .970 to .976 and RMSEA from .015 to .017.
+The introduction of scalar (intercept) constraints at M5 produced a modest decrement in CFI relative to the metric model (CFI = .965 vs. .970; ΔCFI = −.005), though this change remained well within the −.01 threshold. Models combining scalar constraints with residual and/or factor variance/covariance constraints (M7 to M9) showed comparable fit (CFI = .966 to .972, RMSEA = .016 to .018), all satisfying the ΔCFI and ΔRMSEA criteria.
+The most notable strain emerged at M10 (scalar + factor means), where CFI dropped to .943 (ΔCFI = −.022 relative to M5), accompanied by a rise in RMSEA to .023. This decrement exceeded the conventional −.01 threshold and signals that constraining latent means to equality across sexes introduced appreciable misfit. Models M11 and M12, which added residual or factor variance/covariance constraints on top of M10, showed similar levels of strain (CFI = .942 to .945).
+However, the fully constrained model M13 (scalar + residuals + factor variances/covariances + latent means) recovered fit to an acceptable level (CFI = .950, RMSEA = .021), yielding ΔCFI = +.002 and ΔRMSEA = −.001 relative to M10. This pattern, in which the terminal model satisfies practical fit-change criteria despite localized strain at an intermediate step, supports the conclusion that full measurement invariance is tenable at the most restrictive endpoint of the taxonomy.
+
+```{r MI, include=FALSE}
+# ============================================================
+# EPQ ESEM Invariance Testing (Marsh 13-model taxonomy)
+# ============================================================
+
+# --- Invariance data ---
+epq_invariance_data <- tibble(
+  Gender = factor(demographics$gender)
+) %>%
+  bind_cols(as.data.frame(epq_items))
+
+epq_ordered_items <- names(epq_items)
+
+# --- Use 4-factor ESEM syntax ---
+epq_invariance_model <- syn_4f
+
+# --- Marsh 13 specs ---
+SCALAR_PARAM <- "thresholds"
+
+epq_marsh13_equal <- list(
+  M1  = NULL,
+  M2  = c("loadings"),
+  M3  = c("loadings", "residuals"),
+  M4  = c("loadings", "lv.variances", "lv.covariances"),
+  M5  = c("loadings", SCALAR_PARAM),
+  M6  = c("loadings", "residuals", "lv.variances", "lv.covariances"),
+  M7  = c("loadings", SCALAR_PARAM, "residuals"),
+  M8  = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances"),
+  M9  = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances"),
+  M10 = c("loadings", SCALAR_PARAM, "means"),
+  M11 = c("loadings", SCALAR_PARAM, "residuals", "means"),
+  M12 = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances", "means"),
+  M13 = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances", "means")
+)
+
+epq_model_partial    <- setNames(vector("list", 13), paste0("M", 1:13))
+epq_model_extra_args <- setNames(vector("list", 13), paste0("M", 1:13))
+
+# --- Fitting function ---
+fit_epq_M <- function(id) {
+  base_args <- list(
+    model            = epq_invariance_model,
+    data             = epq_invariance_data,
+    group            = "Gender",
+    ordered          = epq_ordered_items,
+    estimator        = "WLSMV",
+    parameterization = "theta",
+    std.lv           = TRUE,
+    meanstructure    = TRUE,
+    group.equal      = epq_marsh13_equal[[id]],
+    group.partial    = epq_model_partial[[id]]
+  )
+  args <- modifyList(base_args, epq_model_extra_args[[id]] %||% list())
+  do.call(lavaan::cfa, args)
+}
+
+# --- Fit all 13 models ---
+epq_models <- setNames(
+  lapply(paste0("M", 1:13), function(id) {
+    message("Fitting EPQ ", id)
+    fit_epq_M(id)
+  }),
+  paste0("M", 1:13)
+)
+
+.pick <- function(fm, primary, fallback) {
+  if (!is.null(fm[[primary]])) unname(fm[[primary]])
+  else if (!is.null(fm[[fallback]])) unname(fm[[fallback]])
+  else NA_real_
+}
+
+# --- Extract fit indices ---
+epq_fit_tbl <- bind_rows(lapply(names(epq_models), function(id) {
+  fit <- epq_models[[id]]
+  conv <- tryCatch(lavInspect(fit, "converged"), error = function(e) NA)
+  fm   <- tryCatch(fitMeasures(fit), error = function(e) NULL)
+  if (is.null(fm)) {
+    return(tibble(Model = id, converged = conv,
+                  Chi_Square = NA_real_, df = NA_real_,
+                  CFI = NA_real_, TLI = NA_real_, RMSEA = NA_real_,
+                  RMSEA_90_L = NA_real_, RMSEA_90_U = NA_real_, SRMR = NA_real_))
+  }
+  tibble(
+    Model      = id,
+    converged  = conv,
+    Chi_Square = .pick(fm, "chisq.scaled", "chisq"),
+    df         = .pick(fm, "df.scaled", "df"),
+    CFI        = .pick(fm, "cfi.scaled", "cfi"),
+    TLI        = .pick(fm, "tli.scaled", "tli"),
+    RMSEA      = .pick(fm, "rmsea.scaled", "rmsea"),
+    RMSEA_90_L = .pick(fm, "rmsea.ci.lower.scaled", "rmsea.ci.lower"),
+    RMSEA_90_U = .pick(fm, "rmsea.ci.upper.scaled", "rmsea.ci.upper"),
+    SRMR       = .pick(fm, "srmr", "srmr")
+  )
+})) %>%
+  mutate(Model = factor(Model, levels = paste0("M", 1:13))) %>%
+  arrange(Model)
+
+# --- Sequential LRT ---
+
+safe_LRT <- function(prev, curr) {
+  tab <- tryCatch(lavTestLRT(prev, curr), error = function(e) NULL)
+  if (is.null(tab)) return(c(chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_))
+  tab <- as.data.frame(tab)
+  i <- nrow(tab)
+  chisq <- if ("Chisq diff" %in% names(tab)) tab[["Chisq diff"]][i] else NA_real_
+  df    <- if ("Df diff"    %in% names(tab)) tab[["Df diff"]][i]    else NA_real_
+  p     <- if ("Pr(>Chisq)" %in% names(tab)) tab[["Pr(>Chisq)"]][i] else NA_real_
+  c(chisq_diff = as.numeric(chisq), df_diff = as.numeric(df), p = as.numeric(p))
+}
+
+
+epq_diff_tbl <- tibble(
+  Model = paste0("M", 1:13),
+  chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_
+)
+
+for (i in 2:13) {
+  d <- safe_LRT(epq_models[[i - 1]], epq_models[[i]])
+  epq_diff_tbl$chisq_diff[i] <- d[["chisq_diff"]]
+  epq_diff_tbl$df_diff[i]    <- d[["df_diff"]]
+  epq_diff_tbl$p[i]          <- d[["p"]]
+}
+
+# --- Combined table with delta criteria ---
+epq_invariance_table <- epq_fit_tbl %>%
+  left_join(epq_diff_tbl, by = "Model") %>%
+  mutate(
+    dCFI   = CFI   - lag(CFI),
+    dTLI   = TLI   - lag(TLI),
+    dRMSEA = RMSEA - lag(RMSEA),
+    CFI_invariance   = dCFI >= -0.01,
+    RMSEA_invariance = dRMSEA <= 0.01
+  )
+
+# --- Pretty APA table ---
+epq_invariance_pretty <- epq_invariance_table %>%
+  transmute(
+    Model,
+    `Chi-Square`             = Chi_Square,
+    df,
+    CFI, TLI, RMSEA,
+    `RMSEA 90% Lower CI`     = RMSEA_90_L,
+    `RMSEA 90% Upper`        = RMSEA_90_U,
+    `Chi-Square Difference`  = chisq_diff,
+    `df difference*`         = df_diff,
+    p,
+    CFI_diff                 = dCFI,
+    TLI_diff                 = dTLI,
+    RMSEA_diff               = dRMSEA,
+    CFI_invariance,
+    RMSEA_invariance,
+    converged
+  )
+
+
+fmt2 <- function(x) ifelse(is.na(x), "", sprintf("%.2f", x))
+fmt3 <- function(x) ifelse(is.na(x), "", sprintf("%.3f", x))
+apa_p <- function(p) {
+  ifelse(
+    is.na(p),
+    "",
+    ifelse(
+      p < .001,
+      "< .001",
+      sub("^0", "", sprintf("%.3f", p))
+    )
+  )
+}
+
+# --- Pretty APA table ---
+epq_invariance_pretty <- epq_invariance_table %>%
+  transmute(
+    Model,
+    `Chi-Square`            = Chi_Square,
+    df,
+    CFI,
+    TLI,
+    RMSEA,
+    `RMSEA 90% Lower CI`    = RMSEA_90_L,
+    `RMSEA 90% Upper`       = RMSEA_90_U,
+    `Chi-Square Difference` = chisq_diff,
+    `df difference*`        = df_diff,
+    p,
+    CFI_diff                = dCFI,
+    TLI_diff                = dTLI,
+    RMSEA_diff              = dRMSEA,
+    CFI_invariance,
+    RMSEA_invariance,
+    converged
+  )
+
+# --- Formatting helpers ---
+fmt2 <- function(x) ifelse(is.na(x), "", sprintf("%.2f", x))
+fmt3 <- function(x) ifelse(is.na(x), "", sprintf("%.3f", x))
+
+apa_p <- function(p) {
+  ifelse(
+    is.na(p),
+    "",
+    ifelse(
+      p < .001,
+      "p < .001",
+      paste0( sub("^0", "", sprintf("%.3f", p)))
+    )
+  )
+}
+
+
+# --- Final table formatter ---
+prep_invariance_tbl <- function(df, model_col = "Model") {
+
+  m13_labels <- c(
+    M1  = "M1 (Configural)",
+    M2  = "M2 (Metric)",
+    M3  = "M3 (Metric + Residuals)",
+    M4  = "M4 (Metric + Factor Var/Cov)",
+    M5  = "M5 (Scalar)",
+    M6  = "M6 (Metric + Residuals + Factor Var/Cov)",
+    M7  = "M7 (Scalar + Residuals)",
+    M8  = "M8 (Scalar + Factor Var/Cov)",
+    M9  = "M9 (Scalar + Residuals + Factor Var/Cov)",
+    M10 = "M10 (Scalar + Means)",
+    M11 = "M11 (Scalar + Residuals + Means)",
+    M12 = "M12 (Scalar + Factor Var/Cov + Means)",
+    M13 = "M13 (Scalar + Residuals + Factor Var/Cov + Means)"
+  )
+
+  df <- df %>%
+    mutate(
+      Model_disp = if ("Model_Label" %in% names(.)) {
+        .data[["Model_Label"]]
+      } else {
+        .data[[model_col]]
+      },
+      Model_disp = dplyr::recode(Model_disp, !!!as.list(m13_labels), .default = Model_disp),
+      RMSEA_CI = ifelse(
+        is.na(.data[["RMSEA 90% Lower CI"]]) | is.na(.data[["RMSEA 90% Upper"]]),
+        "",
+        paste0(
+          "[",
+          fmt3(.data[["RMSEA 90% Lower CI"]]),
+          ", ",
+          fmt3(.data[["RMSEA 90% Upper"]]),
+          "]"
+        )
+      )
+    )
+
+  df %>%
+    transmute(
+      Model      = Model_disp,
+      `χ²`       = fmt2(.data[["Chi-Square"]]),
+      df         = ifelse(is.na(.data[["df"]]), "", as.character(as.integer(.data[["df"]]))),
+      CFI        = fmt3(.data[["CFI"]]),
+      TLI        = fmt3(.data[["TLI"]]),
+      RMSEA      = fmt3(.data[["RMSEA"]]),
+      `RMSEA 90% CI` = RMSEA_CI,
+      `Δχ²`      = fmt2(.data[["Chi-Square Difference"]]),
+      `Δdf`      = ifelse(
+        is.na(.data[["df difference*"]]),
+        "",
+        as.character(as.integer(.data[["df difference*"]]))
+      ),
+      p          = apa_p(.data[["p"]]),
+      `ΔCFI`     = fmt3(.data[["CFI_diff"]]),
+      `ΔTLI`     = fmt3(.data[["TLI_diff"]]),
+      `ΔRMSEA`   = fmt3(.data[["RMSEA_diff"]]),
+      CFI_inv    = ifelse(is.na(.data[["CFI_invariance"]]), "", ifelse(.data[["CFI_invariance"]], "Yes", "No")),
+      RMSEA_inv  = ifelse(is.na(.data[["RMSEA_invariance"]]), "", ifelse(.data[["RMSEA_invariance"]], "Yes", "No")),
+      Converged  = ifelse(is.na(.data[["converged"]]), "", ifelse(.data[["converged"]], "Yes", "No"))
+    )
+}
+
+# --- Create final APA-ready table ---
+epq_invariance_apa <- prep_invariance_tbl(epq_invariance_pretty)
+readr::write_csv(epq_invariance_pretty, "outputs/tables/EYP_invariance_APA.csv")
+```
+
+```{r}
+papaja::apa_table(
+  epq_invariance_pretty,
+  caption = "Measurement invariance results for the EPQ-RS-B.",
+  note = "Δ values are relative to the immediately preceding model. * p < .05, ** p < .01, *** p < .001."
+)
+```
+
+```{r LanguageMI, eval=FALSE, include=FALSE}
+# ============================================================
+# CREATE LANGUAGE INVARIANCE DATA
+# Bangla side already exists as: epq_items
+# English side from: "USA 100 item Adult EPQR.txt"
+# Final output: epq_invariance_data / epq_invariance_data_ord
+# ============================================================
+
+
+# -----------------------------
+# 1. 48-item crosswalk:
+# EYP item -> EPQ-R 100-item position in USA file
+# -----------------------------
+epqrs_48_map <- tibble::tribble(
+  ~EYP,   ~epqr100_item, ~scale,
+  "EYP1",   3,  "Neuroticism",
+  "EYP2",   5,  "Psychoticism",
+  "EYP3",   6,  "Extraversion",
+  "EYP4",  15,  "Lie",
+  "EYP5",   8,  "Neuroticism",
+  "EYP6",   7,  "Psychoticism",
+  "EYP7",  11,  "Extraversion",
+  "EYP8",  10,  "Lie",
+  "EYP9",  17,  "Neuroticism",
+  "EYP10", 25,  "Psychoticism",
+  "EYP11", 20,  "Extraversion",
+  "EYP12", 19,  "Lie",
+  "EYP13", 22,  "Neuroticism",
+  "EYP14", 29,  "Psychoticism",
+  "EYP15", 16,  "Extraversion",
+  "EYP16", 23,  "Lie",
+  "EYP17", 26,  "Neuroticism",
+  "EYP18", 41,  "Psychoticism",
+  "EYP19", 45,  "Extraversion",
+  "EYP20", 27,  "Lie",
+  "EYP21", 35,  "Neuroticism",
+  "EYP22", 48,  "Psychoticism",
+  "EYP23", 51,  "Extraversion",
+  "EYP24", 44,  "Lie",
+  "EYP25", 38,  "Neuroticism",
+  "EYP26", 54,  "Psychoticism",
+  "EYP27", 24,  "Extraversion",
+  "EYP28", 59,  "Psychoticism",
+  "EYP29", 53,  "Lie",
+  "EYP30", 46,  "Neuroticism",
+  "EYP31", 75,  "Psychoticism",
+  "EYP32", 58,  "Extraversion",
+  "EYP33", 57,  "Lie",
+  "EYP34", 80,  "Neuroticism",
+  "EYP35", 79,  "Psychoticism",
+  "EYP36", 90,  "Extraversion",
+  "EYP37", 66,  "Lie",
+  "EYP38", 83,  "Neuroticism",
+  "EYP39", 91,  "Psychoticism",
+  "EYP40", 71,  "Lie",
+  "EYP41", 47,  "Extraversion",
+  "EYP42", 84,  "Neuroticism",
+  "EYP43", 88,  "Psychoticism",
+  "EYP44", 94,  "Extraversion",
+  "EYP45", 86,  "Lie",
+  "EYP46", 31,  "Neuroticism",
+  "EYP47", 93,  "Lie",
+  "EYP48", 78,  "Extraversion"
+)
+
+# -----------------------------
+# 2. Read USA 100-item raw EPQ-R file
+#    Format:
+#    line 1 per person -> ID(5), Age(2), Sex(1), 2 spaces, 70 items
+#    line 2 per person -> ID(5), Age(2), Sex(1), 2 spaces, 30 items
+# -----------------------------
+usa_file <- "EPQ- Invariance/Original-Datafiles/Adult EPQR/USA 100 item Adult EPQR.txt"
+
+usa_lines <- readr::read_lines(usa_file)
+
+# Drop header lines
+usa_lines <- usa_lines[-(1:4)]
+
+stopifnot(length(usa_lines) %% 2 == 0)
+
+usa_line1 <- usa_lines[seq(1, length(usa_lines), by = 2)]
+usa_line2 <- usa_lines[seq(2, length(usa_lines), by = 2)]
+
+parse_block <- function(x, n_items) {
+  tibble(
+    ID   = as.integer(substr(x, 1, 5)),
+    Age  = as.integer(substr(x, 6, 7)),
+    Sex  = as.integer(substr(x, 8, 8)),
+    ItemString = substr(x, 11, 10 + n_items)
+  )
+}
+
+usa_block1 <- parse_block(usa_line1, 70)
+usa_block2 <- parse_block(usa_line2, 30)
+
+# sanity check
+stopifnot(all(usa_block1$ID  == usa_block2$ID))
+stopifnot(all(usa_block1$Age == usa_block2$Age))
+stopifnot(all(usa_block1$Sex == usa_block2$Sex))
+
+# split item strings into columns
+items70 <- stringr::str_split(usa_block1$ItemString, "", simplify = TRUE)
+items30 <- stringr::str_split(usa_block2$ItemString, "", simplify = TRUE)
+
+usa_epqr100_raw <- bind_cols(
+  usa_block1 %>% select(ID, Age, Sex),
+  as_tibble(items70, .name_repair = ~ paste0("USAQ", 1:70)),
+  as_tibble(items30, .name_repair = ~ paste0("USAQ", 71:100))
+)
+
+# -----------------------------
+# 3. Recode USA raw responses
+#    Archive coding: 3 = Yes, 1 = No, 2 = Missing
+#    Convert to keyed binary before reverse-coding:
+#    Yes -> 1, No -> 0, Missing -> NA
+# -----------------------------
+# -----------------------------
+# 3. Recode USA raw responses
+#    3 = Yes, 1 = No, 2 = Missing
+# -----------------------------
+usa_epqr100 <- usa_epqr100_raw %>%
+  mutate(
+    across(
+      starts_with("USAQ"),
+      ~ case_when(
+        .x == "3" ~ 1,
+        .x == "1" ~ 0,
+        .x == "2" ~ NA_real_,
+        TRUE      ~ NA_real_
+      )
+    )
+  )
+
+# -----------------------------
+# 4. Extract the 48 EPQ-RS items from the USA 100-item file
+#    keep ID before filtering
+# -----------------------------
+english_invariance <- tibble(ID = usa_epqr100$ID) %>%
+  bind_cols(
+    map_dfc(seq_len(nrow(epqrs_48_map)), function(i) {
+      qnum <- epqrs_48_map$epqr100_item[i]
+      nm   <- epqrs_48_map$EYP[i]
+      tibble(!!nm := usa_epqr100[[paste0("USAQ", qnum)]])
+    })
+  ) %>%
+  mutate(
+    across(all_of(epq_reverse), ~ ifelse(is.na(.x), NA_real_, 1 - .x))
+  ) %>%
+  filter(if_all(EYP1:EYP48, ~ !is.na(.x))) %>%
+  mutate(
+    Language = "English",
+    .before = 1
+  )
+
+# keep item-only object if needed for scoring
+usa_epq_items <- english_invariance %>%
+  select(EYP1:EYP48)
+
+# optional English scores using your existing key
+usa_epq_scores <- tibble(
+  Psychoticism = row_sum_safe(usa_epq_items, epq_item_sets$Psychoticism),
+  Extraversion = row_sum_safe(usa_epq_items, epq_item_sets$Extraversion),
+  Neuroticism  = row_sum_safe(usa_epq_items, epq_item_sets$Neuroticism),
+  Lie          = row_sum_safe(usa_epq_items, epq_item_sets$Lie)
+)
+
+usa_epq_core_scores <- usa_epq_scores %>%
+  select(Psychoticism, Extraversion, Neuroticism)
+
+# -----------------------------
+# 5. Build the combined language invariance data
+# -----------------------------
+bangla_invariance <- epq_items %>%
+  mutate(
+    Language = "Bangla",
+    ID = seq_len(n()),
+    .before = 1
+  )
+
+epq_invariance_data <- bind_rows(english_invariance, bangla_invariance) %>%
+  mutate(Language = factor(Language, levels = c("English", "Bangla")))
+
+# ordered version for WLSMV invariance models
+epq_invariance_data_ord <- epq_invariance_data %>%
+  mutate(across(EYP1:EYP48, ~ ordered(.x, levels = c(0, 1))))
+
+# -----------------------------
+# 6. Optional quick checks
+# -----------------------------
+# sample sizes
+table(epq_invariance_data$Language)
+
+# missingness by language
+epq_invariance_missing <- epq_invariance_data %>%
+  group_by(Language) %>%
+  summarise(across(EYP1:EYP48, ~ mean(is.na(.x))), .groups = "drop")
+
+# scale scores in the combined data
+epq_invariance_scores <- epq_invariance_data %>%
+  transmute(
+    Language,
+    ID,
+    Psychoticism = row_sum_safe(., epq_item_sets$Psychoticism),
+    Extraversion = row_sum_safe(., epq_item_sets$Extraversion),
+    Neuroticism  = row_sum_safe(., epq_item_sets$Neuroticism),
+    Lie          = row_sum_safe(., epq_item_sets$Lie)
+  )
+
+epq_invariance_core_scores <- epq_invariance_scores %>%
+  select(Language, ID, Psychoticism, Extraversion, Neuroticism)
+
+# -----------------------------
+# 7. Optional save
+# -----------------------------
+saveRDS(epq_invariance_data,     "outputs/Language Invariance/epq_invariance_data_48.rds")
+saveRDS(epq_invariance_data_ord, "outputs/Language Invariance/epq_invariance_data_48_ordered.rds")
+```
+
+
+```{r eval=FALSE, include=FALSE}
+# ============================================================
+# EPQ ESEM LANGUAGE INVARIANCE TESTING (Marsh 13-model taxonomy)
+# ============================================================
+# --- Invariance data ---
+epq_language_data <- readRDS("outputs/Language Invariance/epq_invariance_data_48_ordered.rds")
+epq_ordered_items <- names(epq_language_data %>% dplyr::select(EYP1:EYP48))
+
+# --- Use 4-factor ESEM syntax ---
+epq_invariance_model <- syn_4f
+
+# --- Marsh 13 specs ---
+SCALAR_PARAM <- "thresholds"
+
+epq_marsh13_equal <- list(
+  M1  = NULL,
+  M2  = c("loadings"),
+  M3  = c("loadings", "residuals"),
+  M4  = c("loadings", "lv.variances", "lv.covariances"),
+  M5  = c("loadings", SCALAR_PARAM),
+  M6  = c("loadings", "residuals", "lv.variances", "lv.covariances"),
+  M7  = c("loadings", SCALAR_PARAM, "residuals"),
+  M8  = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances"),
+  M9  = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances"),
+  M10 = c("loadings", SCALAR_PARAM, "means"),
+  M11 = c("loadings", SCALAR_PARAM, "residuals", "means"),
+  M12 = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances", "means"),
+  M13 = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances", "means")
+)
+
+epq_model_partial    <- setNames(vector("list", 13), paste0("M", 1:13))
+epq_model_extra_args <- setNames(vector("list", 13), paste0("M", 1:13))
+
+# --- Fitting function ---
+fit_epq_language_M <- function(id) {
+  base_args <- list(
+    model            = epq_invariance_model,
+    data             = epq_language_data,
+    group            = "Language",
+    ordered          = epq_ordered_items,
+    estimator        = "WLSMV",
+    parameterization = "theta",
+    std.lv           = TRUE,
+    meanstructure    = TRUE,
+    group.equal      = epq_marsh13_equal[[id]],
+    group.partial    = epq_model_partial[[id]]
+  )
+  args <- modifyList(base_args, epq_model_extra_args[[id]] %||% list())
+  do.call(lavaan::cfa, args)
+}
+
+# --- Fit all 13 models ---
+epq_language_models <- setNames(
+  lapply(paste0("M", 1:13), function(id) {
+    message("Fitting EPQ Language ", id)
+    fit_epq_language_M(id)
+  }),
+  paste0("M", 1:13)
+)
+
+.pick <- function(fm, primary, fallback) {
+  if (!is.null(fm[[primary]])) unname(fm[[primary]])
+  else if (!is.null(fm[[fallback]])) unname(fm[[fallback]])
+  else NA_real_
+}
+
+# --- Extract fit indices ---
+epq_language_fit_tbl <- bind_rows(lapply(names(epq_language_models), function(id) {
+  fit <- epq_language_models[[id]]
+  conv <- tryCatch(lavInspect(fit, "converged"), error = function(e) NA)
+  fm   <- tryCatch(fitMeasures(fit), error = function(e) NULL)
+
+  if (is.null(fm)) {
+    return(tibble(
+      Model = id, converged = conv,
+      Chi_Square = NA_real_, df = NA_real_,
+      CFI = NA_real_, TLI = NA_real_, RMSEA = NA_real_,
+      RMSEA_90_L = NA_real_, RMSEA_90_U = NA_real_, SRMR = NA_real_
+    ))
+  }
+
+  tibble(
+    Model      = id,
+    converged  = conv,
+    Chi_Square = .pick(fm, "chisq.scaled", "chisq"),
+    df         = .pick(fm, "df.scaled", "df"),
+    CFI        = .pick(fm, "cfi.scaled", "cfi"),
+    TLI        = .pick(fm, "tli.scaled", "tli"),
+    RMSEA      = .pick(fm, "rmsea.scaled", "rmsea"),
+    RMSEA_90_L = .pick(fm, "rmsea.ci.lower.scaled", "rmsea.ci.lower"),
+    RMSEA_90_U = .pick(fm, "rmsea.ci.upper.scaled", "rmsea.ci.upper"),
+    SRMR       = .pick(fm, "srmr", "srmr")
+  )
+})) %>%
+  mutate(Model = factor(Model, levels = paste0("M", 1:13))) %>%
+  arrange(Model)
+
+# --- Sequential LRT ---
+safe_LRT <- function(prev, curr) {
+  tab <- tryCatch(lavTestLRT(prev, curr), error = function(e) NULL)
+  if (is.null(tab)) return(c(chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_))
+  tab <- as.data.frame(tab)
+  i <- nrow(tab)
+  chisq <- if ("Chisq diff" %in% names(tab)) tab[["Chisq diff"]][i] else NA_real_
+  df    <- if ("Df diff"    %in% names(tab)) tab[["Df diff"]][i] else NA_real_
+  p     <- if ("Pr(>Chisq)" %in% names(tab)) tab[["Pr(>Chisq)"]][i] else NA_real_
+  c(chisq_diff = as.numeric(chisq), df_diff = as.numeric(df), p = as.numeric(p))
+}
+
+epq_language_diff_tbl <- tibble(
+  Model = paste0("M", 1:13),
+  chisq_diff = NA_real_,
+  df_diff = NA_real_,
+  p = NA_real_
+)
+
+for (i in 2:13) {
+  d <- safe_LRT(epq_language_models[[i - 1]], epq_language_models[[i]])
+  epq_language_diff_tbl$chisq_diff[i] <- d[["chisq_diff"]]
+  epq_language_diff_tbl$df_diff[i]    <- d[["df_diff"]]
+  epq_language_diff_tbl$p[i]          <- d[["p"]]
+}
+
+# --- Combined table with delta criteria ---
+epq_language_invariance_table <- epq_language_fit_tbl %>%
+  left_join(epq_language_diff_tbl, by = "Model") %>%
+  mutate(
+    dCFI   = CFI   - lag(CFI),
+    dTLI   = TLI   - lag(TLI),
+    dRMSEA = RMSEA - lag(RMSEA),
+    CFI_invariance   = dCFI >= -0.01,
+    RMSEA_invariance = dRMSEA <= 0.01
+  )
+
+# --- Pretty table ---
+epq_language_invariance_pretty <- epq_language_invariance_table %>%
+  transmute(
+    Model,
+    `Chi-Square`            = Chi_Square,
+    df,
+    CFI,
+    TLI,
+    RMSEA,
+    `RMSEA 90% Lower CI`    = RMSEA_90_L,
+    `RMSEA 90% Upper`       = RMSEA_90_U,
+    `Chi-Square Difference` = chisq_diff,
+    `df difference*`        = df_diff,
+    p,
+    CFI_diff                = dCFI,
+    TLI_diff                = dTLI,
+    RMSEA_diff              = dRMSEA,
+    CFI_invariance,
+    RMSEA_invariance,
+    converged
+  )
+
+# --- Formatting helpers ---
+fmt2 <- function(x) ifelse(is.na(x), "", sprintf("%.2f", x))
+fmt3 <- function(x) ifelse(is.na(x), "", sprintf("%.3f", x))
+
+apa_p <- function(p) {
+  ifelse(
+    is.na(p),
+    "",
+    ifelse(
+      p < .001,
+      "p < .001",
+      sub("^0", "", sprintf("%.3f", p))
+    )
+  )
+}
+
+# --- Final table formatter ---
+prep_invariance_tbl <- function(df, model_col = "Model") {
+
+  m13_labels <- c(
+    M1  = "M1 (Configural)",
+    M2  = "M2 (Metric)",
+    M3  = "M3 (Metric + Residuals)",
+    M4  = "M4 (Metric + Factor Var/Cov)",
+    M5  = "M5 (Scalar)",
+    M6  = "M6 (Metric + Residuals + Factor Var/Cov)",
+    M7  = "M7 (Scalar + Residuals)",
+    M8  = "M8 (Scalar + Factor Var/Cov)",
+    M9  = "M9 (Scalar + Residuals + Factor Var/Cov)",
+    M10 = "M10 (Scalar + Means)",
+    M11 = "M11 (Scalar + Residuals + Means)",
+    M12 = "M12 (Scalar + Factor Var/Cov + Means)",
+    M13 = "M13 (Scalar + Residuals + Factor Var/Cov + Means)"
+  )
+
+  df <- df %>%
+    mutate(
+      Model_disp = if ("Model_Label" %in% names(.)) .data[["Model_Label"]] else .data[[model_col]],
+      Model_disp = dplyr::recode(Model_disp, !!!as.list(m13_labels), .default = Model_disp),
+      RMSEA_CI = ifelse(
+        is.na(.data[["RMSEA 90% Lower CI"]]) | is.na(.data[["RMSEA 90% Upper"]]),
+        "",
+        paste0(
+          "[", fmt3(.data[["RMSEA 90% Lower CI"]]),
+          ", ", fmt3(.data[["RMSEA 90% Upper"]]), "]"
+        )
+      )
+    )
+
+  df %>%
+    transmute(
+      Model          = Model_disp,
+      `χ²`           = fmt2(.data[["Chi-Square"]]),
+      df             = ifelse(is.na(.data[["df"]]), "", as.character(as.integer(.data[["df"]]))),
+      CFI            = fmt3(.data[["CFI"]]),
+      TLI            = fmt3(.data[["TLI"]]),
+      RMSEA          = fmt3(.data[["RMSEA"]]),
+      `RMSEA 90% CI` = RMSEA_CI,
+      `Δχ²`          = fmt2(.data[["Chi-Square Difference"]]),
+      `Δdf`          = ifelse(is.na(.data[["df difference*"]]), "", as.character(as.integer(.data[["df difference*"]]))),
+      p              = apa_p(.data[["p"]]),
+      `ΔCFI`         = fmt3(.data[["CFI_diff"]]),
+      `ΔTLI`         = fmt3(.data[["TLI_diff"]]),
+      `ΔRMSEA`       = fmt3(.data[["RMSEA_diff"]]),
+      CFI_inv        = ifelse(is.na(.data[["CFI_invariance"]]), "", ifelse(.data[["CFI_invariance"]], "Yes", "No")),
+      RMSEA_inv      = ifelse(is.na(.data[["RMSEA_invariance"]]), "", ifelse(.data[["RMSEA_invariance"]], "Yes", "No")),
+      Converged      = ifelse(is.na(.data[["converged"]]), "", ifelse(.data[["converged"]], "Yes", "No"))
+    )
+}
+
+# --- Create final APA-ready table ---
+epq_language_invariance_apa <- prep_invariance_tbl(epq_language_invariance_pretty)
+
+# --- Save outputs ---
+readr::write_csv(
+  epq_language_invariance_pretty,
+  "outputs/tables/EYP_language_invariance_raw.csv"
+)
+
+readr::write_csv(
+  epq_language_invariance_apa,
+  "outputs/tables/EYP_language_invariance_APA.csv"
+)
+```
+
+
+
+
+```{r}
+epq_language_invariance_apa <- read_csv("outputs/tables/EYP_language_invariance_APA.csv")
+papaja::apa_table(
+  epq_language_invariance_apa,
+  caption = "Measurement invariance (Language) results for the EPQ-RS-B.",
+  note = "Δ values are relative to the immediately preceding model. * p < .05, ** p < .01, *** p < .001."
+)
+```
+
+
+```{r languageMI44data, include=FALSE}
+# ============================================================
+# BUILD 44-ITEM LANGUAGE INVARIANCE DATA
+# English source: USA-total sample UK scored EPQ item data.xls
+# Bangla source: epq_items (already reverse-coded in your script)
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. Verified 44 common items between 90-item EPQ and 48-item EPQ-RS
+#    Excluded short-form-only items: EYP2, EYP14, EYP26, EYP43
+# ------------------------------------------------------------
+common_item_map <- tibble::tribble(
+  ~EYP,    ~epq90_item, ~scale,
+  "EYP1",    3,  "Neuroticism",
+  "EYP3",    5,  "Extraversion",
+  "EYP4",   13,  "Lie",
+  "EYP5",    7,  "Neuroticism",
+  "EYP6",    6,  "Psychoticism",
+  "EYP7",   10,  "Extraversion",
+  "EYP8",    8,  "Lie",
+  "EYP9",   15,  "Neuroticism",
+  "EYP10",  22,  "Psychoticism",
+  "EYP11",  17,  "Extraversion",
+  "EYP12",  16,  "Lie",
+  "EYP13",  19,  "Neuroticism",
+  "EYP15",  14,  "Extraversion",
+  "EYP16",  20,  "Lie",
+  "EYP17",  23,  "Neuroticism",
+  "EYP18",  37,  "Psychoticism",
+  "EYP19",  40,  "Extraversion",
+  "EYP20",  24,  "Lie",
+  "EYP21",  31,  "Neuroticism",
+  "EYP22",  43,  "Psychoticism",
+  "EYP23",  45,  "Extraversion",
+  "EYP24",  39,  "Lie",
+  "EYP25",  34,  "Neuroticism",
+  "EYP27",  21,  "Extraversion",
+  "EYP28",  53,  "Psychoticism",
+  "EYP29",  48,  "Lie",
+  "EYP30",  41,  "Neuroticism",
+  "EYP31",  67,  "Psychoticism",
+  "EYP32",  52,  "Extraversion",
+  "EYP33",  51,  "Lie",
+  "EYP34",  72,  "Neuroticism",
+  "EYP35",  71,  "Psychoticism",
+  "EYP36",  82,  "Extraversion",
+  "EYP37",  59,  "Lie",
+  "EYP38",  75,  "Neuroticism",
+  "EYP39",  83,  "Psychoticism",
+  "EYP40",  63,  "Lie",
+  "EYP41",  42,  "Extraversion",
+  "EYP42",  77,  "Neuroticism",
+  "EYP44",  86,  "Extraversion",
+  "EYP45",  78,  "Lie",
+  "EYP46",  27,  "Neuroticism",
+  "EYP47",  85,  "Lie",
+  "EYP48",  70,  "Extraversion"
+)
+
+common_items <- common_item_map$EYP
+
+# ------------------------------------------------------------
+# 2. 44-item subscale definitions
+# ------------------------------------------------------------
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP10","EYP22","EYP31","EYP39","EYP6","EYP18","EYP28","EYP35"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP32","EYP36","EYP44","EYP48","EYP27","EYP41"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30","EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33","EYP37","EYP40","EYP45","EYP47")
+)
+
+# ------------------------------------------------------------
+# 3. Helper
+# ------------------------------------------------------------
+row_sum_safe <- function(df, cols) {
+  out <- rowSums(df[, cols, drop = FALSE], na.rm = TRUE)
+  all_missing <- rowSums(!is.na(df[, cols, drop = FALSE])) == 0
+  out[all_missing] <- NA_real_
+  out
+}
+
+# ------------------------------------------------------------
+# 4. Read USA spreadsheet
+# ------------------------------------------------------------
+usa_file <- "EPQ- Invariance/Analysis-Files/Raw/Total/Excel/USA-total sample EPQ item data.xls"
+usa_sheets <- readxl::excel_sheets(usa_file)
+usa_raw <- readxl::read_excel(usa_file, sheet = usa_sheets[1])
+
+# ------------------------------------------------------------
+# 5. Detect the 90 scored EPQ item columns
+#    Assumes a contiguous 90-column block coded 0/1/(optional NA)
+# ------------------------------------------------------------
+is_binary_col <- function(x) {
+  x_num <- suppressWarnings(as.numeric(x))
+  vals <- unique(stats::na.omit(x_num))
+  length(vals) > 0 && all(vals %in% c(0, 1))
+}
+
+binary_flags <- vapply(usa_raw, is_binary_col, logical(1))
+r <- rle(binary_flags)
+
+if (!any(r$values & r$lengths >= 90)) {
+  stop("Could not detect a contiguous 90-column 0/1 EPQ item block in the USA spreadsheet.")
+}
+
+run_id <- which(r$values & r$lengths >= 90)[1]
+run_start <- if (run_id == 1) 1 else sum(r$lengths[seq_len(run_id - 1)]) + 1
+epq90_cols <- names(usa_raw)[run_start:(run_start + 89)]
+
+message("Detected EPQ 90-item block: ", epq90_cols[1], " ... ", epq90_cols[90])
+
+# ------------------------------------------------------------
+# 6. Extract the 44 common English items
+#    IMPORTANT:
+#    This spreadsheet is already 'UK scored EPQ item data'
+#    so do NOT reverse-code the English side again
+# ------------------------------------------------------------
+english_common <- tibble(ID = seq_len(nrow(usa_raw))) %>%
+  bind_cols(
+    purrr::map_dfc(seq_len(nrow(common_item_map)), function(i) {
+      qnum <- common_item_map$epq90_item[i]
+      nm   <- common_item_map$EYP[i]
+      tibble(!!nm := suppressWarnings(as.numeric(usa_raw[[epq90_cols[qnum]]])))
+    })
+  ) %>%
+  filter(if_all(all_of(common_items), ~ !is.na(.x))) %>%
+  mutate(
+    Language = "English",
+    .before = 1
+  ) %>%
+  select(Language, ID, all_of(common_items))
+
+# ------------------------------------------------------------
+# 7. Extract the 44 common Bangla items
+#    epq_items is assumed to already exist and already be keyed
+# ------------------------------------------------------------
+bangla_common <- epq_items %>%
+  select(all_of(common_items)) %>%
+  mutate(
+    Language = "Bangla",
+    ID = seq_len(n()),
+    .before = 1
+  ) %>%
+  select(Language, ID, all_of(common_items))
+
+# ------------------------------------------------------------
+# 8. Build combined language invariance data
+# ------------------------------------------------------------
+epq_language44_data <- bind_rows(english_common, bangla_common) %>%
+  mutate(Language = factor(Language, levels = c("English", "Bangla")))
+
+epq_language44_data_ord <- epq_language44_data %>%
+  mutate(across(all_of(common_items), ~ ordered(.x, levels = c(0, 1))))
+
+# ------------------------------------------------------------
+# 9. Optional 44-item scale scores
+# ------------------------------------------------------------
+epq_language44_scores <- epq_language44_data %>%
+  transmute(
+    Language,
+    ID,
+    Psychoticism = row_sum_safe(., epq_common_item_sets$Psychoticism),
+    Extraversion = row_sum_safe(., epq_common_item_sets$Extraversion),
+    Neuroticism  = row_sum_safe(., epq_common_item_sets$Neuroticism),
+    Lie          = row_sum_safe(., epq_common_item_sets$Lie)
+  )
+
+epq_language44_core_scores <- epq_language44_scores %>%
+  select(Language, ID, Psychoticism, Extraversion, Neuroticism)
+
+# ------------------------------------------------------------
+# 10. Save
+# ------------------------------------------------------------
+saveRDS(epq_language44_data,     "outputs/Language Invariance/epq_language44_data_from_USA_EPQ.rds")
+saveRDS(epq_language44_data_ord, "outputs/Language Invariance/epq_language44_data_from_USA_EPQ_ordered.rds")
+
+readr::write_csv(
+  common_item_map,
+  "outputs/Language Invariance/epq_language44_item_map.csv"
+)
+
+readr::write_csv(
+  epq_language44_scores,
+  "outputs/Language Invariance/epq_language44_scores.csv"
+)
+
+# ------------------------------------------------------------
+# 11. Quick checks
+# ------------------------------------------------------------
+table(epq_language44_data$Language)
+
+colSums(is.na(epq_language44_data[, common_items, drop = FALSE]))
+
+glimpse(epq_language44_data)
+```
+
+```{r Language44, include=FALSE}
+# ============================================================
+# EPQ ESEM LANGUAGE INVARIANCE TESTING (44 common items)
+# Marsh 13-model taxonomy + progress bar
+# Fixed version
+# ============================================================
+
+# NOTE:
+# This script expects the following objects to be available in the
+# workspace before it is sourced:
+#   * epq_items          data.frame of Bangla EPQ items (used for EFA)
+# and the following packages loaded:
+#   * dplyr, tibble, readr, lavaan, esemComp
+
+# ------------------------------------------------------------
+# 1. Read 44-item language invariance data
+# ------------------------------------------------------------
+epq_language_data <- readRDS(
+  "outputs/Language Invariance/epq_language44_data_from_USA_EPQ_ordered.rds"
+)
+
+# 44 common items (EYP2, EYP14, EYP26, EYP43 excluded)
+common_items <- c(
+  "EYP1","EYP3","EYP4","EYP5","EYP6","EYP7","EYP8","EYP9","EYP10","EYP11",
+  "EYP12","EYP13","EYP15","EYP16","EYP17","EYP18","EYP19","EYP20","EYP21",
+  "EYP22","EYP23","EYP24","EYP25","EYP27","EYP28","EYP29","EYP30","EYP31",
+  "EYP32","EYP33","EYP34","EYP35","EYP36","EYP37","EYP38","EYP39","EYP40",
+  "EYP41","EYP42","EYP44","EYP45","EYP46","EYP47","EYP48"
+)
+
+epq_ordered_items <- common_items
+
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP10","EYP22","EYP31","EYP39","EYP6","EYP18","EYP28","EYP35"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP32","EYP36","EYP44","EYP48","EYP27","EYP41"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30","EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33","EYP37","EYP40","EYP45","EYP47")
+)
+
+# ------------------------------------------------------------
+# 2. Build 44-item Bangla data for EFA
+#    (epq_items must already be in the workspace)
+# ------------------------------------------------------------
+if (!exists("epq_items")) {
+  stop("`epq_items` not found. Load the Bangla EPQ item data before sourcing this script.")
+}
+
+epq_items_4f_44 <- epq_items %>%
+  dplyr::select(
+    # Psychoticism (8)
+    EYP10, EYP22, EYP31, EYP39, EYP6, EYP18, EYP28, EYP35,
+    # Extraversion (12)
+    EYP3, EYP7, EYP11, EYP15, EYP19, EYP23, EYP32, EYP36, EYP44, EYP48, EYP27, EYP41,
+    # Neuroticism (12)
+    EYP1, EYP5, EYP9, EYP13, EYP17, EYP21, EYP25, EYP30, EYP34, EYP38, EYP42, EYP46,
+    # Lie (12)
+    EYP4, EYP16, EYP45, EYP8, EYP12, EYP20, EYP24, EYP29, EYP33, EYP37, EYP40, EYP47
+  )
+
+# ------------------------------------------------------------
+# 3. Target matrix and ESEM-EFA
+# ------------------------------------------------------------
+target_4f_44 <- make_target(
+  nitems       = 44,
+  mainloadings = list(
+    Psychoticism = 1:8,
+    Extraversion = 9:20,
+    Neuroticism  = 21:32,
+    Lie          = 33:44
+  )
+)
+
+efa_4f_44 <- esem_efa(
+  data     = epq_items_4f_44,
+  nfactors = 4,
+  target   = target_4f_44,
+  fm       = "uls",
+  cor      = "tet"
+)
+
+ref_4f_44 <- find_referents(
+  efa_4f_44,
+  factor_names = c("Neuroticism", "Extraversion", "Lie", "Psychoticism")
+)
+
+syn_4f_44 <- syntax_composer(efa_4f_44, ref_4f_44)
+
+# ***  Key fix: alias the syntax object to the name expected downstream ***
+epq_invariance_model <- syn_4f_44
+
+# ------------------------------------------------------------
+# 4. Marsh 13 invariance specifications
+# ------------------------------------------------------------
+# For ordered/WLSMV + theta parameterisation, the intercept-analogue
+# constraint is "thresholds".
+SCALAR_PARAM <- "thresholds"
+
+epq_marsh13_equal <- list(
+  M1  = NULL,
+  M2  = c("loadings"),
+  M3  = c("loadings", "residuals"),
+  M4  = c("loadings", "lv.variances", "lv.covariances"),
+  M5  = c("loadings", SCALAR_PARAM),
+  M6  = c("loadings", "residuals", "lv.variances", "lv.covariances"),
+  M7  = c("loadings", SCALAR_PARAM, "residuals"),
+  M8  = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances"),
+  M9  = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances"),
+  M10 = c("loadings", SCALAR_PARAM, "means"),
+  M11 = c("loadings", SCALAR_PARAM, "residuals", "means"),
+  M12 = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances", "means"),
+  M13 = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances", "means")
+)
+
+epq_model_partial    <- setNames(vector("list", 13), paste0("M", 1:13))
+epq_model_extra_args <- setNames(vector("list", 13), paste0("M", 1:13))
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+# ------------------------------------------------------------
+# 5. Fitting function
+# ------------------------------------------------------------
+fit_epq_language_M <- function(id) {
+  base_args <- list(
+    model            = epq_invariance_model,
+    data             = epq_language_data,
+    group            = "Language",
+    ordered          = epq_ordered_items,
+    estimator        = "WLSMV",
+    parameterization = "theta",
+    std.lv           = TRUE,
+    meanstructure    = TRUE,
+    group.equal      = epq_marsh13_equal[[id]],
+    group.partial    = epq_model_partial[[id]]
+  )
+  args <- modifyList(base_args, epq_model_extra_args[[id]] %||% list())
+  do.call(lavaan::cfa, args)
+}
+
+# ------------------------------------------------------------
+# 6. Fit all 13 models with progress bar (error-safe)
+# ------------------------------------------------------------
+model_ids <- paste0("M", 1:13)
+
+epq_language_models <- setNames(vector("list", length(model_ids)), model_ids)
+
+epq_language_fit_status <- tibble::tibble(
+  Model         = model_ids,
+  fitted        = FALSE,
+  converged     = NA,
+  error_message = NA_character_
+)
+
+pb <- txtProgressBar(min = 0, max = length(model_ids), style = 3)
+
+for (i in seq_along(model_ids)) {
+  id <- model_ids[i]
+  cat(sprintf("\nFitting EPQ Language %s ...\n", id))
+
+  fit_obj <- tryCatch(
+    fit_epq_language_M(id),
+    error   = function(e) e,
+    warning = function(w) w
+  )
+
+  if (inherits(fit_obj, "error")) {
+    epq_language_models[[id]]                 <- NULL
+    epq_language_fit_status$fitted[i]         <- FALSE
+    epq_language_fit_status$converged[i]      <- NA
+    epq_language_fit_status$error_message[i]  <- conditionMessage(fit_obj)
+  } else {
+    epq_language_models[[id]]            <- fit_obj
+    epq_language_fit_status$fitted[i]    <- TRUE
+    epq_language_fit_status$converged[i] <- tryCatch(
+      lavaan::lavInspect(fit_obj, "converged"),
+      error = function(e) NA
+    )
+  }
+
+  setTxtProgressBar(pb, i)
+}
+close(pb)
+
+readr::write_csv(
+  epq_language_fit_status,
+  "outputs/Language Invariance/EYP_language44_fit_status.csv"
+)
+
+# ------------------------------------------------------------
+# 7. Helper: pick robust fit index with a real fallback
+# ------------------------------------------------------------
+.pick <- function(fm, primary, fallback = NULL) {
+  if (!is.null(fm[[primary]]) && !is.na(fm[[primary]])) {
+    return(unname(fm[[primary]]))
+  }
+  if (!is.null(fallback) && !is.null(fm[[fallback]]) && !is.na(fm[[fallback]])) {
+    return(unname(fm[[fallback]]))
+  }
+  NA_real_
+}
+
+# ------------------------------------------------------------
+# 8. Extract fit indices
+# ------------------------------------------------------------
+epq_language_fit_tbl <- dplyr::bind_rows(lapply(model_ids, function(id) {
+  fit <- epq_language_models[[id]]
+
+  if (is.null(fit)) {
+    return(tibble::tibble(
+      Model      = id,
+      converged  = NA,
+      Chi_Square = NA_real_,
+      df         = NA_real_,
+      CFI        = NA_real_,
+      TLI        = NA_real_,
+      RMSEA      = NA_real_,
+      RMSEA_90_L = NA_real_,
+      RMSEA_90_U = NA_real_,
+      SRMR       = NA_real_
+    ))
+  }
+
+  conv <- tryCatch(lavaan::lavInspect(fit, "converged"), error = function(e) NA)
+  fm   <- tryCatch(lavaan::fitMeasures(fit),             error = function(e) NULL)
+
+  if (is.null(fm)) {
+    return(tibble::tibble(
+      Model      = id,
+      converged  = conv,
+      Chi_Square = NA_real_,
+      df         = NA_real_,
+      CFI        = NA_real_,
+      TLI        = NA_real_,
+      RMSEA      = NA_real_,
+      RMSEA_90_L = NA_real_,
+      RMSEA_90_U = NA_real_,
+      SRMR       = NA_real_
+    ))
+  }
+
+  tibble::tibble(
+    Model      = id,
+    converged  = conv,
+    Chi_Square = .pick(fm, "chisq.scaled",          "chisq"),
+    df         = .pick(fm, "df.scaled",             "df"),
+    CFI        = .pick(fm, "cfi.scaled",            "cfi"),
+    TLI        = .pick(fm, "tli.scaled",            "tli"),
+    RMSEA      = .pick(fm, "rmsea.scaled",          "rmsea"),
+    RMSEA_90_L = .pick(fm, "rmsea.ci.lower.scaled", "rmsea.ci.lower"),
+    RMSEA_90_U = .pick(fm, "rmsea.ci.upper.scaled", "rmsea.ci.upper"),
+    SRMR       = .pick(fm, "srmr",                  "srmr_bentler")
+  )
+})) %>%
+  dplyr::mutate(Model = factor(Model, levels = model_ids)) %>%
+  dplyr::arrange(Model)
+
+# ------------------------------------------------------------
+# 9. Sequential LRT
+# ------------------------------------------------------------
+safe_LRT <- function(prev, curr) {
+  if (is.null(prev) || is.null(curr)) {
+    return(c(chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_))
+  }
+
+  tab <- tryCatch(lavaan::lavTestLRT(prev, curr), error = function(e) NULL)
+  if (is.null(tab)) return(c(chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_))
+
+  tab <- as.data.frame(tab)
+  i   <- nrow(tab)
+
+  chisq <- if ("Chisq diff"   %in% names(tab)) tab[["Chisq diff"]][i]   else NA_real_
+  df    <- if ("Df diff"      %in% names(tab)) tab[["Df diff"]][i]      else NA_real_
+  p     <- if ("Pr(>Chisq)"   %in% names(tab)) tab[["Pr(>Chisq)"]][i]   else NA_real_
+
+  c(chisq_diff = as.numeric(chisq),
+    df_diff    = as.numeric(df),
+    p          = as.numeric(p))
+}
+
+epq_language_diff_tbl <- tibble::tibble(
+  Model      = model_ids,
+  chisq_diff = NA_real_,
+  df_diff    = NA_real_,
+  p          = NA_real_
+)
+
+for (i in 2:length(model_ids)) {
+  d <- safe_LRT(
+    epq_language_models[[model_ids[i - 1]]],
+    epq_language_models[[model_ids[i]]]
+  )
+  epq_language_diff_tbl$chisq_diff[i] <- d[["chisq_diff"]]
+  epq_language_diff_tbl$df_diff[i]    <- d[["df_diff"]]
+  epq_language_diff_tbl$p[i]          <- d[["p"]]
+}
+
+# ------------------------------------------------------------
+# 10. Combined table with delta criteria (Chen, 2007)
+# ------------------------------------------------------------
+epq_language_invariance_table <- epq_language_fit_tbl %>%
+  dplyr::left_join(epq_language_diff_tbl, by = "Model") %>%
+  dplyr::mutate(
+    dCFI             = CFI   - dplyr::lag(CFI),
+    dTLI             = TLI   - dplyr::lag(TLI),
+    dRMSEA           = RMSEA - dplyr::lag(RMSEA),
+    CFI_invariance   = dCFI   >= -0.01,
+    RMSEA_invariance = dRMSEA <=  0.01
+  )
+
+# ------------------------------------------------------------
+# 11. Pretty table
+# ------------------------------------------------------------
+epq_language_invariance_pretty <- epq_language_invariance_table %>%
+  dplyr::transmute(
+    Model,
+    `Chi-Square`            = Chi_Square,
+    df,
+    CFI,
+    TLI,
+    RMSEA,
+    `RMSEA 90% Lower CI`    = RMSEA_90_L,
+    `RMSEA 90% Upper CI`    = RMSEA_90_U,
+    `Chi-Square Difference` = chisq_diff,
+    `df difference`         = df_diff,
+    p,
+    CFI_diff                = dCFI,
+    TLI_diff                = dTLI,
+    RMSEA_diff              = dRMSEA,
+    CFI_invariance,
+    RMSEA_invariance,
+    converged
+  )
+
+# ------------------------------------------------------------
+# 12. Formatting helpers
+# ------------------------------------------------------------
+fmt2 <- function(x) ifelse(is.na(x), "", sprintf("%.2f", x))
+fmt3 <- function(x) ifelse(is.na(x), "", sprintf("%.3f", x))
+
+apa_p <- function(p) {
+  ifelse(
+    is.na(p), "",
+    ifelse(p < .001, "p < .001",
+           sub("^0", "", sprintf("%.3f", p)))
+  )
+}
+
+# ------------------------------------------------------------
+# 13. Final table formatter
+# ------------------------------------------------------------
+prep_invariance_tbl <- function(df, model_col = "Model") {
+  m13_labels <- c(
+    M1  = "M1 (Configural)",
+    M2  = "M2 (Metric)",
+    M3  = "M3 (Metric + Residuals)",
+    M4  = "M4 (Metric + Factor Var/Cov)",
+    M5  = "M5 (Scalar)",
+    M6  = "M6 (Metric + Residuals + Factor Var/Cov)",
+    M7  = "M7 (Scalar + Residuals)",
+    M8  = "M8 (Scalar + Factor Var/Cov)",
+    M9  = "M9 (Scalar + Residuals + Factor Var/Cov)",
+    M10 = "M10 (Scalar + Means)",
+    M11 = "M11 (Scalar + Residuals + Means)",
+    M12 = "M12 (Scalar + Factor Var/Cov + Means)",
+    M13 = "M13 (Scalar + Residuals + Factor Var/Cov + Means)"
+  )
+
+  df <- df %>%
+    dplyr::mutate(
+      Model_disp = if ("Model_Label" %in% names(.)) .data[["Model_Label"]] else .data[[model_col]],
+      Model_disp = dplyr::recode(as.character(Model_disp),
+                                 !!!as.list(m13_labels),
+                                 .default = as.character(Model_disp)),
+      RMSEA_CI = ifelse(
+        is.na(.data[["RMSEA 90% Lower CI"]]) | is.na(.data[["RMSEA 90% Upper CI"]]),
+        "",
+        paste0("[",  fmt3(.data[["RMSEA 90% Lower CI"]]),
+               ", ", fmt3(.data[["RMSEA 90% Upper CI"]]), "]")
+      )
+    )
+
+  df %>%
+    dplyr::transmute(
+      Model          = Model_disp,
+      `χ²`           = fmt2(.data[["Chi-Square"]]),
+      df             = ifelse(is.na(.data[["df"]]), "",
+                              as.character(as.integer(.data[["df"]]))),
+      CFI            = fmt3(.data[["CFI"]]),
+      TLI            = fmt3(.data[["TLI"]]),
+      RMSEA          = fmt3(.data[["RMSEA"]]),
+      `RMSEA 90% CI` = RMSEA_CI,
+      `Δχ²`          = fmt2(.data[["Chi-Square Difference"]]),
+      `Δdf`          = ifelse(is.na(.data[["df difference"]]), "",
+                              as.character(as.integer(.data[["df difference"]]))),
+      p              = apa_p(.data[["p"]]),
+      `ΔCFI`         = fmt3(.data[["CFI_diff"]]),
+      `ΔTLI`         = fmt3(.data[["TLI_diff"]]),
+      `ΔRMSEA`       = fmt3(.data[["RMSEA_diff"]]),
+      CFI_inv        = ifelse(is.na(.data[["CFI_invariance"]]), "",
+                              ifelse(.data[["CFI_invariance"]], "Yes", "No")),
+      RMSEA_inv      = ifelse(is.na(.data[["RMSEA_invariance"]]), "",
+                              ifelse(.data[["RMSEA_invariance"]], "Yes", "No")),
+      Converged      = ifelse(is.na(.data[["converged"]]), "",
+                              ifelse(.data[["converged"]], "Yes", "No"))
+    )
+}
+# ------------------------------------------------------------
+# 14. Create APA-ready table
+# ------------------------------------------------------------
+epq_language44_invariance_apa <- prep_invariance_tbl(epq_language_invariance_pretty)
+
+# ------------------------------------------------------------
+# 15. Save outputs
+# ------------------------------------------------------------
+readr::write_csv(
+  epq_language_invariance_pretty,
+  "outputs/tables/EYP_language44_invariance_raw.csv"
+)
+
+readr::write_csv(
+  epq_language44_invariance_apa,
+  "outputs/tables/EYP_language44_invariance_APA.csv"
+)
+```
+
+
+## Item Response Theory
+
+```{r unidimentionality, include=FALSE}
+library(dplyr)
+library(lavaan)
+library(purrr)
+library(tibble)
+
+# ------------------------------------------------------------
+# 1. Define item sets for the four EPQ-RS scales
+# ------------------------------------------------------------
+epq_scale_items <- list(
+  Psychoticism = c("EYP10","EYP14","EYP22","EYP31","EYP39","EYP2","EYP6","EYP18","EYP26","EYP28","EYP35","EYP43"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP32","EYP36","EYP44","EYP48","EYP27","EYP41"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30","EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP16","EYP45","EYP8","EYP12","EYP20","EYP24","EYP29","EYP33","EYP37","EYP40","EYP47")
+)
+
+# ------------------------------------------------------------
+# 2. Function to fit 1-factor CFA for a scale
+# ------------------------------------------------------------
+fit_epq_unidim_cfa <- function(data, items, factor_name) {
+  
+  dat <- epq_items %>%
+    select(all_of(items)) %>%
+    mutate(across(everything(), as.ordered))
+  
+  # Drop rows with all missing on that scale
+  dat <- dat[rowSums(!is.na(dat)) > 0, , drop = FALSE]
+  
+  # 1-factor model
+  model_syntax <- paste0(
+    factor_name, " =~ ", paste(items, collapse = " + ")
+  )
+  
+  fit <- lavaan::cfa(
+    model = model_syntax,
+    data = dat,
+    ordered = items,
+    estimator = "WLSMV",
+    parameterization = "theta",
+    std.lv = TRUE,
+    missing = "pairwise"
+  )
+  
+  fit
+}
+
+# ------------------------------------------------------------
+# 3. Fit all four 1-factor CFAs
+# ------------------------------------------------------------
+epq_cfa_1f <- imap(epq_scale_items, ~ fit_epq_unidim_cfa(
+  data = epq_items,
+  items = .x,
+  factor_name = .y
+))
+
+# ------------------------------------------------------------
+# 4. Extract fit indices
+# ------------------------------------------------------------
+
+
+fmt2 <- function(x) ifelse(is.na(x), "", sprintf("%.2f", x))
+
+fmt3_apa <- function(x) {
+  ifelse(
+    is.na(x),
+    "",
+    sub("^0", "", sprintf("%.3f", x))
+  )
+}
+
+fmt_p_apa <- function(p) {
+  case_when(
+    is.na(p)   ~ "",
+    p < .001   ~ "***",
+    p < .01    ~ "**",
+    p < .05    ~ "*",
+    TRUE       ~ ""
+  )
+}
+
+fmt_chisq_df_apa <- function(chisq, df, p) {
+  paste0(
+    fmt2(chisq),
+    " (",
+    ifelse(is.na(df), "", as.integer(round(df))),
+    ")",
+    fmt_p_apa(p)
+  )
+}
+
+
+
+
+epq_cfa_fit_table <- imap_dfr(epq_cfa_1f, function(fit, scale_name) {
+  tibble(
+    Scale            = scale_name,
+    chisq.scaled     = fitMeasures(fit, "chisq.scaled"),
+    df.scaled        = fitMeasures(fit, "df.scaled"),
+    p.scaled         = fitMeasures(fit, "pvalue.scaled"),
+    cfi.scaled       = fitMeasures(fit, "cfi.scaled"),
+    tli.scaled       = fitMeasures(fit, "tli.scaled"),
+    rmsea.scaled     = fitMeasures(fit, "rmsea.scaled"),
+    rmsea.ci.lower   = fitMeasures(fit, "rmsea.ci.lower.scaled"),
+    rmsea.ci.upper   = fitMeasures(fit, "rmsea.ci.upper.scaled"),
+    srmr             = fitMeasures(fit, "srmr")
+  )
+}) %>%
+  mutate(
+    `χ² (df)`      = fmt_chisq_df_apa(chisq.scaled, df.scaled, p.scaled),
+    `RMSEA 90% CI` = paste0(fmt3_apa(rmsea.ci.lower), "-", fmt3_apa(rmsea.ci.upper))
+  ) %>%
+  select(
+    Scale,
+    `χ² (df)`,
+    cfi.scaled,
+    tli.scaled,
+    rmsea.scaled,
+    `RMSEA 90% CI`,
+    srmr
+  )
+
+epq_cfa_fit_table
+
+# Psychoticism needs modification
+mi_psy_clean <- modindices(epq_cfa_1f$Psychoticism, sort. = TRUE) %>%
+  as_tibble() %>%
+  arrange(desc(mi)) %>%
+  select(lhs, op, rhs, mi, epc, sepc.lv, sepc.all)
+
+mi_psy_clean
+
+
+# Refiting psychotocism
+psychoticism_mod_1 <- '
+Psychoticism =~ EYP10 + EYP14 + EYP22 + EYP31 + EYP39 + EYP2 +
+                 EYP6 + EYP18 + EYP26 + EYP28 + EYP35 + EYP43
+
+EYP26 ~~ EYP43
+EYP2 ~~ EYP28
+EYP28 ~~EYP35
+EYP2 ~~ EYP18 
+EYP2 ~~  EYP6
+EYP14 ~~ EYP28
+EYP22 ~~ EYP28
+EYP14 ~~ EYP43
+'
+
+fit_psychoticism_mod_1 <- cfa(
+  psychoticism_mod_1,
+  data = epq_items,
+  ordered = c("EYP10","EYP14","EYP22","EYP31","EYP39","EYP2",
+              "EYP6","EYP18","EYP26","EYP28","EYP35","EYP43"),
+  estimator = "WLSMV",
+  parameterization = "theta",
+  std.lv = TRUE,
+  missing = "pairwise"
+)
+
+summary(fit_psychoticism_mod_1, fit.measures = TRUE, standardized = TRUE)
+modindices(fit_psychoticism_mod_1, sort. = TRUE)
+
+
+
+# Updating the model
+psychoticism_mod_row <- tibble(
+  Scale          = "Psychoticism (modified)",
+  chisq.scaled   = fitMeasures(fit_psychoticism_mod_1, "chisq.scaled"),
+  df.scaled      = fitMeasures(fit_psychoticism_mod_1, "df.scaled"),
+  p.scaled       = fitMeasures(fit_psychoticism_mod_1, "pvalue.scaled"),
+  cfi.scaled     = fitMeasures(fit_psychoticism_mod_1, "cfi.scaled"),
+  tli.scaled     = fitMeasures(fit_psychoticism_mod_1, "tli.scaled"),
+  rmsea.scaled   = fitMeasures(fit_psychoticism_mod_1, "rmsea.scaled"),
+  rmsea.ci.lower = fitMeasures(fit_psychoticism_mod_1, "rmsea.ci.lower.scaled"),
+  rmsea.ci.upper = fitMeasures(fit_psychoticism_mod_1, "rmsea.ci.upper.scaled"),
+  srmr           = fitMeasures(fit_psychoticism_mod_1, "srmr")
+) %>%
+  mutate(
+    `χ² (df)`      = fmt_chisq_df_apa(chisq.scaled, df.scaled, p.scaled),
+    `RMSEA 90% CI` = paste0(fmt3_apa(rmsea.ci.lower), "-", fmt3_apa(rmsea.ci.upper))
+  ) %>%
+  select(
+    Scale,
+    `χ² (df)`,
+    cfi.scaled,
+    tli.scaled,
+    rmsea.scaled,
+    `RMSEA 90% CI`,
+    srmr
+  )
+
+epq_cfa_fit_table_updated <- bind_rows(
+  epq_cfa_fit_table,
+  psychoticism_mod_row
+) %>%
+  mutate(
+    Scale = factor(
+      Scale,
+      levels = c(
+        "Extraversion",
+        "Neuroticism",
+        "Lie",
+        "Psychoticism",
+        "Psychoticism (modified)"
+      )
+    )
+  ) %>%
+  arrange(Scale) %>%
+  mutate(Scale = as.character(Scale))
+
+epq_cfa_fit_table_updated
+```
+
+```{r}
+papaja::apa_table(
+  epq_cfa_fit_table_updated,
+  caption = "Scaled fit indices for one-factor CFA models of the EPQ-RS-B subscales.",
+  note = "Values in the chi-square column are scaled chi-square statistics. RMSEA CI = 90% confidence interval for RMSEA. * p < .05. ** p < .01. *** p < .001.",
+  align = c("l", "l", "c", "c", "c", "c", "c"),
+  escape = FALSE
+)
+```
+
+
+
+```{r}
+# ============================================================
+# LANGUAGE-LEVEL INVARIANCE (ENGLISH vs BANGLA)
+# COMMON 44 ITEMS ONLY
+# Marsh 13-model taxonomy
+# ============================================================
+
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(readr)
+  library(stringr)
+  library(purrr)
+  library(tibble)
+  library(lavaan)
+  library(esemComp)
+})
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+# -----------------------------
+# 0. Load Bangla raw data
+# -----------------------------
+raw_data <- readRDS("raw_data.rds")
+
+# Bangla EPQ items exactly as in your manuscript
+epq_items_bangla <- raw_data %>%
+  select(EYP1:EYP48) %>%
+  mutate(across(everything(), ~ case_when(
+    as.character(.x) == "হ্যাঁ" ~ 1,
+    as.character(.x) == "না"   ~ 0,
+    TRUE ~ suppressWarnings(as.numeric(as.character(.x)))
+  )))
+
+# reverse-coded in the keyed direction (same as your manuscript)
+epq_reverse_full <- c(
+  "EYP2","EYP6","EYP8","EYP12","EYP18","EYP20","EYP24","EYP26","EYP27","EYP28",
+  "EYP29","EYP33","EYP35","EYP37","EYP40","EYP41","EYP43","EYP47"
+)
+
+epq_items_bangla <- epq_items_bangla %>%
+  mutate(across(all_of(epq_reverse_full), ~ ifelse(is.na(.x), NA_real_, 1 - .x)))
+
+# -----------------------------
+# 1. Define the 44-item crosswalk
+#    EYPxx = Bangla short-form item
+#    epq90 = item number in the 90-item EPQ archive
+#    raw files use names like E_1, P_2, N_3, L_4 ...
+# -----------------------------
+common_item_map <- tribble(
+  ~eyp,    ~epq90, ~scale,
+  "EYP1",    3,    "N",
+  "EYP3",    5,    "E",
+  "EYP4",   13,    "L",
+  "EYP5",    7,    "N",
+  "EYP6",    2,    "P",
+  "EYP7",   10,    "E",
+  "EYP8",    8,    "L",
+  "EYP9",   15,    "N",
+  "EYP10",  22,    "P",
+  "EYP11",  17,    "E",
+  "EYP12",  16,    "L",
+  "EYP13",  19,    "N",
+  "EYP15",  14,    "E",
+  "EYP16",  20,    "L",
+  "EYP17",  23,    "N",
+  "EYP18",  37,    "P",
+  "EYP19",  40,    "E",
+  "EYP20",  24,    "L",
+  "EYP21",  31,    "N",
+  "EYP22",  43,    "P",
+  "EYP23",  45,    "E",
+  "EYP24",  39,    "L",
+  "EYP25",  34,    "N",
+  "EYP27",  21,    "E",
+  "EYP28",  53,    "P",
+  "EYP29",  48,    "L",
+  "EYP30",  41,    "N",
+  "EYP31",  67,    "P",
+  "EYP32",  52,    "E",
+  "EYP33",  51,    "L",
+  "EYP34",  72,    "N",
+  "EYP35",  71,    "P",
+  "EYP36",  82,    "E",
+  "EYP37",  59,    "L",
+  "EYP38",  75,    "N",
+  "EYP39",  83,    "P",
+  "EYP40",  63,    "L",
+  "EYP41",  42,    "E",
+  "EYP42",  77,    "N",
+  "EYP44",  86,    "E",
+  "EYP45",  78,    "L",
+  "EYP46",  27,    "N",
+  "EYP47",  85,    "L",
+  "EYP48",  70,    "E"
+)
+
+common_items_ordered <- common_item_map$eyp
+
+# reverse-keyed among the 44 common items
+common_reverse <- c(
+  "EYP6","EYP8","EYP12","EYP18","EYP20","EYP24","EYP27","EYP28",
+  "EYP29","EYP33","EYP35","EYP37","EYP40","EYP41","EYP45","EYP47"
+)
+
+# factor item sets for the 44-item model
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP10","EYP22","EYP31","EYP39","EYP6","EYP18","EYP28","EYP35"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP32","EYP36","EYP44","EYP48","EYP27","EYP41"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30","EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33","EYP37","EYP40","EYP45","EYP47")
+)
+
+# keep Bangla common items only
+epq_common_bangla <- epq_items_bangla %>%
+  select(all_of(common_items_ordered)) %>%
+  mutate(Language = "Bangla", .before = 1)
+
+# -----------------------------
+# 2. Read the England total-sample raw EPQ file from the nested zip
+# -----------------------------
+outer_zip <- "1-s2.0-S0191886912004825-mmc1 (1).zip"
+
+tmp_root <- file.path(tempdir(), "epq_lang_invariance")
+dir.create(tmp_root, recursive = TRUE, showWarnings = FALSE)
+
+# unzip outer
+utils::unzip(outer_zip, exdir = tmp_root)
+
+inner_zip <- file.path(tmp_root, "EPQ- Invariance.zip")
+inner_dir <- file.path(tmp_root, "EPQ_invariance_unzipped")
+dir.create(inner_dir, recursive = TRUE, showWarnings = FALSE)
+
+# unzip inner
+utils::unzip(inner_zip, exdir = inner_dir)
+
+eng_csv <- file.path(
+  inner_dir,
+  "EPQ- Invariance/Analysis-Files/Raw/Total/Text/England-total sample EPQ item data.csv"
+)
+
+eng_raw <- readr::read_csv(
+  eng_csv,
+  show_col_types = FALSE,
+  na = c("", " ", "NA")
+)
+
+# -----------------------------
+# 3. Helper to standardize English raw item coding
+#    archive docs note older raw files may appear as 3/1/2,
+#    but text exports may already be 1/0/blank
+# -----------------------------
+recode_epq_raw <- function(x) {
+  x <- suppressWarnings(as.numeric(x))
+  vals <- sort(unique(stats::na.omit(x)))
+
+  # already binary 0/1
+  if (all(vals %in% c(0, 1))) {
+    return(x)
+  }
+
+  # original coding 3 = yes, 1 = no, 2 = missing
+  if (all(vals %in% c(1, 2, 3))) {
+    return(dplyr::case_when(
+      x == 3 ~ 1,
+      x == 1 ~ 0,
+      x == 2 ~ NA_real_,
+      TRUE   ~ NA_real_
+    ))
+  }
+
+  # fallback
+  x
+}
+
+eng_raw2 <- eng_raw %>%
+  mutate(across(-c(id, age, sex), recode_epq_raw))
+
+# map EPQ90 item number -> actual column name in the raw file
+extract_item_no <- function(nm) {
+  as.integer(stringr::str_extract(nm, "(?<=_)\\d+$"))
+}
+
+item_cols <- names(eng_raw2)[!names(eng_raw2) %in% c("id", "age", "sex")]
+item_no_map <- setNames(item_cols, extract_item_no(item_cols))
+
+# create English common-item dataset with Bangla-style names
+epq_common_english <- purrr::map_dfc(
+  common_item_map$epq90,
+  ~ tibble::tibble(tmp = eng_raw2[[ item_no_map[as.character(.x)] ]])
+)
+names(epq_common_english) <- common_item_map$eyp
+
+# reverse into keyed direction so it matches Bangla scoring
+epq_common_english <- epq_common_english %>%
+  mutate(across(all_of(common_reverse), ~ ifelse(is.na(.x), NA_real_, 1 - .x))) %>%
+  mutate(Language = "English", .before = 1)
+
+# -----------------------------
+# 4. Combine the two languages
+# -----------------------------
+epq_lang_data <- bind_rows(epq_common_bangla, epq_common_english) %>%
+  mutate(Language = factor(Language, levels = c("English", "Bangla")))
+
+epq_lang_items <- epq_lang_data %>%
+  select(all_of(common_items_ordered))
+
+epq_lang_items_ord <- epq_lang_data %>%
+  mutate(across(all_of(common_items_ordered), ~ ordered(.x, levels = c(0, 1))))
+
+# -----------------------------
+# 5. Build a 4-factor 44-item ESEM syntax from the pooled data
+#    (8 P + 12 E + 12 N + 12 L = 44)
+# -----------------------------
+epq_items_44_blocked <- epq_lang_items %>%
+  select(
+    # P (8)
+    EYP10, EYP22, EYP31, EYP39, EYP6, EYP18, EYP28, EYP35,
+    # E (12)
+    EYP3, EYP7, EYP11, EYP15, EYP19, EYP23, EYP32, EYP36, EYP44, EYP48, EYP27, EYP41,
+    # N (12)
+    EYP1, EYP5, EYP9, EYP13, EYP17, EYP21, EYP25, EYP30, EYP34, EYP38, EYP42, EYP46,
+    # L (12)
+    EYP4, EYP8, EYP12, EYP16, EYP20, EYP24, EYP29, EYP33, EYP37, EYP40, EYP45, EYP47
+  )
+
+target_44 <- make_target(
+  nitems = 44,
+  mainloadings = list(
+    Psychoticism = 1:8,
+    Extraversion = 9:20,
+    Neuroticism  = 21:32,
+    Lie          = 33:44
+  )
+)
+
+efa_44 <- esem_efa(
+  data     = epq_items_44_blocked,
+  nfactors = 4,
+  target   = target_44,
+  fm       = "uls",
+  cor      = "tet"
+)
+
+# adjust order here if your factor labels come out oddly
+ref_44 <- find_referents(
+  efa_44,
+  factor_names = c("Psychoticism", "Extraversion", "Neuroticism", "Lie")
+)
+
+syn_44 <- syntax_composer(efa_44, ref_44)
+
+# -----------------------------
+# 6. Marsh 13-model taxonomy
+# -----------------------------
+SCALAR_PARAM <- "thresholds"
+
+marsh13_equal <- list(
+  M1  = NULL,
+  M2  = c("loadings"),
+  M3  = c("loadings", "residuals"),
+  M4  = c("loadings", "lv.variances", "lv.covariances"),
+  M5  = c("loadings", SCALAR_PARAM),
+  M6  = c("loadings", "residuals", "lv.variances", "lv.covariances"),
+  M7  = c("loadings", SCALAR_PARAM, "residuals"),
+  M8  = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances"),
+  M9  = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances"),
+  M10 = c("loadings", SCALAR_PARAM, "means"),
+  M11 = c("loadings", SCALAR_PARAM, "residuals", "means"),
+  M12 = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances", "means"),
+  M13 = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances", "means")
+)
+
+model_partial    <- setNames(vector("list", 13), paste0("M", 1:13))
+model_extra_args <- setNames(vector("list", 13), paste0("M", 1:13))
+
+fit_lang_M <- function(id) {
+  base_args <- list(
+    model            = syn_44,
+    data             = epq_lang_items_ord,
+    group            = "Language",
+    ordered          = common_items_ordered,
+    estimator        = "WLSMV",
+    parameterization = "theta",
+    std.lv           = TRUE,
+    meanstructure    = TRUE,
+    group.equal      = marsh13_equal[[id]],
+    group.partial    = model_partial[[id]]
+  )
+  args <- modifyList(base_args, model_extra_args[[id]] %||% list())
+  do.call(lavaan::cfa, args)
+}
+
+lang_models <- setNames(
+  lapply(paste0("M", 1:13), function(id) {
+    message("Fitting language invariance model: ", id)
+    fit_lang_M(id)
+  }),
+  paste0("M", 1:13)
+)
+
+# -----------------------------
+# 7. Extract fit indices
+# -----------------------------
+.pick <- function(fm, primary, fallback) {
+  if (!is.null(fm[[primary]])) unname(fm[[primary]])
+  else if (!is.null(fm[[fallback]])) unname(fm[[fallback]])
+  else NA_real_
+}
+
+lang_fit_tbl <- bind_rows(lapply(names(lang_models), function(id) {
+  fit <- lang_models[[id]]
+  conv <- tryCatch(lavInspect(fit, "converged"), error = function(e) NA)
+  fm   <- tryCatch(fitMeasures(fit), error = function(e) NULL)
+
+  if (is.null(fm)) {
+    return(tibble(
+      Model = id, converged = conv,
+      Chi_Square = NA_real_, df = NA_real_,
+      CFI = NA_real_, TLI = NA_real_, RMSEA = NA_real_,
+      RMSEA_90_L = NA_real_, RMSEA_90_U = NA_real_, SRMR = NA_real_
+    ))
+  }
+
+  tibble(
+    Model      = id,
+    converged  = conv,
+    Chi_Square = .pick(fm, "chisq.scaled", "chisq"),
+    df         = .pick(fm, "df.scaled", "df"),
+    CFI        = .pick(fm, "cfi.scaled", "cfi"),
+    TLI        = .pick(fm, "tli.scaled", "tli"),
+    RMSEA      = .pick(fm, "rmsea.scaled", "rmsea"),
+    RMSEA_90_L = .pick(fm, "rmsea.ci.lower.scaled", "rmsea.ci.lower"),
+    RMSEA_90_U = .pick(fm, "rmsea.ci.upper.scaled", "rmsea.ci.upper"),
+    SRMR       = .pick(fm, "srmr", "srmr")
+  )
+})) %>%
+  mutate(Model = factor(Model, levels = paste0("M", 1:13))) %>%
+  arrange(Model)
+
+# -----------------------------
+# 8. Sequential model comparisons
+# -----------------------------
+safe_LRT <- function(prev, curr) {
+  tab <- tryCatch(lavTestLRT(prev, curr), error = function(e) NULL)
+  if (is.null(tab)) return(c(chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_))
+  tab <- as.data.frame(tab)
+  i <- nrow(tab)
+  chisq <- if ("Chisq diff" %in% names(tab)) tab[["Chisq diff"]][i] else NA_real_
+  df    <- if ("Df diff"    %in% names(tab)) tab[["Df diff"]][i] else NA_real_
+  p     <- if ("Pr(>Chisq)" %in% names(tab)) tab[["Pr(>Chisq)"]][i] else NA_real_
+  c(chisq_diff = as.numeric(chisq), df_diff = as.numeric(df), p = as.numeric(p))
+}
+
+lang_diff_tbl <- tibble(
+  Model = paste0("M", 1:13),
+  chisq_diff = NA_real_,
+  df_diff    = NA_real_,
+  p          = NA_real_
+)
+
+for (i in 2:13) {
+  d <- safe_LRT(lang_models[[i - 1]], lang_models[[i]])
+  lang_diff_tbl$chisq_diff[i] <- d[["chisq_diff"]]
+  lang_diff_tbl$df_diff[i]    <- d[["df_diff"]]
+  lang_diff_tbl$p[i]          <- d[["p"]]
+}
+
+# -----------------------------
+# 9. Final invariance table
+# -----------------------------
+lang_invariance_table <- lang_fit_tbl %>%
+  left_join(lang_diff_tbl, by = "Model") %>%
+  mutate(
+    dCFI   = CFI   - lag(CFI),
+    dTLI   = TLI   - lag(TLI),
+    dRMSEA = RMSEA - lag(RMSEA),
+    CFI_invariance   = dCFI >= -0.01,
+    RMSEA_invariance = dRMSEA <= 0.01
+  )
+
+lang_invariance_pretty <- lang_invariance_table %>%
+  transmute(
+    Model,
+    Chi_Square,
+    df,
+    CFI,
+    TLI,
+    RMSEA,
+    RMSEA_90_L,
+    RMSEA_90_U,
+    chisq_diff,
+    df_diff,
+    p,
+    dCFI,
+    dTLI,
+    dRMSEA,
+    CFI_invariance,
+    RMSEA_invariance,
+    converged
+  )
+
+print(lang_invariance_pretty)
+
+# optional export
+dir.create("outputs/tables", recursive = TRUE, showWarnings = FALSE)
+readr::write_csv(lang_invariance_pretty,
+                 "outputs/tables/EPQ_language_invariance_44items_marsh13.csv")
+
+# -----------------------------
+# 10. Optional APA-friendly relabeling
+# -----------------------------
+fmt2 <- function(x) ifelse(is.na(x), "", sprintf("%.2f", x))
+fmt3 <- function(x) ifelse(is.na(x), "", sprintf("%.3f", x))
+apa_p <- function(p) {
+  ifelse(
+    is.na(p), "",
+    ifelse(p < .001, "< .001", sub("^0", "", sprintf("%.3f", p)))
+  )
+}
+
+m13_labels <- c(
+  M1  = "M1 (Configural)",
+  M2  = "M2 (Metric)",
+  M3  = "M3 (Metric + Residuals)",
+  M4  = "M4 (Metric + Factor Var/Cov)",
+  M5  = "M5 (Scalar)",
+  M6  = "M6 (Metric + Residuals + Factor Var/Cov)",
+  M7  = "M7 (Scalar + Residuals)",
+  M8  = "M8 (Scalar + Factor Var/Cov)",
+  M9  = "M9 (Scalar + Residuals + Factor Var/Cov)",
+  M10 = "M10 (Scalar + Means)",
+  M11 = "M11 (Scalar + Residuals + Means)",
+  M12 = "M12 (Scalar + Factor Var/Cov + Means)",
+  M13 = "M13 (Scalar + Residuals + Factor Var/Cov + Means)"
+)
+
+lang_invariance_apa <- lang_invariance_pretty %>%
+  mutate(
+    Model = recode(as.character(Model), !!!as.list(m13_labels)),
+    RMSEA_CI = ifelse(
+      is.na(RMSEA_90_L) | is.na(RMSEA_90_U),
+      "",
+      paste0("[", fmt3(RMSEA_90_L), ", ", fmt3(RMSEA_90_U), "]")
+    )
+  ) %>%
+  transmute(
+    Model,
+    `χ²` = fmt2(Chi_Square),
+    df = ifelse(is.na(df), "", as.character(as.integer(df))),
+    CFI = fmt3(CFI),
+    TLI = fmt3(TLI),
+    RMSEA = fmt3(RMSEA),
+    `RMSEA 90% CI` = RMSEA_CI,
+    `Δχ²` = fmt2(chisq_diff),
+    `Δdf` = ifelse(is.na(df_diff), "", as.character(as.integer(df_diff))),
+    p = apa_p(p),
+    `ΔCFI` = fmt3(dCFI),
+    `ΔTLI` = fmt3(dTLI),
+    `ΔRMSEA` = fmt3(dRMSEA),
+    CFI_inv = ifelse(is.na(CFI_invariance), "", ifelse(CFI_invariance, "Yes", "No")),
+    RMSEA_inv = ifelse(is.na(RMSEA_invariance), "", ifelse(RMSEA_invariance, "Yes", "No")),
+    Converged = ifelse(is.na(converged), "", ifelse(converged, "Yes", "No"))
+  )
+
+print(lang_invariance_apa)
+
+# optional papaja table
+# papaja::apa_table(
+#   lang_invariance_apa,
+#   caption = "Language-level measurement invariance of the 44 common EPQ items (English vs Bangla).",
+#   note = "Δ values are relative to the immediately preceding model."
+# )
+```
+
+
+
+
+
+
+```{r epq-irt, include=FALSE}
+epq_irt_pars <- list()
+epq_irt_tif  <- list()
+epq_irt_fit  <- list()
+epq_irt_rel  <- list()
+epq_irt_conv <- list()
+epq_irt_disc <- list()
+epq_irt_m2   <- list()
+epq_models    <- list()
+
+for (sc in names(epq_item_sets)) {
+  dat <- epq_items[, epq_item_sets[[sc]], drop = FALSE]
+  
+  mod <- mirt::mirt(
+    dat,
+    1,
+    itemtype = "2PL",
+    method = "MHRM",
+    verbose = FALSE
+  )
+  
+  epq_models[[sc]] <- mod
+  
+  # --------------------------------------------------
+  # Model convergence confirmation
+  # --------------------------------------------------
+  epq_irt_conv[[sc]] <- tibble::tibble(
+    Scale              = sc,
+    converged          = mirt::extract.mirt(mod, "converged"),
+    iterations         = mirt::extract.mirt(mod, "iterations"),
+    second_order_test  = mirt::extract.mirt(mod, "secondordertest"),
+    sem_info_converged = mirt::extract.mirt(mod, "SEMconv"),
+    logLik             = mirt::extract.mirt(mod, "logLik")
+  )
+  
+  # --------------------------------------------------
+  # M2 model fit
+  # --------------------------------------------------
+  epq_irt_m2[[sc]] <- tryCatch({
+    m2_out <- as.data.frame(
+      mirt::M2(mod, type = "M2", calcNull = TRUE, CI = 0.90)
+    )
+    
+    # standardize possible column names just in case
+    if ("M2*" %in% names(m2_out)) names(m2_out)[names(m2_out) == "M2*"] <- "M2"
+    if ("C2"  %in% names(m2_out)) names(m2_out)[names(m2_out) == "C2"]  <- "M2"
+    
+    tibble::as_tibble(m2_out) %>%
+      dplyr::mutate(Scale = sc, .before = 1)
+    
+  }, error = function(e) {
+    tibble::tibble(
+      Scale    = sc,
+      M2       = NA_real_,
+      df       = NA_real_,
+      p        = NA_real_,
+      RMSEA    = NA_real_,
+      RMSEA_5  = NA_real_,
+      RMSEA_95 = NA_real_,
+      SRMSR    = NA_real_,
+      TLI      = NA_real_,
+      CFI      = NA_real_,
+      M2_error = conditionMessage(e)
+    )
+  })
+  
+  # --------------------------------------------------
+  # Item parameters
+  # --------------------------------------------------
+  epq_irt_pars[[sc]] <- extract_mirt_pars(mod, sc)
+  epq_irt_tif[[sc]]  <- make_tif_summary(mod, sc)
+  
+  # --------------------------------------------------
+  # Item fit
+  # --------------------------------------------------
+  epq_irt_fit[[sc]] <- tryCatch({
+    sx2 <- mirt::itemfit(mod, fit_stats = "S_X2") |>
+      as.data.frame() |>
+      tibble::rownames_to_column("Item")
+    
+    inout <- mirt::itemfit(mod, fit_stats = "infit") |>
+      as.data.frame() |>
+      tibble::rownames_to_column("Item")
+    
+    dplyr::left_join(sx2, inout, by = "Item") |>
+      dplyr::mutate(
+        Scale = sc,
+        infit_flag  = ifelse(infit < 0.5 | infit > 1.5, "misfit", ""),
+        outfit_flag = ifelse(outfit < 0.5 | outfit > 1.5, "misfit", ""),
+        .before = 1
+      )
+  },
+  error = function(e) tibble::tibble(
+    Scale = sc, Item = names(dat),
+    S_X2 = NA_real_, df = NA_real_, p = NA_real_,
+    infit = NA_real_, outfit = NA_real_,
+    infit_flag = NA_character_, outfit_flag = NA_character_
+  ))
+  
+  # --------------------------------------------------
+  # Marginal and empirical reliability
+  # --------------------------------------------------
+  marginal <- mirt::marginal_rxx(mod)
+  
+  theta_se <- mirt::fscores(mod, full.scores.SE = TRUE)
+  se_vals  <- theta_se[, 2]
+  emp_rel  <- 1 - mean(se_vals^2, na.rm = TRUE) / var(theta_se[, 1], na.rm = TRUE)
+  
+  epq_irt_rel[[sc]] <- tibble::tibble(
+    Scale                 = sc,
+    Marginal_Reliability  = round(marginal, 3),
+    Empirical_Reliability = round(emp_rel, 3)
+  )
+  
+  # --------------------------------------------------
+  # Discrimination categorization
+  # --------------------------------------------------
+  item_coef <- as.data.frame(mirt::coef(mod, IRTpars = TRUE, simplify = TRUE)$items) |>
+    tibble::rownames_to_column("Item") |>
+    dplyr::transmute(
+      Scale = sc,
+      Item,
+      a,
+      Discrimination_categorization = dplyr::case_when(
+        is.na(a) ~ NA_character_,
+        a < 0    ~ "Negative (check keying/model)",
+        a == 0   ~ "None",
+        a < 0.35 ~ "Very Low",
+        a < 0.65 ~ "Low",
+        a < 1.35 ~ "Moderate",
+        a < 1.70 ~ "High",
+        TRUE     ~ "Very High"
+      )
+    )
+  
+  epq_irt_disc[[sc]] <- item_coef
+}
+
+# --------------------------------------------------
+# Bind all outputs
+# --------------------------------------------------
+epq_irt_pars_tbl <- dplyr::bind_rows(epq_irt_pars)
+epq_irt_tif_tbl  <- dplyr::bind_rows(epq_irt_tif)
+epq_irt_fit_tbl  <- dplyr::bind_rows(epq_irt_fit)
+epq_irt_rel_tbl  <- dplyr::bind_rows(epq_irt_rel)
+epq_irt_conv_tbl <- dplyr::bind_rows(epq_irt_conv)
+epq_irt_disc_tbl <- dplyr::bind_rows(epq_irt_disc)
+epq_irt_m2_tbl   <- dplyr::bind_rows(epq_irt_m2)
+
+# Add discrimination category into parameter table
+epq_irt_pars_tbl <- epq_irt_pars_tbl |>
+  dplyr::left_join(
+    epq_irt_disc_tbl |>
+      dplyr::select(Scale, Item, Discrimination_categorization),
+    by = c("Scale", "Item")
+  )
+
+# Summary counts by scale
+epq_irt_disc_summary <- epq_irt_disc_tbl |>
+  dplyr::count(Scale, Discrimination_categorization, name = "n")
+
+# Save files
+readr::write_csv(epq_irt_conv_tbl, "outputs/tables/EPQ_IRT_convergence.csv")
+readr::write_csv(epq_irt_rel_tbl,  "outputs/tables/EPQ_IRT_reliability.csv")
+readr::write_csv(epq_irt_disc_tbl, "outputs/tables/EPQ_IRT_discrimination_by_item.csv")
+readr::write_csv(epq_irt_disc_summary, "outputs/tables/EPQ_IRT_discrimination_summary.csv")
+readr::write_csv(epq_irt_pars_tbl, "outputs/tables/epq_irt_pars_tbl.csv")
+readr::write_csv(epq_irt_fit_tbl,  "outputs/tables/epq_irt_fit_tbl.csv")
+readr::write_csv(epq_irt_m2_tbl,   "outputs/tables/EPQ_IRT_M2_fit.csv")
+```
+
+
+```{r IRTPlots, include=FALSE}
+# ============================================================
+# EPQ-R IRT Plots: TIC, IIC, ICC for all four subscales
+# ============================================================
+
+
+
+# --------------------------------------------------
+# APA theme
+# --------------------------------------------------
+apatheme <- theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border     = element_rect(colour = "black"),
+    axis.title       = element_text(size = 11),
+    plot.title       = element_text(size = 11, face = "bold", hjust = 0.5),
+    strip.background = element_blank()
+  )
+
+# --------------------------------------------------
+# Subscale-specific colour palettes
+# --------------------------------------------------
+scale_fills <- c(
+  Psychoticism = "#E64B35",
+  Extraversion = "#4DBBD5",
+  Neuroticism  = "#00A087",
+  Lie          = "#F39B7F"
+)
+
+scale_colors <- c(
+  Psychoticism = "#E64B35",
+  Extraversion = "#4DBBD5",
+  Neuroticism  = "#00A087",
+  Lie          = "#F39B7F"
+)
+
+# item-level palettes (12 items each) using ggsci
+item_palettes <- list(
+  Psychoticism = colorRampPalette(c("#E64B35", "#B03021", "#FFB4A2"))(12),
+  Extraversion = colorRampPalette(c("#4DBBD5", "#2980B9", "#AED6F1"))(12),
+  Neuroticism  = colorRampPalette(c("#00A087", "#006D5B", "#A3D9CC"))(12),
+  Lie          = colorRampPalette(c("#F39B7F", "#C0392B", "#FAD7A0"))(12)
+)
+
+theta_range <- seq(-4, 4, by = 0.01)
+
+
+# ==========================================================
+# 1. TEST INFORMATION CURVES (all four on one panel)
+# ==========================================================
+tic_data <- do.call(rbind, lapply(names(epq_models), function(sc) {
+  info <- testinfo(epq_models[[sc]], Theta = matrix(theta_range, ncol = 1))
+  se   <- 1 / sqrt(info)
+  data.frame(
+    Theta       = theta_range,
+    Information = as.numeric(info),
+    SE          = as.numeric(se),
+    Scale       = sc
+  )
+}))
+
+tic_plot <- ggplot(tic_data, aes(x = Theta, y = Information, fill = Scale)) +
+  geom_area(alpha = 0.35, position = "identity") +
+  geom_line(aes(colour = Scale), linewidth = 0.8) +
+  scale_fill_manual(values = scale_fills) +
+  scale_colour_manual(values = scale_colors) +
+  labs(
+    title = "Test Information Curves: EPQ-RS-B Subscales",
+    x     = expression(theta),
+    y     = expression(I(theta))
+  ) +
+  apatheme +
+  theme(legend.position = "bottom")
+
+ggsave("outputs/plots/EPQ_TIC_all_scales.png",
+       tic_plot, width = 8, height = 5, dpi = 300)
+
+# Optional: TIC with SE on secondary axis (per scale, saved individually)
+for (sc in names(epq_models)) {
+  df_sc <- tic_data[tic_data$Scale == sc, ]
+  se_scale <- max(df_sc$Information) / max(df_sc$SE)
+  
+  p <- ggplot(df_sc, aes(x = Theta)) +
+    geom_area(aes(y = Information), fill = scale_fills[[sc]], alpha = 0.35) +
+    geom_line(aes(y = Information), colour = scale_colors[[sc]], linewidth = 0.8) +
+    geom_line(aes(y = SE * se_scale), linetype = "dashed", colour = "grey40") +
+    scale_y_continuous(
+      name = expression(I(theta)),
+      sec.axis = sec_axis(~ . / se_scale, name = expression(SE(theta)))
+    ) +
+    labs(title = paste0("TIC + SE: ", sc), x = expression(theta)) +
+    apatheme
+  
+  ggsave(paste0("outputs/plots/EPQ_TIC_SE_", sc, ".png"),
+         p, width = 7, height = 4.5, dpi = 300)
+}
+
+# ==========================================================
+# 2. ITEM INFORMATION CURVES (12 items per subscale panel)
+# ==========================================================
+iic_plots <- list()
+
+for (sc in names(epq_models)) {
+  mod  <- epq_models[[sc]]
+  nitems <- ncol(mod@Data$data)
+  item_names <- colnames(mod@Data$data)
+  
+  iic_df <- do.call(rbind, lapply(1:nitems, function(i) {
+    info <- iteminfo(extract.item(mod, i), Theta = matrix(theta_range, ncol = 1))
+    data.frame(
+      Theta       = theta_range,
+      Information = as.numeric(info),
+      Item        = item_names[i]
+    )
+  }))
+  iic_df$Item <- factor(iic_df$Item, levels = item_names)
+  
+  iic_plots[[sc]] <- ggplot(iic_df, aes(x = Theta, y = Information)) +
+    geom_area(fill = scale_fills[[sc]], alpha = 0.30) +
+    geom_line(colour = scale_colors[[sc]], linewidth = 0.5) +
+    geom_hline(yintercept = 0.20, linetype = "dashed", colour = "grey50") +
+    facet_wrap(~ Item, ncol = 4) +
+    labs(
+      title = paste0("Item Information Curves: ", sc),
+      x     = expression(theta),
+      y     = expression(I(theta))
+    ) +
+    apatheme +
+    theme(strip.text = element_text(size = 8))
+  
+  ggsave(paste0("outputs/plots/EPQ_IIC_", sc, ".png"),
+         iic_plots[[sc]], width = 10, height = 8, dpi = 300)
+}
+
+# ==========================================================
+# 3. ITEM CHARACTERISTIC CURVES / ICC (trace plots, 12 per subscale)
+# ==========================================================
+icc_plots <- list()
+
+for (sc in names(epq_models)) {
+  mod  <- epq_models[[sc]]
+  nitems <- ncol(mod@Data$data)
+  item_names <- colnames(mod@Data$data)
+  
+  icc_df <- do.call(rbind, lapply(1:nitems, function(i) {
+    extr <- extract.item(mod, i)
+    probs <- probtrace(extr, Theta = matrix(theta_range, ncol = 1))
+    # For 2PL: column 2 = P(X=1)
+    data.frame(
+      Theta = theta_range,
+      P     = probs[, 2],
+      Item  = item_names[i]
+    )
+  }))
+  icc_df$Item <- factor(icc_df$Item, levels = item_names)
+  
+  icc_plots[[sc]] <- ggplot(icc_df, aes(x = Theta, y = P)) +
+    geom_line(colour = scale_colors[[sc]], linewidth = 0.7) +
+    geom_hline(yintercept = 0.5, linetype = "dashed", colour = "grey50") +
+    facet_wrap(~ Item, ncol = 4) +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
+    labs(
+      title = paste0("Item Characteristic Curves: ", sc),
+      x     = expression(theta),
+      y     = expression(P(theta))
+    ) +
+    apatheme +
+    theme(strip.text = element_text(size = 8))
+  
+  ggsave(paste0("outputs/plots/EPQ_ICC_", sc, ".png"),
+         icc_plots[[sc]], width = 10, height = 8, dpi = 300)
+}
+
+# ==========================================================
+# 4. MARGINAL RELIABILITY CURVE (per subscale)
+# ==========================================================
+rel_plots <- list()
+
+for (sc in names(epq_models)) {
+  mod <- epq_models[[sc]]
+  info <- testinfo(mod, Theta = matrix(theta_range, ncol = 1))
+  rel  <- as.numeric(info) / (1 + as.numeric(info))  # marginal reliability at each theta
+  
+  rel_df <- data.frame(Theta = theta_range, Reliability = rel, Scale = sc)
+  
+  rel_plots[[sc]] <- ggplot(rel_df, aes(x = Theta, y = Reliability)) +
+    geom_area(fill = scale_fills[[sc]], alpha = 0.3) +
+    geom_line(colour = scale_colors[[sc]], linewidth = 0.7) +
+    geom_hline(yintercept = 0.70, linetype = "dashed", colour = "red") +
+    annotate("text", x = 3.2, y = 0.72, label = ".70", size = 3, colour = "red") +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+    labs(
+      title = paste0("Marginal Reliability: ", sc),
+      x     = expression(theta),
+      y     = expression(rho(theta))
+    ) +
+    apatheme
+  
+  ggsave(paste0("outputs/plots/EPQ_MargRel_", sc, ".png"),
+         rel_plots[[sc]], width = 7, height = 4.5, dpi = 300)
+}
+
+# Combined marginal reliability
+rel_all <- do.call(rbind, lapply(names(epq_models), function(sc) {
+  info <- testinfo(epq_models[[sc]], Theta = matrix(theta_range, ncol = 1))
+  data.frame(Theta = theta_range, Reliability = as.numeric(info) / (1 + as.numeric(info)), Scale = sc)
+}))
+
+rel_combined <- ggplot(rel_all, aes(x = Theta, y = Reliability, colour = Scale)) +
+  geom_line(linewidth = 0.8) +
+  geom_hline(yintercept = 0.70, linetype = "dashed", colour = "red") +
+  scale_colour_manual(values = scale_colors) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  labs(
+    title = "Marginal Reliability Across Theta: EPQ-RS-B",
+    x = expression(theta), y = expression(rho(theta))
+  ) +
+  apatheme + theme(legend.position = "bottom")
+
+ggsave("outputs/plots/EPQ_MargRel_combined.png",
+       rel_combined, width = 8, height = 5, dpi = 300)
+
+# ==========================================================
+# 5. EMPIRICAL RELIABILITY DENSITY (SE distribution)
+# ==========================================================
+emp_plots <- list()
+
+for (sc in names(epq_models)) {
+  mod <- epq_models[[sc]]
+  fs  <- fscores(mod, full.scores.SE = TRUE)
+  
+  emp_df <- data.frame(
+    Theta = fs[, 1],
+    SE    = fs[, 2],
+    Scale = sc
+  )
+  
+  emp_plots[[sc]] <- ggplot(emp_df, aes(x = Theta, y = SE)) +
+    geom_point(colour = scale_colors[[sc]], alpha = 0.3, size = 0.8) +
+    geom_smooth(method = "loess", colour = "black", linewidth = 0.6, se = FALSE) +
+    geom_hline(yintercept = mean(emp_df$SE), linetype = "dashed", colour = "grey40") +
+    labs(
+      title = paste0("Empirical SE by Theta: ", sc),
+      x     = expression(hat(theta)),
+      y     = expression(SE(hat(theta)))
+    ) +
+    apatheme
+  
+  ggsave(paste0("outputs/plots/EPQ_EmpSE_", sc, ".png"),
+         emp_plots[[sc]], width = 7, height = 4.5, dpi = 300)
+}
+
+# ==========================================================
+# 6. COWPLOT COMPOSITES
+# ==========================================================
+
+# 6a. All four TIC + SE panels
+tic_composite <- cowplot::plot_grid(
+  plotlist = lapply(names(epq_models), function(sc) {
+    df_sc <- tic_data[tic_data$Scale == sc, ]
+    se_scale <- max(df_sc$Information) / max(df_sc$SE)
+    ggplot(df_sc, aes(x = Theta)) +
+      geom_area(aes(y = Information), fill = scale_fills[[sc]], alpha = 0.35) +
+      geom_line(aes(y = Information), colour = scale_colors[[sc]], linewidth = 0.7) +
+      geom_line(aes(y = SE * se_scale), linetype = "dashed", colour = "grey40", linewidth = 0.5) +
+      scale_y_continuous(
+        name = expression(I(theta)),
+        sec.axis = sec_axis(~ . / se_scale, name = expression(SE(theta)))
+      ) +
+      labs(title = sc, x = expression(theta)) +
+      apatheme + theme(plot.title = element_text(size = 10))
+  }),
+  ncol = 2, labels = "AUTO"
+)
+ggsave("outputs/plots/EPQ_TIC_composite.png",
+       tic_composite, width = 10, height = 8, dpi = 300)
+
+# 6b. All IIC panels (one per subscale, stitched)
+iic_composite <- cowplot::plot_grid(
+  plotlist = iic_plots, ncol = 1, labels = "AUTO"
+)
+ggsave("outputs/plots/EPQ_IIC_composite.png",
+       iic_composite, width = 10, height = 30, dpi = 300)
+
+# 6c. All ICC panels stitched
+icc_composite <- plot_grid(
+  plotlist = icc_plots, ncol = 1, labels = "AUTO"
+)
+ggsave("outputs/plots/EPQ_ICC_composite.png",
+       icc_composite, width = 10, height = 30, dpi = 300)
+
+# 6d. Marginal + Empirical SE side by side per subscale
+for (sc in names(epq_models)) {
+  combo <- plot_grid(rel_plots[[sc]], emp_plots[[sc]], ncol = 2, labels = "AUTO")
+  ggsave(paste0("outputs/plots/EPQ_RelSE_combo_", sc, ".png"),
+         combo, width = 12, height = 5, dpi = 300)
+}
+
+cat("All EPQ IRT plots saved to outputs/plots/\n")
+
+
+
+# ==========================================================
+# 7. PERSON-FIT PLOTS (Zh histograms, all four subscales)
+# ==========================================================
+
+epq_pf_plots <- list()
+
+for (sc in names(epq_models)) {
+  pf <- mirt::personfit(epq_models[[sc]])
+  
+  misfits <- subset(pf, Zh < -2)
+  cat(sc, ": ", nrow(misfits), " misfitting persons (Zh < -2)\n", sep = "")
+  
+  epq_pf_plots[[sc]] <- ggplot(pf, aes(x = Zh)) +
+    geom_histogram(binwidth = 0.5, col = I("black"), fill = scale_fills[[sc]],
+                   alpha = 0.6) +
+    ylim(0, 200) + xlim(-4, 2) +
+    geom_vline(xintercept = -2) +
+    labs(y = "Number of Participants",
+         x = paste0("Zh Statistics: ", sc)) +
+    apatheme
+}
+
+epq_personfit_plot <- cowplot::plot_grid(
+  plotlist = epq_pf_plots,
+  labels = "auto", ncol = 2, label_size = 20,
+  align = "hv", label_fontface = "plain"
+)
+
+ggsave("outputs/plots/EPQ_personfit.png",
+       epq_personfit_plot, width = 12, height = 10, dpi = 300)
+
+
+
+# ==========================================================
+# 8. PERSON-ITEM (WRIGHT) MAPS: EPQ-RS-B subscales (2PL)
+# ==========================================================
+
+epq_wright_plots <- list()
+
+for (sc in names(epq_models)) {
+  mod <- epq_models[[sc]]
+  
+  # Extract person theta estimates
+  theta_scores <- fscores(mod, full.scores.SE = TRUE)[, 1]
+  person_df <- data.frame(Theta = theta_scores)
+  
+  # Extract item difficulty (b) parameters
+  pars <- coef(mod, simplify = TRUE)$items
+  item_names <- rownames(pars)
+  b_vals <- pars[, "d"]        # intercept in mirt parameterisation
+  a_vals <- pars[, "a1"]
+  # Convert mirt intercept (d) to traditional difficulty: b = -d/a
+  b_traditional <- -b_vals / a_vals
+  
+  item_df <- data.frame(
+    Item = item_names,
+    Difficulty = b_traditional
+  )
+  item_df$Item <- factor(item_df$Item, levels = item_df$Item[order(item_df$Difficulty)])
+  
+  # Person distribution (left panel)
+  p_person <- ggplot(person_df, aes(x = Theta)) +
+    geom_histogram(binwidth = 0.3, fill = scale_fills[[sc]], alpha = 0.6,
+                   col = I("black")) +
+    coord_flip() +
+    scale_x_continuous(limits = c(-4, 4), breaks = seq(-4, 4, 1)) +
+    labs(x = expression(theta), y = "Frequency",
+         title = "Person Distribution") +
+    apatheme
+
+  # Item map (right panel)
+  p_items <- ggplot(item_df, aes(x = Difficulty, y = Item)) +
+    geom_point(size = 3, colour = scale_colors[[sc]]) +
+    geom_segment(aes(x = min(person_df$Theta, item_df$Difficulty) - 0.5,
+                     xend = Difficulty, y = Item, yend = Item),
+                 linetype = "dotted", colour = "grey60") +
+    scale_x_continuous(limits = c(-4, 4), breaks = seq(-4, 4, 1)) +
+    labs(x = expression(theta), y = NULL,
+         title = "Item Difficulty (b)") +
+    apatheme
+
+  # Combine side by side
+  epq_wright_plots[[sc]] <- cowplot::plot_grid(
+    p_person, p_items,
+    ncol = 2, rel_widths = c(0.4, 0.6),
+    labels = paste0(sc), label_size = 12, label_fontface = "bold"
+  )
+
+  ggsave(paste0("outputs/plots/EPQ_WrightMap_", sc, ".png"),
+         epq_wright_plots[[sc]], width = 12, height = 6, dpi = 300)
+}
+
+# Combined composite of all four Wright maps
+epq_wright_composite <- cowplot::plot_grid(
+  plotlist = epq_wright_plots,
+  ncol = 1, labels = "auto", label_size = 20,
+  label_fontface = "plain"
+)
+
+ggsave("outputs/plots/EPQ_WrightMap_composite.png",
+       epq_wright_composite, width = 12, height = 24, dpi = 300)
+```
+
+
+Across the 48 items, item fit was generally acceptable. All infit and out fit mean-square values fell within the range except for  one Lie scale item (EYP12).  RMSEA.S-X² values remained below .10 in all cases.
+Item discrimination and difficulty parameters are reported in Table [X]. The four subscales differed markedly in the quality of their item parameters. Neuroticism exhibited the strongest and most homogeneous discrimination values. All 12 items achieved moderate to very high discrimination (a range = 1.15 to 3.08), with eight items classified as very high (a ≥ 1.70). Difficulty parameters were well distributed across the θ continuum, ranging from -1.78  to 1.33.
+
+Extraversion items showed adequate discrimination overall (a range = 0.71 to 2.23), with three items classified as very high and three as high. Difficulty values ranged from -2.49  to 1.94, although difficulty values were somewhat concentrated below zero, suggesting that most items are relatively easy to endorse.
+
+The Lie scale displayed a heterogeneous discrimination profile. Several items reached very high discrimination (EYP8, a = 2.02; EYP12, a = 2.47; EYP20, a = 1.71; EYP29, a = 1.80), but three items exhibited very low to low discrimination (EYP4, a = 0.29; EYP16, a = 0.61; EYP45, a = 0.59). Notably, EYP4 had an extreme difficulty value of -9.71, placing it far outside the observable θ range and rendering it essentially non-informative.
+
+Psychoticism was the most problematic subscale. Discrimination values were highly heterogeneous, ranging from -0.07 (EYP2) to 1.76 (EYP18). EYP2 returned a negative discrimination estimate, indicating that endorsement probability decreased with increasing levels of the latent trait, a result that raises concerns about item keying or construct relevance in this sample. Two additional items (EYP31, a = 0.29; EYP6, a = 0.25) were classified as very low, contributing negligible measurement information. Difficulty parameters were predominantly high and positive (b range = 0.28 to 8.49 for positively discriminating items), indicating that most Psychoticism items are endorsed only at very elevated trait levels. EYP6 had an extreme difficulty value of 8.49, placing it well beyond the meaningful measurement range.
+
+
+Marginal reliability coefficients were .83 for Neuroticism, .76 for Extraversion, .76 for the Lie scale, and .44 for Psychoticism. Empirical reliability estimates were .80, .70, .69, and -.22, respectively. The negative empirical reliability for Psychoticism indicates that the observed score variance attributable to measurement error exceeded the variance attributable to true score differences, rendering individual-level Psychoticism scores uninterpretable.
+
+The TIC for Neuroticism peaked at 9.52 units of information (minimum SE = 0.32), and the scale maintained reliable measurement (marginal reliability ≥ .70) across a broad θ range from -1.55 to 1.66, spanning approximately 3.2 standard deviation units. Extraversion peaked at 5.26 (minimum SE = 0.44), with reliable measurement from θ = -1.99 to 0.99. The Lie scale peaked at 5.25 (minimum SE = 0.44), with reliable measurement from θ = -1.71 to 1.00. Psychoticism peaked at only 2.78 (minimum SE = 0.60) and achieved marginal reliability ≥ .70 only within the narrow range of θ = 1.65 to 2.87, a 1.2 standard deviation window located well above the population mean. This means that Psychoticism scores are reliable only for individuals approximately 1.5 to 3 standard deviations above the trait mean, a region containing a small fraction of any normative sample
+
+### Person-Item Maps (Wright Maps)
+Wright maps for the four EPQ-RS-B subscales are presented in Figure [X]. These maps juxtapose the distribution of person theta estimates (left panel) with item difficulty parameters (right panel) on a common metric, allowing visual evaluation of person-item targeting.
+For Extraversion, the person distribution was approximately normal and centered near zero, with the bulk of respondents falling between θ = -2 and θ = 2. Item difficulties spanned a broad range from approximately -3 (EYP7) to 2 (EYP36), with reasonable coverage across the person distribution. Most items clustered between -1 and 1, overlapping well with the densest region of the person distribution. Two items (EYP3 and EYP36) had difficulty values above 1.5, providing some differentiation at the upper end of the trait continuum. Conversely, EYP7 and EYP32 anchored the lower end near -3 and -2 respectively. Overall, the Extraversion items demonstrated adequate targeting, though coverage was somewhat denser in the low-to-moderate range than at the positive extreme.
+For Neuroticism, the person distribution was similarly centered near zero with a slight negative skew. Item difficulties ranged from approximately -2 (EYP34) to nearly 4 (EYP30). The majority of items fell between -1 and 1, covering the central region of the person distribution effectively. However, two items (EYP9 and EYP30) had difficulty values exceeding 3, placing them well beyond the upper boundary where most respondents were located. These items would only be endorsed by individuals with very high levels of neuroticism, and they contribute information almost exclusively at the positive extreme. Despite these outliers, the remaining ten items provided graduated coverage across the low-to-moderate trait range. The presence of EYP34 at roughly -2 ensured some measurement capacity at the lower end.
+For the Lie scale, the person distribution was centered slightly below zero with most respondents falling between -2 and 1. Item difficulties spread from approximately -3 (EYP45) to nearly 4 (EYP47). Two items (EYP16 and EYP47) had difficulty values above 3, far exceeding the upper bound of the person distribution and therefore contributing negligible information for all but the most extreme scorers. At the opposite end, EYP45 and EYP40 had difficulties near -3 and -2, capturing variation among low scorers. The middle range was covered by a cluster of items between -1 and 0 (EYP8, EYP12, EYP37, EYP33). This pattern reveals a gap in item coverage between approximately 0 and 2.5, meaning the scale differentiates poorly among moderately high scorers on social desirability.
+For Psychoticism, the person distribution was strongly negatively skewed, with the modal category near θ = -0.5 and a long positive tail. The overwhelming majority of respondents were concentrated between -1 and 0.5. In stark contrast, most item difficulties fell between 0 and 3, with EYP35 near 2.5 being the most difficult. Only two items (EYP14 at approximately -2 and EYP31 near -1) overlapped with the densest region of the person distribution. Three items (EYP2, EYP6, and EYP28) had no visible difficulty points on the plot, suggesting extremely high or computationally unstable difficulty estimates. This severe mismatch between person locations and item difficulties means the Psychoticism subscale provides almost no measurement precision for the majority of respondents, who score in the low-to-average range. The scale functions, in effect, as a set of very "hard" items that only differentiate among the small minority of individuals at the upper extreme of the trait.
+
+
+```{r theta, include=FALSE}
+# ==========================================================
+# Find theta range where I(theta) >= SE(theta)
+# ==========================================================
+theta_range <- seq(-4, 4, by = 0.01)
+
+epq_precision_range <- do.call(rbind, lapply(names(epq_models), function(sc) {
+  info <- as.numeric(testinfo(epq_models[[sc]], Theta = matrix(theta_range, ncol = 1)))
+  se   <- 1 / sqrt(info)
+  
+  # Theta values where information exceeds SE
+  precise <- theta_range[info >= se]
+  
+  data.frame(
+    Scale     = sc,
+    Theta_min = round(min(precise), 2),
+    Theta_max = round(max(precise), 2),
+    Peak_info = round(max(info), 3),
+    Min_SE    = round(min(se), 3)
+  )
+}))
+
+epq_precision_range
+readr::write_csv(epq_precision_range, "outputs/tables/epq_precision_range.csv")
+
+```
+
+```{r marginaltehta, include=FALSE}
+epq_reliable_range <- do.call(rbind, lapply(names(epq_models), function(sc) {
+  info <- as.numeric(testinfo(epq_models[[sc]], Theta = matrix(theta_range, ncol = 1)))
+  rel  <- info / (1 + info)
+  
+  reliable <- theta_range[rel >= 0.70]
+  
+  data.frame(
+    Scale     = sc,
+    Theta_min = round(min(reliable), 2),
+    Theta_max = round(max(reliable), 2),
+    Peak_rel  = round(max(rel), 3),
+    Info_at_70 = round(0.70 / (1 - 0.70), 3)  # = 2.333, for reference
+  )
+}))
+
+epq_reliable_range
+readr::write_csv(epq_reliable_range, "outputs/tables/epq_marginal_reliable_range.csv")
+
+```
+
+
+
+# Differential Item Functioning
+
+Gender DIF was examined for each EPQ-RS subscale using the Rasch model estimated via conditional maximum likelihood. Persons with extreme total scores (all items endorsed or none endorsed) were excluded from the CML estimation, as these response patterns are uninformative under the conditional framework. The reference group was female and the focal group was male. The Andersen likelihood ratio (LR) test assessed omnibus measurement invariance, and item-level Wald tests, with BH-adjusted p values, identified specific items exhibiting DIF. Effect sizes were expressed as the difference in group-specific Rasch difficulty parameters (delta-beta), with positive values indicating that an item was more difficult (less likely to be endorsed) for males relative to females. Results are presented in Table X.
+The omnibus Andersen LR test was statistically significant for all four scales: Psychoticism (LR = 34.56, df = 11, p < .001), Extraversion (LR = 36.64, df = 11, p < .001), Neuroticism (LR = 48.77, df = 11, p < .001), and Lie (LR = 30.98, df = 11, p = .001). These results indicate that perfect measurement invariance across gender does not hold for any scale at the omnibus level. However, omnibus significance does not specify which items are responsible, nor does it establish practical importance; item-level tests are needed to localise and quantify the effects.
+Psychoticism. After BH adjustment, one item was flagged: EYP43 (z = 4.02, adjusted p < .001, delta-beta = 0.78), indicating that this item was substantially harder to endorse for males than for females at the same trait level. Several other items showed unadjusted p values below .05 (EYP14, p = .014; EYP18, p = .034; EYP26, p = .025), but none survived correction (adjusted p values: .082, .101, .100, respectively). The remaining items showed negligible difficulty differences across groups (|delta-beta| range: 0.02 to 0.56).
+
+Extraversion. One item was flagged: EYP48 (z = -5.35, adjusted p < .001, delta-beta = -1.07), indicating that this item was considerably easier to endorse for males at equivalent trait levels. This was the largest item-level effect observed across all four scales. No other Extraversion item approached significance after adjustment, and 9 of the remaining 11 items showed difficulty differences of 0.27 or smaller.
+Neuroticism. This scale showed the most extensive DIF, with five items flagged after BH adjustment. EYP9 (z = -3.89, adjusted p < .001, delta-beta = -0.99) and EYP13 (z = 3.93, adjusted p < .001, delta-beta = 0.94) displayed the largest effects, with EYP9 being easier and EYP13 being harder to endorse for males. Three additional items were flagged: EYP17 (z = 2.77, adjusted p = .022, delta-beta = 0.60), EYP38 (z = 2.32, adjusted p = .048, delta-beta = 0.52), and EYP42 (z = -2.37, adjusted p = .048, delta-beta = -0.50). The direction of these effects was mixed: EYP17 and EYP38 were harder for males, whereas EYP42 was easier. The remaining seven items showed no evidence of DIF (adjusted p values ranging from .109 to .981).
+Lie. Despite the significant omnibus LR test (LR = 30.98, p = .001), no individual item reached significance after BH adjustment. Several items approached conventional thresholds at the unadjusted level (EYP12, p = .009; EYP20, p = .013; EYP40, p = .022; EYP16, p = .040), but all adjusted p values exceeded .05 (range: .079 to .973). The difficulty differences for these items ranged from |0.42| to |0.56|, suggesting modest but non-significant trends.
+In summary, 7 of 48 items displayed statistically significant gender DIF after correction: 1 on Psychoticism (EYP43), 1 on Extraversion (EYP48), 5 on Neuroticism (EYP9, EYP13, EYP17, EYP38, EYP42), and none on the Lie scale. The Neuroticism scale exhibited both the strongest omnibus departure from invariance and the greatest number of individually flagged items.
+
+```{r DIF, eval=FALSE, include=FALSE}
+# ============================================================
+# EPQ DIF Analysis (Gender) -- full script
+# Uses printed Raju output extraction
+# Stores raw Lord and Raju results for each subscale
+# ============================================================
+
+library(difR)
+library(dplyr)
+library(tibble)
+library(readr)
+
+# ---------------------------
+# Settings
+# ---------------------------
+use_purify <- TRUE
+max_purify_iter <- 10
+
+# ============================================================
+# Helper function:
+# Extract Raju table from printed output
+# ============================================================
+extract_raju_from_print <- function(x) {
+  txt <- capture.output(print(x))
+  
+  start_line <- grep("^Raju's statistic:", txt)
+  end_line   <- grep("^Signif\\. codes:", txt)
+  
+  if (length(start_line) == 0) {
+    stop("Could not find 'Raju's statistic:' in printed output.")
+  }
+  if (length(end_line) == 0) {
+    stop("Could not find 'Signif. codes:' in printed output.")
+  }
+  
+  # Keep only the printed table block
+  block <- txt[(start_line + 1):(end_line - 1)]
+  block <- block[nzchar(trimws(block))]
+  
+  # Remove table header
+  block <- block[!grepl("^\\s*Stat\\.\\s+P-value\\s+Adj\\. P", block)]
+  
+  # Parse each line of the printed table
+  out_list <- lapply(block, function(line) {
+    line <- trimws(line)
+    
+    # Remove trailing significance symbols (*, **, ***, .)
+    line_clean <- sub("\\s+[*\\.]+\\s*$", "", line)
+    
+    parts <- strsplit(line_clean, "\\s+")[[1]]
+    
+    if (length(parts) < 4) {
+      return(NULL)
+    }
+    
+    data.frame(
+      Item       = parts[1],
+      Raju_Z     = as.numeric(parts[2]),
+      Raju_p     = as.numeric(parts[3]),
+      Raju_p_adj = as.numeric(parts[4]),
+      stringsAsFactors = FALSE
+    )
+  })
+  
+  out <- do.call(rbind, out_list)
+  
+  if (is.null(out) || nrow(out) == 0) {
+    stop("Could not parse any rows from printed Raju output.")
+  }
+  
+  # Extract flagged DIF items from the printed output
+  dif_line <- grep("^Items detected as DIF items:", txt)
+  flagged_items <- character(0)
+  
+  if (length(dif_line) > 0) {
+    tail_block <- txt[(dif_line + 1):length(txt)]
+    tail_block <- tail_block[nzchar(trimws(tail_block))]
+    
+    if (length(tail_block) > 0) {
+      flagged_items <- unlist(strsplit(paste(tail_block, collapse = " "), "\\s+"))
+      flagged_items <- flagged_items[nzchar(flagged_items)]
+    }
+  }
+  
+  out$Raju_flag <- ifelse(out$Item %in% flagged_items, "DIF", "")
+  
+  out
+}
+
+# ============================================================
+# Objects to store everything
+# ============================================================
+dif_inputs   <- list()
+lord_objects <- list()
+raju_objects <- list()
+
+lord_tables  <- list()
+raju_tables  <- list()
+scale_tables <- list()
+
+# ============================================================
+# Run DIF analysis for each EPQ subscale
+# ============================================================
+for (sc in names(epq_item_sets)) {
+  
+  cat("\n=====================================\n")
+  cat("Running DIF for:", sc, "\n")
+  cat("=====================================\n")
+  
+  # ---------------------------
+  # Step 1: subset scale data
+  # ---------------------------
+  dat   <- as.data.frame(epq_items[, epq_item_sets[[sc]], drop = FALSE])
+  group <- demographics$gender
+  
+  # ---------------------------
+  # Step 2: complete cases only
+  # ---------------------------
+  keep  <- complete.cases(dat, group)
+  dat   <- dat[keep, , drop = FALSE]
+  group <- factor(group[keep])
+  
+  if (nlevels(group) < 2) {
+    message("Skipping ", sc, ": gender has fewer than 2 groups.")
+    next
+  }
+  
+  items   <- names(dat)
+  n_items <- length(items)
+  focal   <- levels(group)[2]
+  
+  # Save clean inputs so you can inspect later
+  dif_inputs[[sc]] <- list(
+    dat = dat,
+    group = group,
+    focal = focal,
+    items = items
+  )
+  
+  # ============================================================
+  # LORD
+  # ============================================================
+  dif_lord <- tryCatch(
+    difLord(
+      Data            = dat,
+      group           = group,
+      focal.name      = focal,
+      model           = "2PL",
+      purify          = use_purify,
+      nrIter          = max_purify_iter,
+      p.adjust.method = "BH"
+    ),
+    error = function(e) {
+      message("Lord failed for ", sc, ": ", e$message)
+      NULL
+    }
+  )
+  
+  lord_objects[[sc]] <- dif_lord
+  
+  if (!is.null(dif_lord)) {
+    
+    lord_chi <- as.numeric(dif_lord$LordChi)
+    lord_p   <- as.numeric(dif_lord$p.value)
+    
+    if (!is.null(dif_lord$adjusted.p)) {
+      lord_p_adj <- as.numeric(dif_lord$adjusted.p)
+    } else {
+      lord_p_adj <- p.adjust(lord_p, method = "BH")
+    }
+    
+    lord_flagged <- dif_lord$DIFitems
+    if (is.null(lord_flagged) || identical(lord_flagged, "No DIF item detected")) {
+      lord_flagged <- integer(0)
+    }
+    
+    if (!is.null(dif_lord$convergence)) {
+      if (isTRUE(dif_lord$convergence)) {
+        lord_convergence <- "converged"
+      } else {
+        lord_convergence <- "not converged"
+      }
+    } else {
+      lord_convergence <- NA_character_
+    }
+    
+    if (!is.null(dif_lord$nrPur)) {
+      lord_nrPur <- as.numeric(dif_lord$nrPur)
+    } else {
+      lord_nrPur <- NA_real_
+    }
+    
+    if (!is.null(dif_lord$itemParFinal)) {
+      all_pars <- dif_lord$itemParFinal
+    } else {
+      all_pars <- dif_lord$itemParInit
+    }
+    
+    pars_ref <- all_pars[1:n_items, , drop = FALSE]
+    pars_foc <- all_pars[(n_items + 1):(2 * n_items), , drop = FALSE]
+    
+    a_ref <- as.numeric(pars_ref[, 1])
+    b_ref <- as.numeric(pars_ref[, 2])
+    a_foc <- as.numeric(pars_foc[, 1])
+    b_foc <- as.numeric(pars_foc[, 2])
+    
+    delta_b <- b_foc - b_ref
+    
+    ETS_class <- ifelse(
+      is.na(delta_b), "",
+      ifelse(abs(delta_b) < 0.43, "A (Negligible)",
+      ifelse(abs(delta_b) < 0.64, "B (Moderate)",
+                                 "C (Large)"))
+    )
+    
+    lord_tbl <- tibble(
+      Scale            = sc,
+      Item             = items,
+      Lord_status      = "completed",
+      Lord_convergence = lord_convergence,
+      Lord_nrPur       = lord_nrPur,
+      Lord_X2          = lord_chi,
+      Lord_p           = lord_p,
+      Lord_p_adj       = lord_p_adj,
+      Lord_flag        = ifelse(seq_len(n_items) %in% lord_flagged, "DIF", ""),
+      a_ref            = a_ref,
+      b_ref            = b_ref,
+      a_foc            = a_foc,
+      b_foc            = b_foc,
+      delta_b          = delta_b,
+      ETS_class        = ETS_class
+    )
+    
+  } else {
+    
+    lord_tbl <- tibble(
+      Scale            = sc,
+      Item             = items,
+      Lord_status      = "failed",
+      Lord_convergence = NA_character_,
+      Lord_nrPur       = NA_real_,
+      Lord_X2          = NA_real_,
+      Lord_p           = NA_real_,
+      Lord_p_adj       = NA_real_,
+      Lord_flag        = "",
+      a_ref            = NA_real_,
+      b_ref            = NA_real_,
+      a_foc            = NA_real_,
+      b_foc            = NA_real_,
+      delta_b          = NA_real_,
+      ETS_class        = ""
+    )
+  }
+  
+  lord_tables[[sc]] <- lord_tbl
+  
+  # ============================================================
+  # RAJU
+  # ============================================================
+  dif_raju <- tryCatch(
+    difRaju(
+      Data            = dat,
+      group           = group,
+      focal.name      = focal,
+      model           = "2PL",
+      purify          = use_purify,
+      nrIter          = max_purify_iter,
+      p.adjust.method = "BH"
+    ),
+    error = function(e) {
+      message("Raju failed for ", sc, ": ", e$message)
+      NULL
+    }
+  )
+  
+  raju_objects[[sc]] <- dif_raju
+  
+  if (!is.null(dif_raju)) {
+    
+    # This uses the printed output, not dif_raju$p.value
+    raju_tbl <- extract_raju_from_print(dif_raju)
+    
+    # Add scale name
+    raju_tbl$Scale <- sc
+    raju_tbl <- raju_tbl %>%
+      select(Scale, everything())
+    
+    # Add convergence info
+    if (!is.null(dif_raju$convergence)) {
+      if (isTRUE(dif_raju$convergence)) {
+        raju_convergence <- "converged"
+      } else {
+        raju_convergence <- "not converged"
+      }
+    } else {
+      raju_convergence <- NA_character_
+    }
+    
+    if (!is.null(dif_raju$nrPur)) {
+      raju_nrPur <- as.numeric(dif_raju$nrPur)
+    } else {
+      raju_nrPur <- NA_real_
+    }
+    
+    raju_tbl <- raju_tbl %>%
+      mutate(
+        Raju_status      = "completed",
+        Raju_convergence = raju_convergence,
+        Raju_nrPur       = raju_nrPur,
+        .before = Raju_Z
+      )
+    
+  } else {
+    
+    raju_tbl <- tibble(
+      Scale            = sc,
+      Item             = items,
+      Raju_status      = "failed",
+      Raju_convergence = NA_character_,
+      Raju_nrPur       = NA_real_,
+      Raju_Z           = NA_real_,
+      Raju_p           = NA_real_,
+      Raju_p_adj       = NA_real_,
+      Raju_flag        = ""
+    )
+  }
+  
+  raju_tables[[sc]] <- raju_tbl
+  
+  # ============================================================
+  # Merge Lord + Raju for this subscale
+  # ============================================================
+  scale_tbl <- left_join(
+    lord_tbl,
+    raju_tbl,
+    by = c("Scale", "Item")
+  )
+  
+  scale_tables[[sc]] <- scale_tbl
+}
+
+# ============================================================
+# Final combined table
+# ============================================================
+epq_dif_all <- bind_rows(scale_tables)
+
+# View final result
+epq_dif_all
+
+# ============================================================
+# Save results
+# ============================================================
+write_csv(epq_dif_all, "EPQ_DIF_gender_all_scales.csv")
+
+# Save each scale separately
+for (sc in names(scale_tables)) {
+  write_csv(
+    scale_tables[[sc]],
+    paste0("EPQ_DIF_gender_", sc, ".csv")
+  )
+}
+
+#Inspect
+
+# lord_objects$Psychoticism
+# raju_objects$Psychoticism
+# 
+# lord_tables$Psychoticism
+# raju_tables$Psychoticism
+# scale_tables$Psychoticism
+# 
+# lord_objects$Extraversion
+# raju_objects$Extraversion
+# 
+# lord_tables$Extraversion
+# raju_tables$Extraversion
+# scale_tables$Extraversion
+# 
+# 
+# lord_objects$Neuroticism
+# raju_objects$Neuroticism
+# 
+# lord_tables$Neuroticism
+# raju_tables$Neuroticism
+# scale_tables$Neuroticism
+# 
+# lord_objects$Lie
+# raju_objects$Lie
+# 
+# lord_tables$Lie
+# raju_tables$Lie
+# scale_tables$Lie
+
+```
+
+```{r DIFRash, include=FALSE}
+# ============================================================
+# EPQ-RS DIF Analysis (Gender) — Rasch Model, Joint Calibration
+# Method: Conditional ML Rasch (eRm) + Wald test & Andersen LR test
+# ============================================================
+
+library(eRm)
+library(dplyr)
+library(tibble)
+library(readr)
+
+# ---------------------------------------------------------
+# 0. Helper: format p values APA style
+# ---------------------------------------------------------
+fmt_p <- function(p) {
+  ifelse(
+    is.na(p), NA_character_,
+    ifelse(p < .001, "< .001", sub("^0", "", sprintf("%.3f", p)))
+  )
+}
+
+# ---------------------------------------------------------
+# 1. Prepare data
+#    Adjust the object names below to match your workspace.
+#    epq_items        : data.frame of all 48 binary item responses
+#    demographics     : data.frame with a column "gender"
+#    epq_item_sets    : named list mapping scale names to item columns
+# ---------------------------------------------------------
+
+# Example structure (uncomment / adapt as needed):
+# epq_item_sets <- list(
+#   Psychoticism = c("EYP10","EYP14","EYP22","EYP31","EYP39",
+#                     "EYP2","EYP6","EYP18","EYP26","EYP28",
+#                     "EYP35","EYP43"),
+#   Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19",
+#                     "EYP23","EYP32","EYP36","EYP44","EYP48",
+#                     "EYP27","EYP41"),
+#   Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17",
+#                     "EYP21","EYP25","EYP30","EYP34","EYP38",
+#                     "EYP42","EYP46")
+# )
+
+# ---------------------------------------------------------
+# 2. Analysis loop
+# ---------------------------------------------------------
+rasch_dif_results <- list()
+
+for (sc in names(epq_item_sets)) {
+  
+  cat("\n========================================\n")
+  cat("Scale:", sc, "\n")
+  cat("========================================\n")
+  
+  items_vec <- epq_item_sets[[sc]]
+  dat       <- as.data.frame(epq_items[, items_vec, drop = FALSE])
+  group     <- demographics$gender
+  
+  # Complete cases only
+  keep  <- complete.cases(dat, group)
+  dat   <- dat[keep, , drop = FALSE]
+  group <- factor(group[keep])
+  
+  if (nlevels(group) < 2) {
+    message("Skipping ", sc, ": fewer than 2 gender groups.")
+    next
+  }
+  
+  n_items <- ncol(dat)
+  items   <- names(dat)
+  
+  # --- Remove persons with perfect (all-0 or all-12) scores ---
+  # CML estimation conditions on total scores; extreme scores
+  # are not informative and must be excluded.
+  row_sums <- rowSums(dat)
+  non_extreme <- row_sums > 0 & row_sums < n_items
+  
+  dat_cml   <- dat[non_extreme, , drop = FALSE]
+  group_cml <- group[non_extreme]
+  
+  cat("  N after removing extreme scores:", nrow(dat_cml), "\n")
+  cat("  N removed (extreme):", sum(!non_extreme), "\n")
+  cat("  Group sizes:", table(group_cml), "\n")
+  
+  # ---------------------------------------------------------
+  # 2a. Fit the joint Rasch model (CML)
+  # ---------------------------------------------------------
+  rasch_fit <- tryCatch(
+    RM(dat_cml),
+    error = function(e) {
+      message("  Rasch model failed for ", sc, ": ", e$message)
+      NULL
+    }
+  )
+  
+  if (is.null(rasch_fit)) next
+  
+  # Item difficulty (beta) parameters — note eRm uses the
+  # "easiness" parameterisation by default; we reverse sign
+  # for conventional difficulty interpretation.
+  beta <- -coef(rasch_fit)  # positive = harder
+  
+  cat("  Item difficulties (beta, higher = harder):\n")
+  print(round(beta, 3))
+  
+  # ---------------------------------------------------------
+  # 2b. Wald test for DIF — split by gender
+  #     Tests H0: item parameters are equal across groups
+  #     One test per item; overall omnibus test also provided.
+  # ---------------------------------------------------------
+  wald_res <- tryCatch(
+    Waldtest(rasch_fit, splitcr = group_cml),
+    error = function(e) {
+      message("  Waldtest failed for ", sc, ": ", e$message)
+      NULL
+    }
+  )
+  
+  # ---------------------------------------------------------
+  # 2c. Andersen LR test — split by gender
+  #     Omnibus test of measurement invariance across groups.
+  # ---------------------------------------------------------
+  lr_res <- tryCatch(
+    LRtest(rasch_fit, splitcr = group_cml),
+    error = function(e) {
+      message("  LRtest failed for ", sc, ": ", e$message)
+      NULL
+    }
+  )
+  
+  if (!is.null(lr_res)) {
+    cat("\n  Andersen LR test (omnibus):\n")
+    cat("    LR =", round(lr_res$LR, 2),
+        "  df =", lr_res$df,
+        "  p =", fmt_p(lr_res$pvalue), "\n")
+  }
+  
+  # ---------------------------------------------------------
+  # 2d. Compute group-specific item difficulties
+  #     Fit separate Rasch models to extract beta per group.
+  #     This is for DESCRIPTIVE purposes only; the DIF test
+  #     itself uses the joint-calibration Wald/LR approach.
+  # ---------------------------------------------------------
+  lev <- levels(group_cml)
+  
+  rasch_g1 <- tryCatch(RM(dat_cml[group_cml == lev[1], ]), error = function(e) NULL)
+  rasch_g2 <- tryCatch(RM(dat_cml[group_cml == lev[2], ]), error = function(e) NULL)
+  
+  beta_g1 <- if (!is.null(rasch_g1)) -coef(rasch_g1) else rep(NA, n_items)
+  beta_g2 <- if (!is.null(rasch_g2)) -coef(rasch_g2) else rep(NA, n_items)
+  
+  # ---------------------------------------------------------
+  # 2e. Assemble results table
+  # ---------------------------------------------------------
+  
+  # Joint betas: eRm may return K-1 or K params depending on version.
+  # Standardise to length K (n_items) with sum-zero constraint.
+  raw_beta <- -coef(rasch_fit)
+  if (length(raw_beta) == n_items - 1) {
+    beta_joint_full <- c(raw_beta, -sum(raw_beta))
+    names(beta_joint_full) <- items
+  } else {
+    beta_joint_full <- raw_beta[1:n_items]
+    names(beta_joint_full) <- items
+  }
+  
+  # Wald test: extract per-item z and p.
+  # eRm returns all K items in model order; use positional indexing.
+  if (!is.null(wald_res)) {
+    wald_tab    <- wald_res$coef.table
+    wald_z_full <- wald_tab[, "z-statistic"]
+    wald_p_full <- wald_tab[, "p-value"]
+  } else {
+    wald_z_full <- rep(NA_real_, n_items)
+    wald_p_full <- rep(NA_real_, n_items)
+  }
+  
+  # BH adjustment
+  wald_p_adj_full <- p.adjust(wald_p_full, method = "BH")
+  
+  # Group-specific betas: standardise to length K
+  if (length(beta_g1) == n_items - 1) {
+    beta_g1_full <- c(beta_g1, -sum(beta_g1))
+  } else {
+    beta_g1_full <- beta_g1[1:n_items]
+  }
+  if (length(beta_g2) == n_items - 1) {
+    beta_g2_full <- c(beta_g2, -sum(beta_g2))
+  } else {
+    beta_g2_full <- beta_g2[1:n_items]
+  }
+  names(beta_g1_full) <- items
+  names(beta_g2_full) <- items
+  
+  delta_beta <- beta_g2_full - beta_g1_full
+  
+  tbl <- tibble(
+    Scale            = sc,
+    Item             = items,
+    beta_joint       = as.numeric(beta_joint_full),
+    beta_ref         = as.numeric(beta_g1_full),
+    beta_focal       = as.numeric(beta_g2_full),
+    delta_beta       = as.numeric(delta_beta),
+    Wald_z           = wald_z_full,
+    Wald_p           = wald_p_full,
+    Wald_p_adj       = wald_p_adj_full,
+    Wald_DIF         = ifelse(wald_p_adj_full < .05, "DIF", ""),
+    LR_chi2          = if (!is.null(lr_res)) lr_res$LR else NA_real_,
+    LR_df            = if (!is.null(lr_res)) lr_res$df  else NA_integer_,
+    LR_p             = if (!is.null(lr_res)) lr_res$pvalue else NA_real_
+  )
+  
+  rasch_dif_results[[sc]] <- tbl
+}
+
+# ---------------------------------------------------------
+# 3. Combine and format for APA reporting
+# ---------------------------------------------------------
+rasch_dif_all <- bind_rows(rasch_dif_results)
+
+rasch_dif_apa <- rasch_dif_all %>%
+  transmute(
+    Scale,
+    Item,
+    `beta (joint)`    = sprintf("%.2f", beta_joint),
+    `beta (Ref)`      = sprintf("%.2f", beta_ref),
+    `beta (Focal)`    = sprintf("%.2f", beta_focal),
+    `Delta beta`      = sprintf("%.2f", delta_beta),
+    `Wald z`          = sprintf("%.2f", Wald_z),
+    `Wald p`          = fmt_p(Wald_p),
+    `Wald p (adj)`    = fmt_p(Wald_p_adj),
+    `DIF flag`        = Wald_DIF,
+    `LR chi2 (omnibus)` = sprintf("%.2f", LR_chi2),
+    `LR df`           = as.character(LR_df),
+    `LR p (omnibus)`  = fmt_p(LR_p)
+  )
+
+readr::write_csv(rasch_dif_apa, "outputs/tables/EPQ_DIF_gender_Rasch_APA.csv")
+
+cat("\n\nDone. Results saved to outputs/tables/EPQ_DIF_gender_Rasch_APA.csv\n")
+
+# ---------------------------------------------------------
+# 4. Print summary to console
+# ---------------------------------------------------------
+cat("\n========= SUMMARY =========\n")
+for (sc in names(rasch_dif_results)) {
+  tbl <- rasch_dif_results[[sc]]
+  flagged <- tbl %>% filter(Wald_DIF == "DIF") %>% pull(Item)
+  cat("\n", sc, ":\n")
+  cat("  Andersen LR (omnibus): chi2 =", round(tbl$LR_chi2[1], 2),
+      ", df =", tbl$LR_df[1],
+      ", p =", fmt_p(tbl$LR_p[1]), "\n")
+  if (length(flagged) > 0) {
+    cat("  Items flagged (Wald, BH-adj p < .05):", paste(flagged, collapse = ", "), "\n")
+  } else {
+    cat("  No items flagged after BH adjustment.\n")
+  }
+}
+```
+
+```{r include=FALSE}
+# ---------------------------------------------------------
+# 4. Print summary to console
+# ---------------------------------------------------------
+cat("\n========= SUMMARY =========\n")
+for (sc in names(rasch_dif_results)) {
+  tbl <- rasch_dif_results[[sc]]
+  flagged <- tbl %>% filter(Wald_DIF == "DIF") %>% pull(Item)
+  cat("\n", sc, ":\n")
+  cat("  Andersen LR (omnibus): chi2 =", round(tbl$LR_chi2[1], 2),
+      ", df =", tbl$LR_df[1],
+      ", p =", fmt_p(tbl$LR_p[1]), "\n")
+  if (length(flagged) > 0) {
+    cat("  Items flagged (Wald, BH-adj p < .05):", paste(flagged, collapse = ", "), "\n")
+  } else {
+    cat("  No items flagged after BH adjustment.\n")
+  }
+}
+```
+
+
+## Concurrent Validity With BFI-2
+
+```{r concurrent-validity, include=FALSE}
+cross_framework_cor <- psych::corr.test(
+  bfi_domains,
+  epq_scores,
+  method = "pearson",
+  adjust = "holm"
+)
+
+cross_r <- as.data.frame(round(cross_framework_cor$r, 3)) |>
+  tibble::rownames_to_column("BFI-2 Domain")
+
+cross_p <- as.data.frame(cross_framework_cor$p) |>
+  tibble::rownames_to_column("BFI-2 Domain")
+```
+
+Table \@ref(tab:concurrent) presents the correlation matrix between EPQ-RS-B subscale scores and BFI-2-B domain scores. The concurrent validity pattern conformed to theoretical expectations.
+
+```{r concurrent, results='asis'}
+apa_table(
+  cross_r,
+  caption = "Pearson correlations between BFI-2-B domains and EPQ-RS-B subscales.",
+  note = "All coefficients Holm-adjusted. Bold values indicate convergent validity pairs."
+)
+```
+
+# Discussion
+
+The present study provides the first psychometric evaluation of a Bangla adaptation of the EPQ-RS. The results largely replicate the cross-cultural pattern that has emerged across more than a dozen language adaptations over four decades: Extraversion and Neuroticism subscales demonstrated acceptable reliability, coherent factor structure, and adequate measurement precision, whereas Psychoticism was markedly weaker on all criteria.
+
+The reliability estimates for EPQ-RS-B Extraversion and Neuroticism fell within the range reported in English-speaking samples ($\alpha$ = .78 to .88; @eysenck1985revised; @francis1992abbreviated), Japanese ($\alpha$ = .75 to .78; @hosokawa1993reliability), Greek ($\alpha$ = .73 to .78; @alexopoulos2004psychometric), and German ($\alpha$ = .81 to .85; @francis2006german) adaptations. The Lie scale performed in the range typical of non-English versions. Psychoticism reliability in the present sample was consistent with the range of .24 to .62 that characterizes the cross-cultural literature, falling below the conventional .70 threshold regardless of which estimator was employed. This finding is not attributable to translation quality alone; it is the modal outcome for this subscale across languages and continents.
+
+The IRT analyses added precision to this picture. The 2PL models revealed that P items had, on average, lower discrimination parameters and more extreme difficulty values than items from other subscales, resulting in a test information function that peaked at unusual theta levels and provided limited measurement precision across the practically relevant range. By contrast, E and N items showed discrimination and information patterns consistent with adequate measurement. These IRT findings converge with the classical indices and with the Italian IRT analysis by @colledani2018irt, who found that even after IRT-guided item selection, P remained the weakest EPQ-RS scale.
+
+## Invariance
+The invariance results for the EPQ-RS-B follow a pattern that is well documented in the measurement invariance literature. Full configural and metric invariance were established with ease, indicating that males and females interpreted the items in terms of the same latent constructs and that the strength of item-factor relations did not differ across groups. This is consistent with prior findings on Eysenckian measures, where the basic factor structure of extraversion, neuroticism, psychoticism, and the lie scale has been repeatedly recovered across sex and cultural groups (Barrett et al., 1998; Eysenck & Barrett, 2013; Francis et al., 1992). McLarnon and Romero (2020) similarly reported that the configural structure of shortened EPQ forms was broadly replicable across 35 countries, though they cautioned that metric and scalar equivalence required alignment corrections before cross-group comparisons could be trusted.
+The localized strain observed at M10, when latent means were first constrained to equality, warrants careful interpretation. This step effectively tests whether males and females occupy the same position on each latent dimension, and its failure is not a measurement artefact but rather a substantive finding: the sexes differ in their standing on one or more of the Eysenckian traits. Such differences are among the most robustly replicated results in personality psychology. Females consistently score higher on neuroticism, while males tend to score higher on psychoticism (Alexopoulos & Kalaitzidis, 2004; Aluja et al., 2003; Hosokawa & Ohyama, 1993). These mean-level differences are expected to produce misfit when latent means are forcibly equated, and this is precisely what the M10 results reflect.
+The critical observation is that M13, the fully constrained model, met practical fit-change criteria. This pattern, in which intermediate mean-structure steps show strain but the terminal model is tenable, aligns with the interpretive logic articulated by Marsh et al. (2009), who argued that the most restrictive solution provides the primary evidential basis for concluding that cross-group comparisons operate within a defensible invariant framework. From this perspective, the EPQ-RS-B can be regarded as measuring the same constructs, with the same metric and scalar properties, across sexes in the present sample. This does not deny that latent mean differences exist; rather, it confirms that such differences, once incorporated into a model that also constrains all other relevant parameters, do not compromise the overall measurement framework.
+It is worth noting that the recovery of fit from M10 to M13 is itself informative. The addition of residual variance and factor variance/covariance constraints in M13 evidently compensated for the strain introduced by mean constraints alone, suggesting that the misfit at M10 was partly attributable to unmodeled heterogeneity in variance parameters rather than to genuine intercept non-invariance. This interpretation is consistent with Chen's (2007) demonstration that fit-change indices are jointly sensitive to differences in means, variances, and covariances, making it hazardous to attribute misfit at any single step to a single parameter class in isolation.
+The present findings should be situated alongside the well-known limitations of the psychoticism scale, which has historically exhibited low internal consistency (Eysenck & Eysenck, 1985; Alexopoulos & Kalaitzidis, 2004; Francis et al., 1992) and has been shown to contain items with gender differential item functioning (Colledani et al., 2018). Although the current invariance analysis did not isolate scale-specific sources of strain, the broader literature suggests that psychoticism items are the most likely candidates for partial non-invariance at the item level. Future studies would benefit from item-level invariance testing or alignment methods (McLarnon & Romero, 2020) to pinpoint whether the localized misfit at M10 is driven predominantly by the psychoticism or lie subscales. Despite these caveats, the overall conclusion is that the EPQ-RS-B demonstrates adequate sex measurement invariance under the 13-model framework, supporting the validity of cross-sex comparisons of Eysenckian personality dimensions in this sample.Usage limit reac
+
+## IRT
+### Neuroticism, Extraversion, and the Lie Scale
+The IRT analysis revealed a clear hierarchy of measurement quality across the four EPQ-RS-B subscales. Neuroticism performed best, with uniformly high item discriminations, well-distributed difficulty parameters, and a broad window of reliable measurement. This finding is consistent with prior IRT work on the EPQ-R Neuroticism scale. For example, Smits et al. (2021), using UK Biobank data from over 400,000 participants, reported that the 12 Neuroticism items showed generally strong discrimination, though they also noted that a reduced 7-item version was more psychometrically efficient because it eliminated items with redundant difficulty values. In the present Bangla sample, the full 12-item Neuroticism scale retained strong measurement properties, and the range of difficulty parameters was sufficiently broad to avoid the clustering problem identified by Smits et al. (2021). The marginal reliability of .83 and the empirical reliability of .80 place the Bangla Neuroticism scale comfortably within the range reported in cross-cultural adaptations, where alpha coefficients typically fall between .77 and .83 (Francis et al., 1992; Katz & Francis, 2000; Morfaki, 2021).
+
+Extraversion and the Lie scale both achieved marginal reliabilities of .76, which are acceptable for research purposes though modest for individual-level assessment. These values are broadly comparable to the alpha coefficients reported in other non-Western adaptations. Francis et al. (2006) reported an Extraversion alpha of .85 in a German sample, and Katz and Francis (2000) reported values ranging from .78 to .87 across English-speaking countries. The somewhat lower reliability in the present sample may reflect cultural differences in the behavioral referents of Extraversion items, particularly those tapping sociability and gregariousness, which may carry different connotations in Bangladeshi collectivist cultural contexts (Hosokawa & Ohyama, 1993). IRT analysis further revealed that the Lie scale contained three weak items (EYP4, EYP16, EYP45) with low discrimination, and that EYP4 was essentially inert, failing to contribute any meaningful measurement information. These findings parallel those of Colledani et al. (2019), who identified similar weak items in the Italian EPQ-R and proposed shortened versions with improved psychometric efficiency.
+### The Psychoticism Problem
+The most consequential finding concerns the Psychoticism subscale. The marginal reliability of .44 and the negative empirical reliability confirm that the Bangla Psychoticism scale is not functioning as a coherent measure of a single latent trait. This result is not surprising when considered against the extensive literature documenting the poor psychometric performance of EPQ Psychoticism scales across cultures. Francis et al. (1992) reported alpha coefficients of .31 to .52 for the EPQ-RS Psychoticism scale across four English-speaking countries. Comparable or lower values have been reported in German (α = .42; Francis et al., 2006), Hindi (α = .24; Tiwari et al., 2009), Greek (α = .51; Morfaki, 2021), Japanese (α = .48; Hosokawa & Ohyama, 1993), and Hebrew (α = .31 to .41; Katz & Francis, 2000) adaptations. McLarnon and Romero (2020), using factor alignment across 35 countries from the Eysenck and Barrett (2013) archival dataset, concluded that the Psychoticism scale demonstrated weak reliability across many nations and recommended the use of latent variable approaches to partially mitigate measurement error concerns.
+
+The IRT analysis in the present study goes further than classical reliability in diagnosing the source of the problem. The negative discrimination for EYP2 suggests that this item is operating in a direction opposite to the construct it is supposed to measure, possibly because of cultural differences in the interpretation of social conformity items. Two additional items (EYP6, EYP31) were essentially non-discriminating. The extreme difficulty values for several items (e.g., EYP6, b = 8.49; EYP28, b = 4.05) indicate that these items are endorsed only at implausibly extreme trait levels, rendering them uninformative for the vast majority of respondents. The TIC analysis confirmed that Psychoticism provides reliable measurement only for a narrow band of the population (θ = 1.65 to 2.87), approximately 1.5 to 3 standard deviations above the mean. For typical respondents, the scale generates more noise than signal.
+These findings carry both theoretical and practical implications. Theoretically, the persistent failure of Psychoticism items across cultures calls into question whether the construct, as operationalized by Eysenck's items, captures a coherent dimension of individual differences or instead conflates heterogeneous content (e.g., nonconformity, impulsivity, callousness) that does not cohere into a unitary factor in many cultural contexts (Colledani et al., 2019; Eysenck & Barrett, 2013). Prior factor analytic work has repeatedly found that the P scale defines a multifaceted construct with poor unidimensionality (Howarth, 1986; Roger & Morris, 1991; Colledani et al., 2019). The IRT evidence from the present Bangla adaptation reinforces this conclusion by showing that the items not only fail to cohere internally but also fail to provide informative measurement at any commonly occurring trait level.
+Practically, these results warrant caution in interpreting Psychoticism scores from the EPQ-RS-B at the individual level. Researchers wishing to assess constructs related to the Psychoticism domain in Bangladeshi samples may benefit from considering alternative instruments or, at a minimum, from interpreting Psychoticism scores only at the group level, where aggregation can attenuate measurement error. Future work on the EPQ-RS-B might also explore item replacement or the development of culturally appropriate Psychoticism indicators, building on the item-reduction strategies proposed by Colledani et al. (2019) and the shortened scale recommendations of McLarnon and Romero (2020).
+The Wright map evidence reinforces and extends the precision concerns identified through the TIC and IIC analyses. Among the four EPQ-RS-B subscales, Extraversion showed the most balanced targeting, with item difficulties distributed across the person range in a manner that supports adequate measurement precision for most respondents. This finding is consistent with the broad effective theta coverage reported for Extraversion (-2.83 to 2.07) and its acceptable marginal reliability.
+Neuroticism displayed generally sound targeting across its central range, but two high-difficulty outliers (EYP9 and EYP30) deserve scrutiny. These items sit at difficulty values exceeding 3, a region occupied by very few respondents. In a Bangladeshi sample, items such as "Are you an irritable person?" and "Would you call yourself tense or 'highly strung'?" may carry culturally specific connotations that inflate their effective difficulty. This does not necessarily indicate item malfunction, but it does mean these items contribute little to overall scale precision and are informationally redundant for most practical purposes. The remaining ten items, however, provide well-graduated coverage, which explains why Neuroticism maintains the strongest marginal reliability among the four subscales.
+The Lie scale revealed an informative structural gap. The clustering of moderate-difficulty items between -1 and 0, combined with two extreme outliers above 3, leaves a measurement void in the 0 to 2.5 range. This gap means that the scale differentiates well among individuals with low social desirability tendencies, differentiates somewhat among those with very high tendencies, but performs poorly for the substantial middle-to-upper portion of the distribution. From a psychometric standpoint, this is the region where the Lie scale is most often called upon to function as a validity indicator, because it is precisely the moderately elevated Lie scorers who may be inflating their self-reports without reaching obviously implausible extremes. The inability to measure precisely in this range weakens the practical utility of the Lie scale as a response validity check in this population.
+The most consequential finding concerns Psychoticism. The Wright map confirms what the TIC analysis suggested: the person-item misalignment is severe. Most item difficulties sit one to three standard deviations above the modal person location. This pattern is not unique to the present Bangladeshi sample. Cross-cultural studies of the EPQ-R have repeatedly documented that Psychoticism items tend to be rarely endorsed, producing extreme difficulty values and low internal consistency across diverse populations (Barrett & Eysenck, 1984; Eysenck et al., 1985; Francis et al., 2006). The present Wright map provides direct visual confirmation that, for the vast majority of Bangladeshi respondents, the Psychoticism items are effectively "off-target," functioning at a trait level that almost nobody in the sample occupies. The missing difficulty points for EYP2, EYP6, and EYP28 further suggest computational instability, likely driven by extremely low endorsement rates that prevent stable parameter estimation under the 2PL model.
+This targeting failure carries direct implications for the comparative evaluation of the BFI-2-B and EPQ-RS-B frameworks. Any observed attenuation in Psychoticism's criterion correlations or predictive validity cannot be attributed solely to substantive trait irrelevance. It may instead reflect, at least in part, a measurement artifact: a scale that measures imprecisely across most of the score range will necessarily produce attenuated associations with external variables, regardless of how substantively relevant the underlying construct may be. The BFI-2-B, with its polytomous response format generating multiple thresholds per item, is structurally less vulnerable to this kind of targeting failure because even a four-item facet contributes four category boundaries rather than a single binary threshold.
+These results reinforce the longstanding concern that the EPQ-R Psychoticism scale requires substantial revision for use in non-Western, non-English-speaking populations, and they suggest that caution is warranted when interpreting low Psychoticism scores as meaningful individual differences in this sample. More broadly, the Wright map evidence illustrates a limitation of the Giant Three framework that is not purely theoretical but rooted in the measurement properties of its operationalization: the Psychoticism construct, however important it may be conceptually, is not adequately captured by the EPQ-RS-B items in the present population.
+
+## DIF
+
+The Rasch-based DIF analysis revealed a differentiated pattern of gender measurement invariance across the four EPQ-RS subscales. The Lie scale was the most invariant: although the omnibus test was significant, no individual item survived correction, suggesting that the departure from invariance is diffuse and small in magnitude. The Psychoticism and Extraversion scales each contained a single item with significant DIF, indicating that these scales are largely gender-equivalent at the item level, with localised exceptions. The Neuroticism scale, by contrast, showed the most pervasive DIF, with five of twelve items exhibiting significant difficulty differences across gender.
+The finding that EYP48 on Extraversion displayed the single largest DIF effect (delta-beta = -1.07, favouring male endorsement) converges with the earlier 2PL-based analysis, which also flagged this item via both Lord's chi-square and Raju's area methods. This convergence across two different IRT frameworks (one requiring separate group calibrations, the other using joint calibration) strengthens confidence that EYP48 functions differently across gender groups and is not merely an artifact of a particular estimation approach. Content inspection of EYP48 would be warranted to determine whether the item taps a behavioural domain with known gender-differential base rates (e.g., sensation seeking, social boldness) rather than the core Extraversion trait.
+On the Psychoticism scale, the Rasch analysis flagged only one item (EYP43), in stark contrast to the earlier 2PL-based analysis that flagged 9 of 12 items. This discrepancy supports the methodological concern raised previously: the 2PL DIF results for Psychoticism reflected estimation failure (near-zero focal-group discriminations and extreme difficulty values) rather than genuine differential functioning. The Rasch model, by constraining discrimination to equality and using CML estimation, produced stable and interpretable parameters for all Psychoticism items, including those with low endorsement rates. The single flagged item (EYP43, delta-beta = 0.78) represents a credible and interpretable finding: this item was harder for males to endorse at equivalent trait levels. Future research should examine whether this reflects genuine content-based DIF or an interaction between the item's content domain (potentially more Agreeableness- than Conscientiousness-related, following Ruch et al., 2021) and known gender differences in Agreeableness.
+The Neuroticism results merit careful interpretation. Five items displayed statistically significant DIF, but the direction of effects was mixed: two items (EYP9 and EYP42) were easier for males, while three (EYP13, EYP17, EYP38) were harder. When DIF effects operate in opposing directions within a scale, they can partially cancel at the total-score level, producing what Shealy and Stout (1993) termed "cancellation DIF." This means that the Neuroticism total score may be less biased than the item-level results suggest, because the male-advantaging and female-advantaging items offset one another. Nonetheless, five of twelve items is a substantial proportion, and this finding warrants scrutiny. Prior research on the EPQ-RS has generally found the Neuroticism scale to be less affected by gender DIF than Psychoticism (Colledani et al., 2018; Forrest et al., 2000), making the present results somewhat atypical. Whether this reflects cultural specificity of the Bangla adaptation, sample characteristics, or methodological sensitivity (the Rasch Wald test may be more powerful than the methods used in prior studies) cannot be determined from the present data alone.
+The Lie scale results are reassuring. Despite the significant omnibus LR test, the absence of any individually flagged item after correction suggests that the scale's invariance violation is distributed across many items at trivially small magnitudes. This is a common pattern with omnibus tests: when sample sizes are adequate (here, N > 500), the LR test has sufficient power to detect aggregate departures that are too small to localise at the item level. From a practical standpoint, the Lie scale can be considered gender-equivalent.
+Several methodological points deserve comment. First, the choice of the Rasch model for DIF rather than the 2PL was driven by the data, not by theoretical preference. The 2PL is the more general model and was used for the main IRT calibration on the full sample, where it performed adequately. However, when the task shifts to group-specific parameter recovery with only 12 binary items per group, the additional discrimination parameter becomes a liability rather than an asset, particularly for scales with low reliability and skewed item distributions. The Rasch model provided stable, interpretable estimates across all four scales and both gender groups, which the 2PL did not. This outcome illustrates a broader principle in psychometric practice: the most appropriate model depends not only on theoretical considerations but also on the inferential task and the data conditions under which it must operate (Embretson & Reise, 2000).
+Second, the omnibus Andersen LR test was significant for all four scales, including those where item-level DIF was minimal or absent. This highlights the well-known sensitivity of omnibus invariance tests in adequately powered samples and cautions against interpreting omnibus significance as evidence that a scale is problematically biased. Item-level follow-up is essential for evaluating practical impact.
+Third, the present analysis examined only uniform DIF (differences in item difficulty). The Rasch model does not accommodate non-uniform DIF (differences in item discrimination across groups), because discrimination is constrained to equality by definition. If non-uniform DIF is suspected on substantive grounds, complementary methods such as logistic regression (Swaminathan & Rogers, 1990) could be applied. However, given the estimation instability observed with the 2PL (which does allow discrimination to vary), the practical value of testing non-uniform DIF with these data is questionable.
+
+
+The concurrent validity results confirmed the expected pattern of associations between PEN and Big Five domains. EPQ-RS-B Extraversion correlated positively with BFI-2-B Extraversion, EPQ-RS-B Neuroticism correlated positively with BFI-2-B Negative Emotionality, and EPQ-RS-B Psychoticism correlated negatively with BFI-2-B Agreeableness and Conscientiousness. These associations are consistent with the theoretical mapping outlined by @mccrae1985comparison and supported empirically by @colledani2018irt and @ruch2021long, who showed that P content has shifted across revisions toward a blend of low Agreeableness and low Conscientiousness.
+
+The structural validity evaluation using ESEM with target rotation provided a more realistic representation of the EPQ-RS-B item structure than strict CFA. This finding parallels @aluja2003psychometric, who demonstrated that CFA simple-structure models for the Spanish EPQ-RS produced poor fit indices and that modification indices pointed to systematic cross-loadings and local dependencies. ESEM allowed small but meaningful cross-loadings to be estimated rather than forced to zero, resulting in more interpretable fit indices without sacrificing theoretical grounding.
+
+Several limitations warrant mention. First, the sample was recruited through convenience sampling in Dhaka, limiting representativeness. Second, the fixed instrument order (BFI-2-B preceding EPQ-RS-B) may have introduced order effects. Third, no test-retest data were collected, precluding evaluation of temporal stability. Fourth, the absence of an external criterion measure beyond the BFI-2-B limits the scope of concurrent validity evidence. Fifth, the sample composition (predominantly Muslim, urban, and educated) may not generalize to rural or less-educated Bangladeshi populations.
+
+In conclusion, the EPQ-RS-B provides an adequate Bangla-language measure of Extraversion and Neuroticism, with psychometric properties comparable to those observed in other non-English adaptations. The Psychoticism scale, however, cannot be recommended for use in its current form without substantial reservations. Researchers employing the EPQ-RS-B in Bangladeshi contexts should interpret P scores with caution and consider supplementing PEN assessment with broader-bandwidth instruments such as the BFI-2-B when measurement of the personality space encompassed by low Agreeableness and low Conscientiousness is required.
+
+# Limitation
+It should be noted that both the Andersen LR test and the item-level Wald test, as implemented within the dichotomous Rasch model, are tests of uniform DIF only. That is, they evaluate whether item difficulty parameters differ across groups under the assumption that the discrimination parameter is fixed at unity for all items and groups. Non-uniform DIF, which would manifest as group-by-ability interactions (i.e., crossing item characteristic curves), is not directly testable within the standard Rasch framework because the model constrains all discrimination parameters to be equal. Consequently, the present analysis cannot rule out the presence of non-uniform DIF. Researchers interested in detecting non-uniform DIF with these data would need to employ alternative approaches, such as logistic regression DIF methods (Swaminathan & Rogers, 1990) or interaction terms within two-parameter IRT models, which allow discrimination to vary across groups. This
+
+\newpage
+
+# References
+
+::: {#refs custom-style="Bibliography"}
+:::

@@ -1,0 +1,17 @@
+Scale,Discrimination_categorization,n
+Extraversion,High,3
+Extraversion,Moderate,6
+Extraversion,Very High,3
+Lie,High,2
+Lie,Low,2
+Lie,Moderate,3
+Lie,Very High,4
+Lie,Very Low,1
+Neuroticism,High,2
+Neuroticism,Moderate,1
+Neuroticism,Very High,9
+Psychoticism,Low,1
+Psychoticism,Moderate,6
+Psychoticism,Negative (check keying/model),1
+Psychoticism,Very High,2
+Psychoticism,Very Low,2

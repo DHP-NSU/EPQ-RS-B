@@ -1,0 +1,29 @@
+response_row,Timestamp,participant_name,participant_email,section_number,nsu_id,consented,response_100,attention_checks_passed,passed_all_attention,final_eligible,n_submissions_same_nsu,any_pass_same_nsu
+97,2026/04/09 8:16:32 PM GMT+6,Farhan Labib,farhan.labib@northsouth.edu,PSY101.04,2111959630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+161,2026/04/09 11:10:19 PM GMT+6,Farhan Labib,farhan.labib@northsouth.edu,PSY101L.3 (LAB),2111959630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+190,2026/04/10 12:39:05 AM GMT+6,Shamsun Nahar Purnata,shamsun.purnata@northsouth.edu,PSY101.03,2131129648,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+168,2026/04/09 11:31:32 PM GMT+6,Shamsun Nahar Purnata,shamsun.purnata@northsouth.edu,PSY101.03,2131129648,TRUE,TRUE,5,FALSE,FALSE,2,TRUE
+41,2026/04/09 5:52:32 PM GMT+6,Fathmi Ali Misha,fathmi.misha@northsouth.edu,PSY101.05,2211479030,TRUE,TRUE,5,FALSE,FALSE,2,FALSE
+30,2026/04/09 5:35:01 PM GMT+6,Fathmi Ali Misha,fathmimisha487@gmail.com,PSY101L.3 (LAB),2211479030,TRUE,TRUE,5,FALSE,FALSE,2,FALSE
+93,2026/04/09 8:03:16 PM GMT+6,Sayma Siddika Monalisa,sayma.monalisa@northsouth.edu,PSY101.05,2221189042,TRUE,TRUE,5,FALSE,FALSE,2,FALSE
+149,2026/04/09 10:52:47 PM GMT+6,Sayma Siddika Monalisa,sayma.monalisa@northsouth.edu,PSY101.05,2221189042,TRUE,TRUE,4,FALSE,FALSE,2,FALSE
+74,2026/04/09 6:54:31 PM GMT+6,Zahid Hasan,zahid.hasan35@northsouth.edu,PSY101.06,2231479630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+167,2026/04/09 11:29:15 PM GMT+6,Zahid Hasan,zahid.hasan35@northsouth.edu,PSY101L.4 (LAB),2231479630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+54,2026/04/09 6:08:02 PM GMT+6,Sameen Farhan Abid,sameen.abid@northsouth.edu,PSY101.06,2232004030,TRUE,TRUE,5,FALSE,FALSE,2,TRUE
+37,2026/04/09 5:42:19 PM GMT+6,Sameen Farhan Abid,sameen.abid@northsouth.edu,PSY101L.4 (LAB),2232004030,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+61,2026/04/09 6:26:47 PM GMT+6,Sabid Islam,sabid.islam@northsouth.edu,PSY101.06,2232329630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+45,2026/04/09 5:53:47 PM GMT+6,Sabid Islam,sabid.islam@northsouth.edu,PSY101L.3 (LAB),2232329630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+200,2026/04/10 2:31:40 AM GMT+6,Sumaiya Akter,sumaiya.tumpa@northsouth.edu,PSY101.04,2232365030,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+69,2026/04/09 6:46:10 PM GMT+6,Sumaiya Akter Tumpa,sumaiya.tumpa@northsouth.edu,PSY101.04,2232365030,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+128,2026/04/09 9:31:58 PM GMT+6,Fariha Tasnim,fariha.tasnim10@northsouth.edu,PSY101L.02 (LAB),2312246011,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+72,2026/04/09 6:47:49 PM GMT+6,Fariha Tasnim,fariha.tasnim10@northsouth.edu,PSY101.06,2312246011,TRUE,TRUE,3,FALSE,FALSE,2,TRUE
+56,2026/04/09 6:12:51 PM GMT+6,Sumaiya Alam Shreyoshi,sumaiya.shreyoshi.232@northsouth.edu,PSY101.04,2321065630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+164,2026/04/09 11:22:05 PM GMT+6,Sumaiya Alam Shreyoshi,sumaiya.shreyoshi.232@northsouth.edu,PSY101L.02 (LAB),2321065630,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+118,2026/04/09 9:11:53 PM GMT+6,Rukaiya Mahmuda Bushra,rukaiya.bushra.241@northsouth.edu,PSY101L.40 (LAB),2411323015,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+103,2026/04/09 8:35:13 PM GMT+6,Rukaiya Mahmuda Bushra,rukaiya.bushra.241@northsouth.edu,PSY101L.40 (LAB),2411323015,FALSE,FALSE,NA,NA,FALSE,2,TRUE
+68,2026/04/09 6:45:50 PM GMT+6,Farhana Mursid Joti,farhana.joti.241@northsouth.edu,PSY101L.40 (LAB),2412517615,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+35,2026/04/09 5:40:41 PM GMT+6,Farhana Mursid Joti,farhana.joti.241@northsouth.edu,PSY101L.40 (LAB),2412517615,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+191,2026/04/10 12:45:06 AM GMT+6,Md. Asaduzzaman Asha,asaduzzaman.asha.241@northsouth.edu,PSY101L.40 (LAB),2413749630,TRUE,TRUE,0,FALSE,FALSE,2,FALSE
+188,2026/04/10 12:23:33 AM GMT+6,Md. Asaduzzaman Asha,asaduzzamana737@gmail.com,PSY101L.40 (LAB),2413749630,TRUE,TRUE,1,FALSE,FALSE,2,FALSE
+204,2026/04/10 8:51:02 AM GMT+6,Samia Akter,samia.akter.261@northsouth.edu,PSY101.04,2613957618,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
+113,2026/04/09 9:01:19 PM GMT+6,Samia Akter,samia.akter.261@northsouth.edu,PSY101.04,2613957618,TRUE,TRUE,6,TRUE,TRUE,2,TRUE
