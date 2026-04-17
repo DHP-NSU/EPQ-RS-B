@@ -2001,6 +2001,2108 @@ papaja::apa_table(
 )
 ```
 
+## EPQ-RS ALIGNMENT BENCHMARKING ANALYSIS
+
+```{r claude}
+################################################################################
+# EPQ-RS FACTOR ALIGNMENT BENCHMARKING  —  FINAL CORRECTED VERSION
+#
+# Based directly on:
+#   Asparouhov, T. & Muthén, B. (2013). Multiple-group factor analysis
+#   alignment. Mplus Web Notes No. 18.
+#
+# ── WHAT THE PAPER SPECIFIES ──────────────────────────────────────────────────
+#
+#  Model (paper eq. 1):   y_ipg = ν_pg  +  λ_pg × η_ig  +  ε_ipg
+#    ν_pg  = item INTERCEPT  (higher ν → higher P(Y=1) for binary items)
+#    λ_pg  = factor loading
+#    η_ig ~ N(α_g, ψ_g)
+#
+#  For BINARY items with WLSMV + theta parameterization:
+#    P(Y=1 | η) = Φ(λη − τ)   where τ = item THRESHOLD from lavaan
+#    Rewrite as  = Φ(λη + ν)  where ν = −τ
+#    Therefore:   ν  =  −τ                    
+#
+#  Alignment loss (paper eq. 4) is minimized w.r.t. α_g, ψ_g.
+#  Weight (paper p. 8):  w_{g1,g2} = sqrt(N_{g1} × N_{g2})
+#  sirt implements this via a G×I matrix where wgt[g, i] = sqrt(N_g).  
+#
+#  Reference group (FIXED alignment, paper p. 8–9):
+#    α_1 = 0 fixed; sirt always uses ROW 1 as reference.
+#    We REORDER so England is row 1.                                    
+#
+#  R² formula (sirt source sirt_rsquared.R):
+#    R² = 1  −  Σ(x − expl)²  /  Σ(x²)
+#    This is the no-intercept coefficient of determination, not standard R².
+#    It is bounded by 1 from above and goes deeply negative when the
+#    optimizer diverges (which happened because of un-negated thresholds).
+#    With correct inputs it returns values near 1 and the 0.90 threshold
+#    from Asparouhov & Muthén (2014) still applies.
+#
+#
+# ── REFERENCE GROUP FILE NAME ─────────────────────────────────────────────────
+#  "England-total sample UK scored EPQ item data.xls"
+#  tools::file_path_sans_ext strips the extension, leaving the label:
+#  "England-total sample UK scored EPQ item data"
+#  The code matches this label exactly.
+################################################################################
+
+
+# ==============================================================================
+# 0. PACKAGES
+# ==============================================================================
+
+required_pkgs <- c(
+  "readxl", "dplyr", "purrr", "lavaan",
+  "sirt", "ggplot2", "tibble", "tools", "stringr"
+)
+
+invisible(lapply(required_pkgs, function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE))
+    install.packages(pkg, dependencies = TRUE)
+  library(pkg, character.only = TRUE)
+}))
+
+
+# ==============================================================================
+# 1. CONFIGURATION  —  edit only these paths
+# ==============================================================================
+
+ARCHIVAL_DIR <- "EPQ- Invariance/Analysis-Files/UKscored/Total/Excel/"
+BANGLA_LABEL <- "Bangladesh (Bangla)"
+OUT_DIR      <- "outputs/alignment_output_final"
+R2_THRESHOLD <- 0.90
+
+# Exact label produced by tools::file_path_sans_ext on the England file.
+# File name: "England-total sample UK scored EPQ item data.xls"
+ENGLAND_LABEL <- "England-total sample UK scored EPQ item data"
+
+dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
+
+
+# ==============================================================================
+# 2. VERIFY BANGLA INPUT
+# ==============================================================================
+
+if (!exists("epq_items"))
+  stop("`epq_items` not found in environment. Load your Bangla item data first.")
+epq_items <- as.data.frame(epq_items)
+
+
+# ==============================================================================
+# 3. ITEM MAP  (44 common items between IPQ-RS and EPQ-90)
+# ==============================================================================
+
+common_item_map <- tibble::tribble(
+  ~EYP,    ~archival_col, ~scale,
+  "EYP1",  "N_3",  "Neuroticism",
+  "EYP3",  "E_5",  "Extraversion",
+  "EYP4",  "L_13", "Lie",
+  "EYP5",  "N_7",  "Neuroticism",
+  "EYP6",  "P_6",  "Psychoticism",
+  "EYP7",  "E_10", "Extraversion",
+  "EYP8",  "L_8",  "Lie",
+  "EYP9",  "N_15", "Neuroticism",
+  "EYP10", "P_22", "Psychoticism",
+  "EYP11", "E_17", "Extraversion",
+  "EYP12", "L_16", "Lie",
+  "EYP13", "N_19", "Neuroticism",
+  "EYP15", "E_14", "Extraversion",
+  "EYP16", "L_20", "Lie",
+  "EYP17", "N_23", "Neuroticism",
+  "EYP18", "P_37", "Psychoticism",
+  "EYP19", "E_40", "Extraversion",
+  "EYP20", "L_24", "Lie",
+  "EYP21", "N_31", "Neuroticism",
+  "EYP22", "P_43", "Psychoticism",
+  "EYP23", "E_45", "Extraversion",
+  "EYP24", "L_39", "Lie",
+  "EYP25", "N_34", "Neuroticism",
+  "EYP27", "E_21", "Extraversion",
+  "EYP28", "P_53", "Psychoticism",
+  "EYP29", "L_48", "Lie",
+  "EYP30", "N_41", "Neuroticism",
+  "EYP31", "P_67", "Psychoticism",
+  "EYP32", "E_52", "Extraversion",
+  "EYP33", "L_51", "Lie",
+  "EYP34", "N_72", "Neuroticism",
+  "EYP35", "P_71", "Psychoticism",
+  "EYP36", "E_82", "Extraversion",
+  "EYP37", "L_59", "Lie",
+  "EYP38", "N_75", "Neuroticism",
+  "EYP39", "P_83", "Psychoticism",
+  "EYP40", "L_63", "Lie",
+  "EYP41", "E_42", "Extraversion",
+  "EYP42", "N_77", "Neuroticism",
+  "EYP44", "E_86", "Extraversion",
+  "EYP45", "L_78", "Lie",
+  "EYP46", "N_27", "Neuroticism",
+  "EYP47", "L_85", "Lie",
+  "EYP48", "E_70", "Extraversion"
+)
+
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP6","EYP10","EYP18","EYP22","EYP28","EYP31","EYP35","EYP39"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP27","EYP32",
+                   "EYP36","EYP41","EYP44","EYP48"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30",
+                   "EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33",
+                   "EYP37","EYP40","EYP45","EYP47")
+)
+
+archival_to_eyp <- setNames(common_item_map$EYP,          common_item_map$archival_col)
+eyp_to_archival <- setNames(common_item_map$archival_col, common_item_map$EYP)
+
+
+# ==============================================================================
+# 4. HELPER: PER-GROUP SINGLE-FACTOR WLSMV CFA
+# ==============================================================================
+
+# Returns a list with:
+#   $loadings    — named vector of std. factor loadings (std.all from lavaan)
+#   $thresholds  — named vector of RAW thresholds τ from lavaan (will be
+#                  negated later to obtain intercepts ν = −τ)
+#   $n, $converged, $items_used, $dropped_zv, $error
+
+fit_group_cfa <- function(data_subset, factor_name, item_names,
+                          group_label = "") {
+
+  df <- as.data.frame(lapply(
+    data_subset[, item_names, drop = FALSE],
+    function(x) {
+      if (is.factor(x) || is.character(x)) x <- suppressWarnings(as.numeric(x))
+      if (is.logical(x)) x <- as.integer(x)
+      as.numeric(x)
+    }
+  ))
+
+  # Drop zero-variance items (would crash WLSMV)
+  zv <- sapply(df, function(x) length(unique(stats::na.omit(x))) < 2)
+  dropped_zv <- names(df)[zv]
+  df         <- df[, !zv, drop = FALSE]
+  item_names <- names(df)
+
+  if (length(dropped_zv) > 0)
+    message(sprintf("  [%s | %s] zero-variance dropped: %s",
+                    group_label, factor_name, paste(dropped_zv, collapse = ", ")))
+
+  if (length(item_names) < 3)
+    return(list(loadings = NULL, thresholds = NULL, n = nrow(df),
+                converged = FALSE, items_used = item_names,
+                dropped_zv = dropped_zv,
+                error = "fewer than 3 usable items after zero-variance filter"))
+
+  # WLSMV CFA with theta parameterization for binary items.
+  # std.lv = TRUE fixes factor variance to 1 (identification).
+  fit <- tryCatch(
+    lavaan::cfa(
+      model            = paste0(factor_name, " =~ ",
+                                paste(item_names, collapse = " + ")),
+      data             = df,
+      estimator        = "WLSMV",
+      ordered          = item_names,
+      parameterization = "theta",
+      std.lv           = TRUE
+    ),
+    error = function(e) e
+  )
+
+  if (inherits(fit, "error"))
+    return(list(loadings = NULL, thresholds = NULL, n = nrow(df),
+                converged = FALSE, items_used = item_names,
+                dropped_zv = dropped_zv,
+                error = conditionMessage(fit)))
+
+  converged <- tryCatch(lavaan::lavInspect(fit, "converged"),
+                        error = function(e) FALSE)
+  if (!isTRUE(converged))
+    return(list(loadings = NULL, thresholds = NULL, n = nrow(df),
+                converged = FALSE, items_used = item_names,
+                dropped_zv = dropped_zv,
+                error = "lavaan did not converge"))
+
+  pars <- lavaan::parameterEstimates(fit, standardized = TRUE)
+
+  # Factor loadings: use std.all (fully standardised)
+  lam_df   <- pars[pars$op == "=~", c("rhs", "std.all"), drop = FALSE]
+  loadings <- setNames(rep(NA_real_, length(item_names)), item_names)
+  cl       <- intersect(item_names, lam_df$rhs)
+  loadings[cl] <- lam_df$std.all[match(cl, lam_df$rhs)]
+
+  # Thresholds τ  (one per binary item, from op == "|")
+  # IMPORTANT: these are RAW thresholds, NOT yet negated.
+  # Negation to intercepts  ν = −τ  happens in run_alignment (FIX A).
+  thr_df <- pars[pars$op == "|", c("lhs", "est"), drop = FALSE]
+  thr_df <- thr_df[!duplicated(thr_df$lhs), ]         # keep first threshold
+  thresholds <- setNames(rep(NA_real_, length(item_names)), item_names)
+  ct         <- intersect(item_names, thr_df$lhs)
+  thresholds[ct] <- thr_df$est[match(ct, thr_df$lhs)]
+
+  list(
+    loadings   = loadings,
+    thresholds = thresholds,     # τ — caller negates to get ν
+    n          = nrow(df),
+    converged  = TRUE,
+    items_used = item_names,
+    dropped_zv = dropped_zv,
+    error      = NA_character_
+  )
+}
+
+
+# ==============================================================================
+# 5. LOAD AND PROCESS ARCHIVAL FILES
+# ==============================================================================
+
+excel_files <- list.files(ARCHIVAL_DIR, pattern = "\\.xlsx?$",
+                          full.names = TRUE, ignore.case = TRUE)
+if (length(excel_files) == 0)
+  stop("No Excel files found in: ", ARCHIVAL_DIR)
+message("Found ", length(excel_files), " archival files.")
+
+process_country <- function(filepath) {
+  label <- tools::file_path_sans_ext(basename(filepath))
+  message("\nProcessing: ", label)
+
+  dat <- tryCatch(as.data.frame(readxl::read_excel(filepath)),
+                  error = function(e) e)
+  if (inherits(dat, "error")) {
+    message("  READ ERROR: ", conditionMessage(dat))
+    return(list(country = label, n = NA_integer_,
+                results  = setNames(vector("list", 4), names(epq_common_item_sets)),
+                read_error = conditionMessage(dat)))
+  }
+
+  needed    <- common_item_map$archival_col
+  present   <- intersect(needed, names(dat))
+  missing   <- setdiff(needed, names(dat))
+  if (length(missing) > 0)
+    message("  Missing archival columns: ", paste(missing, collapse = ", "))
+
+  dat_c          <- dat[, present, drop = FALSE]
+  names(dat_c)   <- archival_to_eyp[present]
+
+  results <- lapply(names(epq_common_item_sets), function(sc) {
+    items <- intersect(epq_common_item_sets[[sc]], names(dat_c))
+    message(sprintf("  %s: %d items", sc, length(items)))
+    fit_group_cfa(dat_c, sc, items, label)
+  })
+  names(results) <- names(epq_common_item_sets)
+
+  list(country = label, n = nrow(dat_c),
+       results = results, read_error = NA_character_)
+}
+
+archival_results <- lapply(excel_files, process_country)
+names(archival_results) <- vapply(archival_results, `[[`, character(1), "country")
+
+
+# ==============================================================================
+# 6. PROCESS BANGLA DATA
+# ==============================================================================
+
+message("\nProcessing Bangla data from `epq_items`.")
+
+required_bangla <- common_item_map$EYP
+missing_bangla  <- setdiff(required_bangla, names(epq_items))
+if (length(missing_bangla) > 0)
+  message("Bangla data missing items: ", paste(missing_bangla, collapse = ", "))
+
+bangla_dat <- as.data.frame(
+  epq_items[, intersect(required_bangla, names(epq_items)), drop = FALSE]
+)
+
+bangla_cfas <- lapply(names(epq_common_item_sets), function(sc) {
+  items <- intersect(epq_common_item_sets[[sc]], names(bangla_dat))
+  message(sprintf("  Bangla %s: %d items", sc, length(items)))
+  fit_group_cfa(bangla_dat, sc, items, BANGLA_LABEL)
+})
+names(bangla_cfas) <- names(epq_common_item_sets)
+
+bangla_entry <- list(
+  country    = BANGLA_LABEL,
+  n          = nrow(bangla_dat),
+  results    = bangla_cfas,
+  read_error = NA_character_
+)
+
+
+# ==============================================================================
+# 7. COMBINE ALL GROUPS  AND  PLACE ENGLAND FIRST  (FIX C)
+#
+#  sirt::invariance.alignment() always uses ROW 1 as the FIXED reference group
+#  (α_1 = 0, paper p. 8-9).  We reorder so England is row 1.
+#  The England file label (after stripping extension) is exactly:
+#    "England-total sample UK scored EPQ item data"
+# ==============================================================================
+
+all_groups  <- c(archival_results, list(Bangladesh = bangla_entry))
+all_labels  <- vapply(all_groups, `[[`, character(1), "country")
+all_ns      <- vapply(all_groups,
+                      function(x) ifelse(is.na(x$n), 0L, as.integer(x$n)),
+                      integer(1))
+
+# Locate England by exact label match first, then partial as fallback
+england_idx <- which(all_labels == ENGLAND_LABEL)
+if (length(england_idx) == 0) {
+  england_idx <- which(grepl("^England", all_labels, ignore.case = TRUE))
+  if (length(england_idx) == 0)
+    stop("England file not found. Check ENGLAND_LABEL or ARCHIVAL_DIR.\n",
+         "Available labels:\n  ", paste(all_labels, collapse = "\n  "))
+  warning("Exact England label not matched; using first partial match: ",
+          all_labels[england_idx[1]])
+}
+england_idx <- england_idx[1]
+message("\nReference group (row 1): ", all_labels[england_idx])
+
+# Reorder: England first, then all others in original order
+reorder_idx <- c(england_idx, setdiff(seq_along(all_groups), england_idx))
+all_groups  <- all_groups[reorder_idx]
+all_labels  <- all_labels[reorder_idx]
+all_ns      <- all_ns[reorder_idx]
+
+# Confirm England is now row 1
+stopifnot(grepl("England", all_labels[1], ignore.case = TRUE))
+message("Groups after reordering: ", length(all_groups))
+message("Row 1 (reference): ", all_labels[1])
+message("Bangladesh at row: ", which(all_labels == BANGLA_LABEL))
+
+
+# ==============================================================================
+# 8. RUN ALIGNMENT PER SUBSCALE
+#
+#  Paper formulas implemented:
+#    ν = −τ           (FIX A: negate thresholds to get intercepts)
+#    wgt[g,i] = sqrt(N_g)  as G×I matrix  (FIX B: correct sirt input type)
+#    Row 1 = England  (FIX C: correct reference group)
+#
+#  R² interpretation (sirt_rsquared.R):
+#    R² = 1 − Σ(x − expl)² / Σ(x²)
+#    For loadings:   expl[g,i] = ψ_g × mean_aligned_loading[i]
+#    For intercepts: expl[g,i] = mean_aligned_nu[i] + α_g × mean_aligned_loading[i]
+#    Threshold ≥ 0.90 (Asparouhov & Muthén 2014)
+# ==============================================================================
+
+run_alignment <- function(scale_name) {
+  message("\n=== Alignment: ", scale_name, " ===")
+
+  target_items <- epq_common_item_sets[[scale_name]]
+  G <- length(all_groups)
+  I <- length(target_items)
+
+  # ── Build parameter matrices (groups × items) ────────────────────────────
+  lambda_mat <- matrix(NA_real_, G, I,
+                       dimnames = list(all_labels, target_items))
+  nu_mat     <- matrix(NA_real_, G, I,
+                       dimnames = list(all_labels, target_items))
+  # nu_mat will hold INTERCEPTS ν = −τ  (see FIX A below)
+
+  converged_flag <- logical(G)
+
+  for (g in seq_len(G)) {
+    res <- all_groups[[g]]$results[[scale_name]]
+    if (is.null(res) || !isTRUE(res$converged)) next
+    converged_flag[g] <- TRUE
+
+    lam <- res$loadings
+    thr <- res$thresholds
+
+    if (!is.null(lam)) {
+      ci <- intersect(names(lam), target_items)
+      lambda_mat[g, ci] <- lam[ci]
+    }
+
+    if (!is.null(thr)) {
+      ci <- intersect(names(thr), target_items)
+      # ── FIX A: ν = −τ ─────────────────────────────────────────────────
+      # lavaan returns τ (threshold, where P(Y=1) DECREASES as τ increases).
+      # sirt alignment expects ν (intercept, where P(Y=1) INCREASES as ν increases).
+      # Paper eq. (1): y_ipg = ν_pg + λ_pg × η_ig  →  for binary items ν = −τ.
+      nu_mat[g, ci] <- -thr[ci]
+    }
+  }
+
+  n_conv <- sum(converged_flag)
+  message("  Groups converged: ", n_conv, " / ", G)
+
+  if (n_conv < 2) {
+    message("  Skipping: need at least 2 converged groups.")
+    return(NULL)
+  }
+
+  # ── Drop items with < 50% coverage across CONVERGED groups ───────────────
+  coverage   <- colMeans(!is.na(lambda_mat[converged_flag, , drop = FALSE]))
+  keep_items <- names(coverage)[coverage >= 0.50]
+  drop_items <- setdiff(target_items, keep_items)
+
+  if (length(drop_items) > 0)
+    message("  Items dropped (< 50% coverage): ", paste(drop_items, collapse = ", "))
+  if (length(keep_items) < 3) {
+    message("  Skipping: fewer than 3 items with adequate coverage.")
+    return(NULL)
+  }
+
+  lambda_mat <- lambda_mat[, keep_items, drop = FALSE]
+  nu_mat     <- nu_mat[,    keep_items, drop = FALSE]
+
+  # ── Keep groups that have at least one valid entry in BOTH matrices ───────
+  usable <- rowSums(!is.na(lambda_mat)) > 0 & rowSums(!is.na(nu_mat)) > 0
+  if (sum(usable) < 2) {
+    message("  Skipping: fewer than 2 usable groups after item trim.")
+    return(NULL)
+  }
+
+  # Confirm England (reference, row 1) is still present after filtering
+  if (!usable[1]) {
+    message("  WARNING: England (reference group) was dropped as unusable.",
+            " Cannot proceed with this subscale.")
+    return(NULL)
+  }
+
+  lambda_mat  <- lambda_mat[usable, , drop = FALSE]
+  nu_mat      <- nu_mat[usable,     , drop = FALSE]
+  used_labels <- rownames(lambda_mat)
+  used_ns     <- all_ns[match(used_labels, all_labels)]
+
+  # ── Mean-impute remaining NAs cell-by-cell ────────────────────────────────
+  had_imputation <- anyNA(lambda_mat) || anyNA(nu_mat)
+  if (had_imputation) {
+    message("  Imputing remaining NA cells by column mean.")
+    for (j in seq_len(ncol(lambda_mat))) {
+      na_l <- is.na(lambda_mat[, j])
+      na_n <- is.na(nu_mat[, j])
+      if (any(na_l)) lambda_mat[na_l, j] <- mean(lambda_mat[, j], na.rm = TRUE)
+      if (any(na_n)) nu_mat[na_n,     j] <- mean(nu_mat[,     j], na.rm = TRUE)
+    }
+  }
+
+  # ── FIX B: Weight matrix ──────────────────────────────────────────────────
+  # Paper p.8: w_{g1,g2} = sqrt(N_{g1} × N_{g2}).
+  # sirt implements this internally from a G×I matrix where wgt[g,i] = sqrt(N_g).
+  # sirt IMMEDIATELY calls dim(wgt) and colSums(wgt) — it MUST be a matrix.
+  # A vector has no dim and crashes the function silently (caught by tryCatch → NULL).
+  #
+  # Documentation example: wgt <- matrix(sqrt(Ng), length(Ng), ncol(nu))
+  # This fills column-by-column, giving row g the value sqrt(N_g) in every column.
+  wgt_mat <- matrix(
+    sqrt(used_ns),
+    nrow = length(used_ns),
+    ncol = ncol(lambda_mat)      # fills column-by-column: correct
+  )
+  dimnames(wgt_mat) <- dimnames(lambda_mat)
+
+  # Sanity check: first row must be England (reference)
+  stopifnot(grepl("England", rownames(lambda_mat)[1], ignore.case = TRUE))
+
+  # ── Call sirt alignment ───────────────────────────────────────────────────
+  align_res <- tryCatch(
+    sirt::invariance.alignment(
+      lambda    = lambda_mat,
+      nu        = nu_mat,         # intercepts ν = −τ  (FIX A applied above)
+      wgt       = wgt_mat,        # G×I matrix  (FIX B)
+      align.pow = c(0.5, 0.5),   # default; matches A&M 2014 (sirt halves internally)
+      eps       = 1e-4
+    ),
+    error   = function(e) { message("  sirt ERROR: ",   conditionMessage(e)); NULL },
+    warning = function(w) { message("  sirt WARNING: ", conditionMessage(w)); NULL }
+  )
+
+  if (is.null(align_res)) {
+    message("  Alignment failed. Check sirt error message above.")
+    return(NULL)
+  }
+
+  # ── Extract R² ────────────────────────────────────────────────────────────
+  # From sirt source sirt_rsquared.R:
+  #   R² = 1 − Σ(x − expl)² / Σ(x²)
+  # For loadings:   x = lambda (input), expl = psi0[g] × mean_aligned_lambda[i]
+  # For intercepts: x = nu     (input), expl = mean_aligned_nu[i] + alpha0[g] × mean_aligned_lambda[i]
+  # Both consistent with paper equations (2) and (3).
+  # Threshold ≥ 0.90 following Asparouhov & Muthén (2014).
+  es <- align_res$es.invariance
+  r2_load <- if (!is.null(es) && "R2" %in% rownames(es) &&
+                  "loadings"   %in% colnames(es)) es["R2", "loadings"]   else NA_real_
+  r2_int  <- if (!is.null(es) && "R2" %in% rownames(es) &&
+                  "intercepts" %in% colnames(es)) es["R2", "intercepts"] else NA_real_
+
+  message(sprintf("  R2 loadings = %.4f  |  R2 intercepts = %.4f  |  Acceptable: %s",
+                  r2_load, r2_int,
+                  ifelse(!is.na(r2_load) && r2_load >= R2_THRESHOLD, "YES", "NO")))
+
+  list(
+    scale            = scale_name,
+    model            = align_res,
+    items_used       = keep_items,
+    groups_used      = used_labels,
+    # alpha0: aligned factor means; England fixed at 0 (FIXED alignment)
+    alpha0           = setNames(align_res$pars$alpha0, rownames(align_res$pars)),
+    # psi0:  aligned factor scale factors (sqrt of factor variance)
+    psi0             = setNames(align_res$pars$psi0,   rownames(align_res$pars)),
+    itempars_aligned = align_res$itempars.aligned,
+    es_invariance    = align_res$es.invariance,
+    R2_loadings      = r2_load,
+    R2_intercepts    = r2_int,
+    acceptable       = !is.na(r2_load) && r2_load >= R2_THRESHOLD,
+    had_imputation   = had_imputation
+  )
+}
+
+alignment_results <- lapply(names(epq_common_item_sets), run_alignment)
+names(alignment_results) <- names(epq_common_item_sets)
+
+
+# ==============================================================================
+# 9. OUTPUT TABLES
+# ==============================================================================
+
+# Helper: expand aligned values to the full group vector (NA for absent groups)
+to_full_vec <- function(named_vec, full_labels) {
+  out <- setNames(rep(NA_real_, length(full_labels)), full_labels)
+  if (!is.null(named_vec)) out[names(named_vec)] <- named_vec
+  out
+}
+
+# 9a. Aligned factor means
+means_df <- tibble::tibble(Group = all_labels, n = all_ns)
+for (sc in names(alignment_results)) {
+  res          <- alignment_results[[sc]]
+  means_df[[sc]] <- to_full_vec(if (!is.null(res)) res$alpha0 else NULL, all_labels)
+}
+write.csv(means_df, file.path(OUT_DIR, "aligned_factor_means.csv"), row.names = FALSE)
+
+# 9b. Aligned factor variances (psi0)
+vars_df <- tibble::tibble(Group = all_labels)
+for (sc in names(alignment_results)) {
+  res         <- alignment_results[[sc]]
+  vars_df[[sc]] <- to_full_vec(if (!is.null(res)) res$psi0 else NULL, all_labels)
+}
+write.csv(vars_df, file.path(OUT_DIR, "aligned_factor_vars.csv"), row.names = FALSE)
+
+# 9c. Alignment fit summary
+fit_df <- tibble::tibble(
+  Subscale       = names(alignment_results),
+  R2_loadings    = sapply(alignment_results, function(r) if (is.null(r)) NA_real_ else r$R2_loadings),
+  R2_intercepts  = sapply(alignment_results, function(r) if (is.null(r)) NA_real_ else r$R2_intercepts),
+  Acceptable     = sapply(alignment_results, function(r) if (is.null(r)) NA       else r$acceptable),
+  N_items_used   = sapply(alignment_results, function(r) if (is.null(r)) NA_integer_ else length(r$items_used)),
+  N_groups_used  = sapply(alignment_results, function(r) if (is.null(r)) NA_integer_ else length(r$groups_used)),
+  Had_imputation = sapply(alignment_results, function(r) if (is.null(r)) NA       else r$had_imputation)
+)
+write.csv(fit_df, file.path(OUT_DIR, "alignment_fit.csv"), row.names = FALSE)
+message("\n=== Alignment fit ===")
+print(fit_df)
+
+# 9d. Aligned item parameters (non-invariance diagnostics)
+noninv_df <- purrr::map_dfr(names(alignment_results), function(sc) {
+  res <- alignment_results[[sc]]
+  if (is.null(res) || is.null(res$itempars_aligned)) return(NULL)
+  out          <- as.data.frame(res$itempars_aligned)
+  out$Subscale <- sc
+  out
+})
+write.csv(noninv_df, file.path(OUT_DIR, "noninvariant_params.csv"), row.names = FALSE)
+
+# 9e. Bangladesh percentile table
+# Values are ALWAYS written with an Interpret column flagging acceptability.
+# The R2 guard that produced all-NAs has been removed.
+bangla_percentile <- purrr::map_dfr(names(alignment_results), function(sc) {
+  res <- alignment_results[[sc]]
+
+  # Alignment failed entirely for this subscale
+  if (is.null(res)) {
+    message("  [", sc, "] alignment NULL — all values NA.")
+    return(tibble::tibble(
+      Subscale = sc, R2_loadings = NA_real_, R2_intercepts = NA_real_,
+      R2_acceptable = NA, Bangla_in_model = FALSE,
+      Bangla_mean = NA_real_, Mean_36groups = NA_real_, SD_36groups = NA_real_,
+      Percentile_rank = NA_real_, Z_score = NA_real_,
+      Interpret = "DO NOT INTERPRET: alignment skipped"
+    ))
+  }
+
+  in_model <- BANGLA_LABEL %in% names(res$alpha0)
+
+  if (!in_model) {
+    message("  [", sc, "] Bangladesh absent from aligned groups.",
+            " Check convergence_log for Bangla ", sc, ".")
+    return(tibble::tibble(
+      Subscale = sc, R2_loadings = res$R2_loadings, R2_intercepts = res$R2_intercepts,
+      R2_acceptable = res$acceptable, Bangla_in_model = FALSE,
+      Bangla_mean = NA_real_,
+      Mean_36groups = mean(unname(res$alpha0), na.rm = TRUE),
+      SD_36groups   = sd(unname(res$alpha0),   na.rm = TRUE),
+      Percentile_rank = NA_real_, Z_score = NA_real_,
+      Interpret = "DO NOT INTERPRET: Bangladesh absent from alignment"
+    ))
+  }
+
+  all_means <- unname(res$alpha0)
+  bgd_mean  <- res$alpha0[[BANGLA_LABEL]]
+  mu        <- mean(all_means, na.rm = TRUE)
+  s         <- sd(all_means,   na.rm = TRUE)
+  pct       <- round(mean(all_means <= bgd_mean, na.rm = TRUE) * 100, 1)
+  z         <- if (!is.na(s) && s > 0) round((bgd_mean - mu) / s, 2) else NA_real_
+
+  interp <- if (isTRUE(res$acceptable)) {
+    "OK to interpret (R2 >= 0.90)"
+  } else {
+    sprintf("CAUTION: R2_loadings = %.3f < %.2f; interpret with caution",
+            res$R2_loadings, R2_THRESHOLD)
+  }
+
+  tibble::tibble(
+    Subscale = sc, R2_loadings = res$R2_loadings, R2_intercepts = res$R2_intercepts,
+    R2_acceptable = res$acceptable, Bangla_in_model = TRUE,
+    Bangla_mean = bgd_mean, Mean_36groups = mu, SD_36groups = s,
+    Percentile_rank = pct, Z_score = z, Interpret = interp
+  )
+})
+write.csv(bangla_percentile, file.path(OUT_DIR, "bangla_percentile.csv"), row.names = FALSE)
+message("\n=== Bangladesh percentile ===")
+print(bangla_percentile[, c("Subscale","R2_loadings","R2_acceptable",
+                             "Bangla_mean","Percentile_rank","Z_score","Interpret")])
+
+
+# ==============================================================================
+# 10. CONVERGENCE LOG
+# ==============================================================================
+
+convergence_log <- purrr::map_dfr(seq_along(all_groups), function(g) {
+  grp <- all_groups[[g]]
+  purrr::map_dfr(names(epq_common_item_sets), function(sc) {
+    res <- grp$results[[sc]]
+    if (is.null(res)) {
+      tibble::tibble(Group = grp$country, Subscale = sc, n = grp$n,
+                     Converged = FALSE, Items_used = NA_character_,
+                     Dropped_zv = NA_character_, Error = "no result object")
+    } else {
+      tibble::tibble(
+        Group      = grp$country,  Subscale = sc,       n = res$n,
+        Converged  = isTRUE(res$converged),
+        Items_used = paste(res$items_used, collapse = ", "),
+        Dropped_zv = paste(res$dropped_zv, collapse = ", "),
+        Error      = ifelse(is.na(res$error), "", res$error)
+      )
+    }
+  })
+})
+write.csv(convergence_log, file.path(OUT_DIR, "convergence_log.csv"), row.names = FALSE)
+
+n_fail <- sum(!convergence_log$Converged)
+message(sprintf("\nConvergence: %d failures out of %d group-subscale combinations.",
+                n_fail, nrow(convergence_log)))
+
+
+# ==============================================================================
+# 11. BENCHMARK PLOT
+#
+# All 4 subscales shown. Panels where R2 < 0.90 get an orange strip label.
+# Reference line at 0 = England.
+# Bangladesh highlighted in red.
+# ==============================================================================
+
+plot_data <- purrr::map_dfr(names(alignment_results), function(sc) {
+  res <- alignment_results[[sc]]
+  if (is.null(res)) return(NULL)
+  ok    <- isTRUE(res$acceptable)
+  label <- sprintf("%s  [R\u00b2=%.3f%s]", sc, res$R2_loadings,
+                   if (ok) " \u2713" else " \u26a0 CAUTION")
+  tibble::tibble(
+    panel     = label,
+    panel_ok  = ok,
+    group     = names(res$alpha0),
+    mean      = unname(res$alpha0),
+    is_bangla = names(res$alpha0) == BANGLA_LABEL
+  )
+})
+
+if (nrow(plot_data) > 0) {
+  ok_panels  <- unique(plot_data$panel[plot_data$panel_ok])
+  bad_panels <- unique(plot_data$panel[!plot_data$panel_ok])
+  plot_data$panel <- factor(plot_data$panel, levels = c(ok_panels, bad_panels))
+
+  strip_fills <- setNames(
+    ifelse(levels(plot_data$panel) %in% ok_panels, "#FFFFFF", "#FFE0B2"),
+    levels(plot_data$panel)
+  )
+
+  p <- ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(x = mean, y = reorder(group, mean),
+                 colour = is_bangla, size = is_bangla)
+  ) +
+    ggplot2::geom_point(alpha = 0.85) +
+    ggplot2::scale_colour_manual(
+      values = c("FALSE" = "grey60", "TRUE" = "#C0392B"),
+      labels = c("Other group", BANGLA_LABEL), name = NULL
+    ) +
+    ggplot2::scale_size_manual(values = c("FALSE" = 1.8, "TRUE" = 4),
+                               guide = "none") +
+    ggplot2::facet_wrap(~ panel, scales = "free_x", ncol = 2) +
+    ggplot2::geom_vline(xintercept = 0, linetype = "dashed",
+                        colour = "grey30", linewidth = 0.4) +
+    ggplot2::labs(
+      title    = "Aligned Factor Means: 35 Archival Countries + Bangladesh (EPQ-RS)",
+      subtitle = paste0(
+        "Reference group = England (UK-scored, \u03b1 = 0).  ",
+        "Red point = Bangladesh.  \u26a0 panels: R\u00b2 < ", R2_THRESHOLD,
+        ", interpret with caution."
+      ),
+      x       = "Aligned factor mean (\u03b10)",
+      y       = NULL,
+      caption = paste0(
+        "Alignment method: Asparouhov & Muth\u00e9n (2013, Web Note 18) ",
+        "via sirt (Robitzsch).  ",
+        "44 common items (IPQ-RS \u2229 EPQ-90).  ",
+        "Intercepts computed as \u03bd = \u2212\u03c4 from WLSMV theta parameterization."
+      )
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      legend.position    = "top",
+      strip.background   = ggplot2::element_rect(
+        fill  = strip_fills[levels(plot_data$panel)],
+        color = "grey80"
+      ),
+      strip.text         = ggplot2::element_text(face = "bold", size = 8),
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank()
+    )
+
+  ggplot2::ggsave(
+    filename = file.path(OUT_DIR, "benchmark_plot.pdf"),
+    plot     = p,
+    width    = 12,
+    height   = max(10, 0.22 * dplyr::n_distinct(plot_data$group)),
+    device   = cairo_pdf
+  )
+  message("Benchmark plot saved.")
+}
+
+
+# ==============================================================================
+# 12. SAVE RDS WORKSPACE
+# ==============================================================================
+
+saveRDS(
+  list(
+    common_item_map      = common_item_map,
+    epq_common_item_sets = epq_common_item_sets,
+    archival_results     = archival_results,
+    bangla_entry         = bangla_entry,
+    all_groups           = all_groups,
+    all_labels           = all_labels,
+    all_ns               = all_ns,
+    alignment_results    = alignment_results,
+    means_df             = means_df,
+    vars_df              = vars_df,
+    fit_df               = fit_df,
+    bangla_percentile    = bangla_percentile,
+    convergence_log      = convergence_log
+  ),
+  file = file.path(OUT_DIR, "alignment_workspace.rds")
+)
+
+message("\n==============================")
+message("DONE. Output: ", normalizePath(OUT_DIR, winslash = "/"))
+message("==============================")
+message("\nKey file: ", file.path(OUT_DIR, "bangla_percentile.csv"))
+message("Key file: ", file.path(OUT_DIR, "alignment_fit.csv"))
+message("Key file: ", file.path(OUT_DIR, "benchmark_plot.pdf"))
+```
+
+```{r gpt1}
+################################################################################
+# EPQ-RS CROSS-CULTURAL ALIGNMENT BENCHMARKING
+# R-only approximation to the logic used in:
+# - McLarnon & Romero (2020)
+# - Asparouhov & Muthén, Web Note 18
+#
+# What this script does:
+#   1) Reads all archival UK-scored EPQ country files + Bangla epq_items
+#   2) Keeps England as the exact reference file
+#   3) Uses the common-item map you already worked with
+#   4) Estimates group-specific configural 1-factor CFAs for each scale
+#      using categorical/probit modeling in lavaan
+#   5) Feeds the configural loadings + thresholds into sirt alignment
+#   6) Tries a FREE-like alignment first, then FIXED-like if needed
+#   7) Re-expresses all aligned means/SDs relative to England
+#
+# Important:
+#   - This is the closest R-only approximation.
+#   - It is NOT the exact Mplus implementation from the paper.
+################################################################################
+
+# ---- 0. PACKAGES -------------------------------------------------------------
+
+required_pkgs <- c(
+  "readxl", "dplyr", "tidyr", "purrr", "stringr", "tibble",
+  "readr", "ggplot2", "lavaan", "sirt"
+)
+
+invisible(lapply(required_pkgs, function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, dependencies = TRUE)
+  }
+  library(pkg, character.only = TRUE)
+}))
+
+# ---- 1. CONFIGURATION --------------------------------------------------------
+
+ARCHIVAL_DIR   <- "EPQ- Invariance/Analysis-Files/UKscored/Total/Excel/"
+OUT_DIR        <- "outputs/alignment_output_r_approx"
+BANGLA_LABEL   <- "Bangladesh (Bangla)"
+ENGLAND_FILE   <- "England-total sample UK scored EPQ item data.xls"
+
+# These tolerances are heuristic and only used to flag larger residual non-invariance.
+# You can tighten or loosen them later.
+LAMBDA_TOL <- 0.20
+NU_TOL     <- 0.40
+
+dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
+
+# ---- 2. VERIFY BANGLA INPUT --------------------------------------------------
+
+if (!exists("epq_items")) {
+  stop("Object `epq_items` was not found in the R environment.")
+}
+epq_items <- as.data.frame(epq_items)
+
+# ---- 3. ITEM MAP -------------------------------------------------------------
+
+common_item_map <- tibble::tribble(
+  ~EYP,    ~archival_col, ~scale,
+  "EYP1",  "N_3",  "Neuroticism",
+  "EYP3",  "E_5",  "Extraversion",
+  "EYP4",  "L_13", "Lie",
+  "EYP5",  "N_7",  "Neuroticism",
+  "EYP6",  "P_6",  "Psychoticism",
+  "EYP7",  "E_10", "Extraversion",
+  "EYP8",  "L_8",  "Lie",
+  "EYP9",  "N_15", "Neuroticism",
+  "EYP10", "P_22", "Psychoticism",
+  "EYP11", "E_17", "Extraversion",
+  "EYP12", "L_16", "Lie",
+  "EYP13", "N_19", "Neuroticism",
+  "EYP15", "E_14", "Extraversion",
+  "EYP16", "L_20", "Lie",
+  "EYP17", "N_23", "Neuroticism",
+  "EYP18", "P_37", "Psychoticism",
+  "EYP19", "E_40", "Extraversion",
+  "EYP20", "L_24", "Lie",
+  "EYP21", "N_31", "Neuroticism",
+  "EYP22", "P_43", "Psychoticism",
+  "EYP23", "E_45", "Extraversion",
+  "EYP24", "L_39", "Lie",
+  "EYP25", "N_34", "Neuroticism",
+  "EYP27", "E_21", "Extraversion",
+  "EYP28", "P_53", "Psychoticism",
+  "EYP29", "L_48", "Lie",
+  "EYP30", "N_41", "Neuroticism",
+  "EYP31", "P_67", "Psychoticism",
+  "EYP32", "E_52", "Extraversion",
+  "EYP33", "L_51", "Lie",
+  "EYP34", "N_72", "Neuroticism",
+  "EYP35", "P_71", "Psychoticism",
+  "EYP36", "E_82", "Extraversion",
+  "EYP37", "L_59", "Lie",
+  "EYP38", "N_75", "Neuroticism",
+  "EYP39", "P_83", "Psychoticism",
+  "EYP40", "L_63", "Lie",
+  "EYP41", "E_42", "Extraversion",
+  "EYP42", "N_77", "Neuroticism",
+  "EYP44", "E_86", "Extraversion",
+  "EYP45", "L_78", "Lie",
+  "EYP46", "N_27", "Neuroticism",
+  "EYP47", "L_85", "Lie",
+  "EYP48", "E_70", "Extraversion"
+)
+
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP6","EYP10","EYP18","EYP22","EYP28","EYP31","EYP35","EYP39"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP27","EYP32",
+                   "EYP36","EYP41","EYP44","EYP48"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30",
+                   "EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33",
+                   "EYP37","EYP40","EYP45","EYP47")
+)
+
+archival_to_eyp <- setNames(common_item_map$EYP, common_item_map$archival_col)
+
+# ---- 4. HELPERS --------------------------------------------------------------
+
+infer_country_from_filename <- function(path) {
+  x <- basename(path)
+  x <- stringr::str_remove(x, "\\.[^.]+$")
+  x <- stringr::str_replace_all(x, "_", " ")
+  x <- stringr::str_replace_all(x, "-", " ")
+  x <- stringr::str_replace(
+    x,
+    regex("total sample uk scored epq item data", ignore_case = TRUE),
+    ""
+  )
+  stringr::str_squish(x)
+}
+
+normalize_binary <- function(x) {
+  if (is.factor(x)) x <- as.character(x)
+  if (is.logical(x)) x <- as.integer(x)
+
+  if (is.character(x)) {
+    x_clean <- stringr::str_to_lower(stringr::str_trim(x))
+    x <- dplyr::case_when(
+      x_clean %in% c("yes", "y", "1", "true", "t") ~ 1,
+      x_clean %in% c("no",  "n", "0", "false", "f") ~ 0,
+      x_clean %in% c("", "na", "n/a", ".", "missing") ~ NA_real_,
+      TRUE ~ suppressWarnings(as.numeric(x_clean))
+    )
+  } else {
+    x <- suppressWarnings(as.numeric(x))
+  }
+
+  vals <- sort(unique(stats::na.omit(x)))
+
+  # Common archival coding from Eysenck & Barrett (2013)-style files:
+  # 1 = No, 3 = Yes, 2 = missing
+  if (all(vals %in% c(1, 2, 3))) {
+    x <- dplyr::case_when(
+      x == 1 ~ 0,
+      x == 3 ~ 1,
+      x == 2 ~ NA_real_,
+      TRUE   ~ x
+    )
+    return(x)
+  }
+
+  if (identical(vals, c(1, 2))) {
+    x <- x - 1
+    return(x)
+  }
+
+  if (identical(vals, c(1, 3))) {
+    x <- ifelse(is.na(x), NA_real_, ifelse(x == 3, 1, 0))
+    return(x)
+  }
+
+  bad <- setdiff(sort(unique(stats::na.omit(x))), c(0, 1))
+  if (length(bad) > 0) {
+    warning("Non-binary values detected: ", paste(bad, collapse = ", "))
+  }
+
+  x
+}
+
+coerce_binary_df <- function(df) {
+  as.data.frame(lapply(df, normalize_binary))
+}
+
+read_archival_country <- function(path) {
+  raw <- readxl::read_excel(path)
+  raw <- as.data.frame(raw)
+  names(raw) <- stringr::str_squish(names(raw))
+
+  needed <- common_item_map$archival_col
+  missing_cols <- setdiff(needed, names(raw))
+  if (length(missing_cols) > 0) {
+    stop("Missing archival columns in ", basename(path), ": ",
+         paste(missing_cols, collapse = ", "))
+  }
+
+  dat <- raw[, needed, drop = FALSE]
+  names(dat) <- archival_to_eyp[names(dat)]
+  dat <- coerce_binary_df(dat)
+
+  list(
+    country = infer_country_from_filename(path),
+    source_file = path,
+    data = dat,
+    n_raw = nrow(dat)
+  )
+}
+
+read_bangla_country <- function(epq_items_df) {
+  needed <- common_item_map$EYP
+  missing_cols <- setdiff(needed, names(epq_items_df))
+  if (length(missing_cols) > 0) {
+    stop("Bangla epq_items is missing: ", paste(missing_cols, collapse = ", "))
+  }
+
+  dat <- epq_items_df[, needed, drop = FALSE]
+  dat <- coerce_binary_df(dat)
+
+  list(
+    country = BANGLA_LABEL,
+    source_file = NA_character_,
+    data = dat,
+    n_raw = nrow(dat)
+  )
+}
+
+fit_configural_group_cfa <- function(df, items, scale_name, country_name) {
+  dat <- df[, items, drop = FALSE]
+  dat <- dat[stats::complete.cases(dat), , drop = FALSE]
+
+  if (nrow(dat) == 0) {
+    stop("No complete cases for ", scale_name, " in ", country_name)
+  }
+
+  bad_items <- names(which(vapply(dat, function(x) length(unique(stats::na.omit(x))) < 2, logical(1))))
+  if (length(bad_items) > 0) {
+    stop(
+      "Zero-variance item(s) in ", country_name, " for ", scale_name, ": ",
+      paste(bad_items, collapse = ", ")
+    )
+  }
+
+  model_syntax <- paste0("F =~ ", paste(items, collapse = " + "))
+
+  fit <- lavaan::cfa(
+    model = model_syntax,
+    data = dat,
+    ordered = items,
+    estimator = "WLSMV",
+    parameterization = "theta",
+    std.lv = TRUE
+  )
+
+  pe <- lavaan::parameterEstimates(fit, standardized = FALSE)
+
+  # Loadings
+  loading_df <- pe |>
+    dplyr::filter(op == "=~", lhs == "F") |>
+    dplyr::select(rhs, est)
+
+  lambda <- setNames(rep(NA_real_, length(items)), items)
+  lambda[loading_df$rhs] <- loading_df$est
+
+  # Thresholds: binary items should have one threshold
+  thr_df <- pe |>
+    dplyr::filter(op == "|") |>
+    dplyr::select(lhs, est) |>
+    dplyr::distinct(lhs, .keep_all = TRUE)
+
+  tau <- setNames(rep(NA_real_, length(items)), items)
+  common_items <- intersect(items, thr_df$lhs)
+  tau[common_items] <- thr_df$est[match(common_items, thr_df$lhs)]
+
+  # Alignment works on intercept-like parameters.
+  # For binary probit CFA, use nu = -tau as the practical conversion.
+  nu <- -tau
+
+  list(
+    fit = fit,
+    n_complete = nrow(dat),
+    lambda = lambda,
+    nu = nu
+  )
+}
+
+run_alignment_one_scale <- function(scale_name, all_groups, group_key) {
+  message("\n==============================")
+  message("Running scale: ", scale_name)
+  message("==============================")
+
+  items <- epq_common_item_sets[[scale_name]]
+
+  config_est <- purrr::map(
+    all_groups,
+    ~ fit_configural_group_cfa(
+      df = .x$data,
+      items = items,
+      scale_name = scale_name,
+      country_name = .x$country
+    )
+  )
+
+  lambda <- do.call(rbind, purrr::map(config_est, "lambda"))
+  nu     <- do.call(rbind, purrr::map(config_est, "nu"))
+  n_vec  <- purrr::map_int(config_est, "n_complete")
+
+  rownames(lambda) <- group_key$country
+  rownames(nu)     <- group_key$country
+  colnames(lambda) <- items
+  colnames(nu)     <- items
+
+  # Web Note 18 uses weights based on sqrt(Ng1 * Ng2) in the loss function.
+  # In sirt, weights are supplied as a G x I matrix, commonly with sqrt(Ng).
+  wgt <- matrix(sqrt(n_vec), nrow = length(n_vec), ncol = length(items))
+  colnames(wgt) <- items
+  rownames(wgt) <- group_key$country
+
+  # FREE-like first
+  free_res <- tryCatch(
+    sirt::invariance.alignment(
+      lambda = lambda,
+      nu = nu,
+      wgt = wgt,
+      align.scale = c(1, 1),
+      align.pow = c(.5, .5),
+      center = FALSE,
+      fixed = FALSE,
+      meth = 4
+    ),
+    error = function(e) NULL
+  )
+
+  chosen <- free_res
+  chosen_method <- "FREE-like (sirt meth=4)"
+  fallback_used <- FALSE
+
+  if (is.null(chosen)) {
+    fallback_used <- TRUE
+  } else {
+    bad_pars <- any(!is.finite(chosen$pars$alpha0)) ||
+      any(!is.finite(chosen$pars$psi0)) ||
+      any(chosen$pars$psi0 <= 0)
+
+    if (bad_pars) fallback_used <- TRUE
+  }
+
+  if (fallback_used) {
+    chosen <- sirt::invariance.alignment(
+      lambda = lambda,
+      nu = nu,
+      wgt = wgt,
+      align.scale = c(1, 1),
+      align.pow = c(.5, .5),
+      center = FALSE,
+      fixed = TRUE,
+      meth = 3
+    )
+    chosen_method <- "FIXED-like (sirt meth=3)"
+  }
+
+  pars <- as.data.frame(chosen$pars)
+  pars$country <- group_key$country
+  pars$scale <- scale_name
+  pars$method <- chosen_method
+  pars$n_complete <- n_vec
+
+  # Re-express on England-referenced metric
+  eng_idx <- which(group_key$is_reference)
+  alpha_eng <- pars$alpha0[eng_idx]
+  psi_eng   <- pars$psi0[eng_idx]
+
+  pars$mean_eng_ref     <- (pars$alpha0 - alpha_eng) / psi_eng
+  pars$sd_eng_ref       <- pars$psi0 / psi_eng
+  pars$variance_eng_ref <- pars$sd_eng_ref^2
+
+  # Effect sizes of approximate invariance
+  es <- as.data.frame(chosen$es.invariance)
+  es$scale <- scale_name
+  es$method <- chosen_method
+
+  # Residual non-invariance tables
+  lambda_resid <- as.data.frame(chosen$lambda.resid)
+  lambda_resid$country <- rownames(lambda_resid)
+
+  nu_resid <- as.data.frame(chosen$nu.resid)
+  nu_resid$country <- rownames(nu_resid)
+
+  lambda_noninv <- lambda_resid |>
+    tidyr::pivot_longer(-country, names_to = "item", values_to = "resid") |>
+    dplyr::mutate(
+      parameter = "loading",
+      abs_resid = abs(resid),
+      flagged = abs_resid > LAMBDA_TOL,
+      scale = scale_name,
+      method = chosen_method
+    )
+
+  nu_noninv <- nu_resid |>
+    tidyr::pivot_longer(-country, names_to = "item", values_to = "resid") |>
+    dplyr::mutate(
+      parameter = "threshold/intercept",
+      abs_resid = abs(resid),
+      flagged = abs_resid > NU_TOL,
+      scale = scale_name,
+      method = chosen_method
+    )
+
+  noninv <- dplyr::bind_rows(lambda_noninv, nu_noninv)
+
+  config_lambda <- as.data.frame(lambda)
+  config_lambda$country <- rownames(config_lambda)
+  config_lambda$scale <- scale_name
+
+  config_nu <- as.data.frame(nu)
+  config_nu$country <- rownames(config_nu)
+  config_nu$scale <- scale_name
+
+  list(
+    scale = scale_name,
+    items = items,
+    method = chosen_method,
+    config_est = config_est,
+    config_lambda = config_lambda,
+    config_nu = config_nu,
+    alignment = chosen,
+    pars = pars,
+    es = es,
+    noninv = noninv
+  )
+}
+
+# ---- 5. READ GROUPS ----------------------------------------------------------
+
+archival_files <- list.files(
+  ARCHIVAL_DIR,
+  pattern = "\\.(xls|xlsx)$",
+  full.names = TRUE
+)
+
+if (length(archival_files) == 0) {
+  stop("No archival Excel files found in: ", ARCHIVAL_DIR)
+}
+
+archival_groups <- purrr::map(archival_files, read_archival_country)
+bangla_group    <- read_bangla_country(epq_items)
+
+all_groups <- c(archival_groups, list(bangla_group))
+
+source_files <- purrr::map_chr(
+  all_groups,
+  ~ if (is.null(.x$source_file) || all(is.na(.x$source_file))) "" else basename(.x$source_file)
+)
+
+eng_idx <- which(source_files == ENGLAND_FILE)
+
+if (length(eng_idx) == 0) {
+  stop("England reference file was not found. Expected file name: ", ENGLAND_FILE)
+}
+
+reorder_idx <- c(eng_idx[1], setdiff(seq_along(all_groups), eng_idx[1]))
+all_groups  <- all_groups[reorder_idx]
+
+group_key <- tibble::tibble(
+  code = seq_along(all_groups),
+  country = purrr::map_chr(all_groups, "country"),
+  n_raw = purrr::map_int(all_groups, "n_raw"),
+  source_file = purrr::map_chr(
+    all_groups,
+    ~ if (is.null(.x$source_file) || all(is.na(.x$source_file))) "" else basename(.x$source_file)
+  )
+) |>
+  dplyr::mutate(
+    is_bangla = country == BANGLA_LABEL,
+    is_reference = source_file == ENGLAND_FILE
+  )
+
+readr::write_csv(group_key, file.path(OUT_DIR, "country_key.csv"))
+
+message(
+  "England reference group: ",
+  group_key$country[group_key$is_reference][1],
+  " [", group_key$source_file[group_key$is_reference][1], "]"
+)
+
+# ---- 6. RUN ALIGNMENT --------------------------------------------------------
+
+alignment_results <- purrr::map(
+  names(epq_common_item_sets),
+  ~ run_alignment_one_scale(.x, all_groups = all_groups, group_key = group_key)
+)
+names(alignment_results) <- names(epq_common_item_sets)
+
+# ---- 7. EXPORT RESULTS -------------------------------------------------------
+
+aligned_means <- dplyr::bind_rows(purrr::map(alignment_results, "pars"))
+alignment_es  <- dplyr::bind_rows(purrr::map(alignment_results, "es"))
+noninv_tbl    <- dplyr::bind_rows(purrr::map(alignment_results, "noninv"))
+config_lambda <- dplyr::bind_rows(purrr::map(alignment_results, "config_lambda"))
+config_nu     <- dplyr::bind_rows(purrr::map(alignment_results, "config_nu"))
+
+readr::write_csv(aligned_means, file.path(OUT_DIR, "aligned_factor_means_variances.csv"))
+readr::write_csv(alignment_es,  file.path(OUT_DIR, "alignment_effect_sizes.csv"))
+readr::write_csv(noninv_tbl,    file.path(OUT_DIR, "noninvariant_params.csv"))
+readr::write_csv(config_lambda, file.path(OUT_DIR, "configural_loadings.csv"))
+readr::write_csv(config_nu,     file.path(OUT_DIR, "configural_nu.csv"))
+
+# ---- 8. BANGLA PERCENTILE ----------------------------------------------------
+
+bangla_percentile <- aligned_means |>
+  dplyr::group_by(scale) |>
+  dplyr::mutate(
+    z_against_groups = as.numeric(scale(mean_eng_ref)),
+    percentile = dplyr::percent_rank(mean_eng_ref) * 100
+  ) |>
+  dplyr::ungroup() |>
+  dplyr::filter(country == BANGLA_LABEL)
+
+readr::write_csv(bangla_percentile, file.path(OUT_DIR, "bangla_percentile.csv"))
+
+# ---- 9. SUMMARY OF FLAGGED NONINVARIANCE ------------------------------------
+
+noninv_summary <- noninv_tbl |>
+  dplyr::group_by(scale, parameter) |>
+  dplyr::summarise(
+    flagged_n = sum(flagged, na.rm = TRUE),
+    total = dplyr::n(),
+    pct_flagged = 100 * flagged_n / total,
+    .groups = "drop"
+  )
+
+readr::write_csv(noninv_summary, file.path(OUT_DIR, "noninvariance_summary.csv"))
+
+# ---- 10. PLOT ----------------------------------------------------------------
+
+plot_df <- aligned_means |>
+  dplyr::mutate(
+    is_bangla = country == BANGLA_LABEL,
+    scale = factor(scale, levels = c("Psychoticism", "Extraversion", "Neuroticism", "Lie"))
+  )
+
+p <- ggplot2::ggplot(
+  plot_df,
+  ggplot2::aes(
+    x = mean_eng_ref,
+    y = reorder(country, mean_eng_ref),
+    colour = is_bangla,
+    size = is_bangla
+  )
+) +
+  ggplot2::geom_point(alpha = 0.85) +
+  ggplot2::facet_wrap(~ scale, scales = "free_x", ncol = 2) +
+  ggplot2::geom_vline(xintercept = 0, linetype = "dashed", colour = "grey40", linewidth = 0.4) +
+  ggplot2::scale_colour_manual(
+    values = c("FALSE" = "grey60", "TRUE" = "#C0392B"),
+    labels = c("Other group", BANGLA_LABEL),
+    name = NULL
+  ) +
+  ggplot2::scale_size_manual(values = c("FALSE" = 1.8, "TRUE" = 4), guide = "none") +
+  ggplot2::labs(
+    title = "Aligned factor means relative to England",
+    subtitle = paste0(
+      "R-only approximation to McLarnon/Web Note 18 logic; England reference file = ",
+      ENGLAND_FILE
+    ),
+    x = "Aligned latent mean (England = 0)",
+    y = NULL
+  ) +
+  ggplot2::theme_minimal(base_size = 10) +
+  ggplot2::theme(
+    legend.position = "top",
+    strip.text = ggplot2::element_text(face = "bold")
+  )
+
+ggplot2::ggsave(
+  filename = file.path(OUT_DIR, "benchmark_plot.pdf"),
+  plot = p,
+  width = 12,
+  height = max(10, 0.22 * dplyr::n_distinct(plot_df$country))
+)
+
+# ---- 11. SAVE WORKSPACE ------------------------------------------------------
+
+saveRDS(
+  list(
+    group_key = group_key,
+    alignment_results = alignment_results,
+    aligned_means = aligned_means,
+    alignment_es = alignment_es,
+    noninv_tbl = noninv_tbl,
+    noninv_summary = noninv_summary,
+    bangla_percentile = bangla_percentile
+  ),
+  file = file.path(OUT_DIR, "alignment_workspace.rds")
+)
+
+message("\nDone. Output folder: ", normalizePath(OUT_DIR, winslash = "/"))
+```
+
+```{r gpt2}
+################################################################################
+# EPQ-RS CROSS-CULTURAL ALIGNMENT BENCHMARKING
+# R-only approximation to the logic used in:
+# - McLarnon & Romero (2020)
+# - Asparouhov & Muthén, Web Note 18
+#
+# What this script does:
+#   1) Reads all archival UK-scored EPQ country files + Bangla epq_items
+#   2) Keeps England as the exact reference file
+#   3) Uses the common-item map
+#   4) Estimates group-specific configural 1-factor CFAs for each scale
+#      using categorical/probit-style ordered-item modeling in lavaan
+#   5) Feeds configural loadings + thresholds into sirt alignment
+#   6) Tries a FREE-like alignment first, then FIXED-like if needed
+#   7) Re-expresses aligned means/SDs relative to England
+#   8) Exports alignment effect sizes and R2 summaries
+#
+# Important:
+#   - This is the closest R-only approximation.
+#   - It is NOT the exact Mplus implementation from the paper.
+################################################################################
+
+# ---- 0. PACKAGES -------------------------------------------------------------
+
+required_pkgs <- c(
+  "readxl", "dplyr", "tidyr", "purrr", "stringr", "tibble",
+  "readr", "ggplot2", "lavaan", "sirt"
+)
+
+invisible(lapply(required_pkgs, function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, dependencies = TRUE)
+  }
+  library(pkg, character.only = TRUE)
+}))
+
+# ---- 1. CONFIGURATION --------------------------------------------------------
+
+ARCHIVAL_DIR   <- "EPQ- Invariance/Analysis-Files/UKscored/Total/Excel/"
+OUT_DIR        <- "alignment_output_r_approx"
+BANGLA_LABEL   <- "Bangladesh (Bangla)"
+ENGLAND_FILE   <- "England-total sample UK scored EPQ item data.xls"
+
+# Heuristic flags for larger residual non-invariance
+LAMBDA_TOL <- 0.20
+NU_TOL     <- 0.40
+
+dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
+
+# ---- 2. VERIFY BANGLA INPUT --------------------------------------------------
+
+if (!exists("epq_items")) {
+  stop("Object `epq_items` was not found in the R environment.")
+}
+epq_items <- as.data.frame(epq_items)
+
+# ---- 3. ITEM MAP -------------------------------------------------------------
+
+common_item_map <- tibble::tribble(
+  ~EYP,    ~archival_col, ~scale,
+  "EYP1",  "N_3",  "Neuroticism",
+  "EYP3",  "E_5",  "Extraversion",
+  "EYP4",  "L_13", "Lie",
+  "EYP5",  "N_7",  "Neuroticism",
+  "EYP6",  "P_6",  "Psychoticism",
+  "EYP7",  "E_10", "Extraversion",
+  "EYP8",  "L_8",  "Lie",
+  "EYP9",  "N_15", "Neuroticism",
+  "EYP10", "P_22", "Psychoticism",
+  "EYP11", "E_17", "Extraversion",
+  "EYP12", "L_16", "Lie",
+  "EYP13", "N_19", "Neuroticism",
+  "EYP15", "E_14", "Extraversion",
+  "EYP16", "L_20", "Lie",
+  "EYP17", "N_23", "Neuroticism",
+  "EYP18", "P_37", "Psychoticism",
+  "EYP19", "E_40", "Extraversion",
+  "EYP20", "L_24", "Lie",
+  "EYP21", "N_31", "Neuroticism",
+  "EYP22", "P_43", "Psychoticism",
+  "EYP23", "E_45", "Extraversion",
+  "EYP24", "L_39", "Lie",
+  "EYP25", "N_34", "Neuroticism",
+  "EYP27", "E_21", "Extraversion",
+  "EYP28", "P_53", "Psychoticism",
+  "EYP29", "L_48", "Lie",
+  "EYP30", "N_41", "Neuroticism",
+  "EYP31", "P_67", "Psychoticism",
+  "EYP32", "E_52", "Extraversion",
+  "EYP33", "L_51", "Lie",
+  "EYP34", "N_72", "Neuroticism",
+  "EYP35", "P_71", "Psychoticism",
+  "EYP36", "E_82", "Extraversion",
+  "EYP37", "L_59", "Lie",
+  "EYP38", "N_75", "Neuroticism",
+  "EYP39", "P_83", "Psychoticism",
+  "EYP40", "L_63", "Lie",
+  "EYP41", "E_42", "Extraversion",
+  "EYP42", "N_77", "Neuroticism",
+  "EYP44", "E_86", "Extraversion",
+  "EYP45", "L_78", "Lie",
+  "EYP46", "N_27", "Neuroticism",
+  "EYP47", "L_85", "Lie",
+  "EYP48", "E_70", "Extraversion"
+)
+
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP6","EYP10","EYP18","EYP22","EYP28","EYP31","EYP35","EYP39"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP27","EYP32",
+                   "EYP36","EYP41","EYP44","EYP48"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30",
+                   "EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33",
+                   "EYP37","EYP40","EYP45","EYP47")
+)
+
+archival_to_eyp <- setNames(common_item_map$EYP, common_item_map$archival_col)
+
+# ---- 4. HELPERS --------------------------------------------------------------
+
+infer_country_from_filename <- function(path) {
+  x <- basename(path)
+  x <- stringr::str_remove(x, "\\.[^.]+$")
+  x <- stringr::str_replace_all(x, "_", " ")
+  x <- stringr::str_replace_all(x, "-", " ")
+  x <- stringr::str_replace(
+    x,
+    regex("total sample uk scored epq item data", ignore_case = TRUE),
+    ""
+  )
+  stringr::str_squish(x)
+}
+
+normalize_binary <- function(x) {
+  if (is.factor(x)) x <- as.character(x)
+  if (is.logical(x)) x <- as.integer(x)
+
+  if (is.character(x)) {
+    x_clean <- stringr::str_to_lower(stringr::str_trim(x))
+    x <- dplyr::case_when(
+      x_clean %in% c("yes", "y", "1", "true", "t") ~ 1,
+      x_clean %in% c("no",  "n", "0", "false", "f") ~ 0,
+      x_clean %in% c("", "na", "n/a", ".", "missing") ~ NA_real_,
+      TRUE ~ suppressWarnings(as.numeric(x_clean))
+    )
+  } else {
+    x <- suppressWarnings(as.numeric(x))
+  }
+
+  vals <- sort(unique(stats::na.omit(x)))
+
+  # Common archival coding: 1 = No, 3 = Yes, 2 = missing
+  if (all(vals %in% c(1, 2, 3))) {
+    x <- dplyr::case_when(
+      x == 1 ~ 0,
+      x == 3 ~ 1,
+      x == 2 ~ NA_real_,
+      TRUE   ~ x
+    )
+    return(x)
+  }
+
+  if (identical(vals, c(1, 2))) {
+    x <- x - 1
+    return(x)
+  }
+
+  if (identical(vals, c(1, 3))) {
+    x <- ifelse(is.na(x), NA_real_, ifelse(x == 3, 1, 0))
+    return(x)
+  }
+
+  bad <- setdiff(sort(unique(stats::na.omit(x))), c(0, 1))
+  if (length(bad) > 0) {
+    warning("Non-binary values detected: ", paste(bad, collapse = ", "))
+  }
+
+  x
+}
+
+coerce_binary_df <- function(df) {
+  as.data.frame(lapply(df, normalize_binary))
+}
+
+read_archival_country <- function(path) {
+  raw <- readxl::read_excel(path)
+  raw <- as.data.frame(raw)
+  names(raw) <- stringr::str_squish(names(raw))
+
+  needed <- common_item_map$archival_col
+  missing_cols <- setdiff(needed, names(raw))
+  if (length(missing_cols) > 0) {
+    stop("Missing archival columns in ", basename(path), ": ",
+         paste(missing_cols, collapse = ", "))
+  }
+
+  dat <- raw[, needed, drop = FALSE]
+  names(dat) <- archival_to_eyp[names(dat)]
+  dat <- coerce_binary_df(dat)
+
+  list(
+    country = infer_country_from_filename(path),
+    source_file = path,
+    data = dat,
+    n_raw = nrow(dat)
+  )
+}
+
+read_bangla_country <- function(epq_items_df) {
+  needed <- common_item_map$EYP
+  missing_cols <- setdiff(needed, names(epq_items_df))
+  if (length(missing_cols) > 0) {
+    stop("Bangla epq_items is missing: ", paste(missing_cols, collapse = ", "))
+  }
+
+  dat <- epq_items_df[, needed, drop = FALSE]
+  dat <- coerce_binary_df(dat)
+
+  list(
+    country = BANGLA_LABEL,
+    source_file = NA_character_,
+    data = dat,
+    n_raw = nrow(dat)
+  )
+}
+
+fit_configural_group_cfa <- function(df, items, scale_name, country_name) {
+  dat <- df[, items, drop = FALSE]
+  dat <- dat[stats::complete.cases(dat), , drop = FALSE]
+
+  if (nrow(dat) == 0) {
+    stop("No complete cases for ", scale_name, " in ", country_name)
+  }
+
+  bad_items <- names(which(vapply(dat, function(x) length(unique(stats::na.omit(x))) < 2, logical(1))))
+  if (length(bad_items) > 0) {
+    stop(
+      "Zero-variance item(s) in ", country_name, " for ", scale_name, ": ",
+      paste(bad_items, collapse = ", ")
+    )
+  }
+
+  model_syntax <- paste0("F =~ ", paste(items, collapse = " + "))
+
+  fit <- lavaan::cfa(
+    model = model_syntax,
+    data = dat,
+    ordered = items,
+    estimator = "WLSMV",
+    parameterization = "theta",
+    std.lv = TRUE
+  )
+
+  if (!lavaan::inspect(fit, "converged")) {
+    stop("lavaan CFA did not converge for ", scale_name, " in ", country_name)
+  }
+
+  pe <- lavaan::parameterEstimates(fit, standardized = FALSE)
+
+  loading_df <- pe |>
+    dplyr::filter(op == "=~", lhs == "F") |>
+    dplyr::select(rhs, est)
+
+  lambda <- setNames(rep(NA_real_, length(items)), items)
+  lambda[loading_df$rhs] <- loading_df$est
+
+  thr_df <- pe |>
+    dplyr::filter(op == "|") |>
+    dplyr::select(lhs, est) |>
+    dplyr::distinct(lhs, .keep_all = TRUE)
+
+  tau <- setNames(rep(NA_real_, length(items)), items)
+  common_items <- intersect(items, thr_df$lhs)
+  tau[common_items] <- thr_df$est[match(common_items, thr_df$lhs)]
+
+  # For binary categorical CFA, use intercept-like parameter nu = -tau
+  nu <- -tau
+
+  list(
+    fit = fit,
+    n_complete = nrow(dat),
+    lambda = lambda,
+    nu = nu
+  )
+}
+
+extract_alignment_es_r2 <- function(alignment_obj, scale_name, chosen_method) {
+  es_obj <- alignment_obj$es.invariance
+
+  # Robust coercion to matrix/data.frame
+  es_df <- as.data.frame(es_obj)
+
+  # If rownames are missing, try to infer them
+  if (is.null(rownames(es_df)) || all(rownames(es_df) == as.character(seq_len(nrow(es_df))))) {
+    if (nrow(es_df) == 3) {
+      rownames(es_df) <- c("R2", "sqrtU2", "rbar")
+    }
+  }
+
+  es_df$metric <- rownames(es_df)
+  rownames(es_df) <- NULL
+
+  # Normalize likely column names
+  names(es_df) <- gsub("\\.+", "_", names(es_df))
+  names(es_df) <- tolower(names(es_df))
+
+  # Try to map columns to expected parameters
+  col_map <- names(es_df)
+  col_map[col_map %in% c("loadings", "loading", "lambda")] <- "loading"
+  col_map[col_map %in% c("intercepts", "intercept", "nu", "threshold", "thresholds")] <- "threshold/intercept"
+  names(es_df) <- col_map
+
+  # Keep only known columns plus metric
+  keep_cols <- intersect(names(es_df), c("metric", "loading", "threshold/intercept"))
+  es_df <- es_df[, keep_cols, drop = FALSE]
+
+  es_long <- es_df |>
+    tidyr::pivot_longer(
+      cols = -metric,
+      names_to = "parameter",
+      values_to = "value"
+    ) |>
+    dplyr::mutate(
+      scale = scale_name,
+      method = chosen_method,
+      .before = 1
+    )
+
+  r2_tbl <- es_long |>
+    dplyr::filter(metric == "R2") |>
+    dplyr::select(scale, method, parameter, value) |>
+    dplyr::rename(R2 = value)
+
+  r2_summary <- r2_tbl |>
+    tidyr::pivot_wider(
+      names_from = parameter,
+      values_from = R2
+    )
+
+  # Ensure columns exist
+  if (!"loading" %in% names(r2_summary)) {
+    r2_summary$loading <- NA_real_
+  }
+  if (!"threshold/intercept" %in% names(r2_summary)) {
+    r2_summary$`threshold/intercept` <- NA_real_
+  }
+
+  r2_summary <- r2_summary |>
+    dplyr::mutate(
+      min_R2 = pmin(loading, `threshold/intercept`, na.rm = TRUE),
+      acceptable_by_R2_90 = dplyr::if_else(
+        !is.na(loading) &
+          !is.na(`threshold/intercept`) &
+          loading >= .90 &
+          `threshold/intercept` >= .90,
+        TRUE, FALSE,
+        missing = FALSE
+      )
+    )
+
+  list(
+    es_long = es_long,
+    r2_tbl = r2_tbl,
+    r2_summary = r2_summary
+  )
+}
+
+run_alignment_one_scale <- function(scale_name, all_groups, group_key) {
+  message("\n==============================")
+  message("Running scale: ", scale_name)
+  message("==============================")
+
+  items <- epq_common_item_sets[[scale_name]]
+
+  config_est <- purrr::map(
+    all_groups,
+    ~ fit_configural_group_cfa(
+      df = .x$data,
+      items = items,
+      scale_name = scale_name,
+      country_name = .x$country
+    )
+  )
+
+  lambda <- do.call(rbind, purrr::map(config_est, "lambda"))
+  nu     <- do.call(rbind, purrr::map(config_est, "nu"))
+  n_vec  <- purrr::map_int(config_est, "n_complete")
+
+  rownames(lambda) <- group_key$country
+  rownames(nu)     <- group_key$country
+  colnames(lambda) <- items
+  colnames(nu)     <- items
+
+  # Weighting based on group sample sizes
+  wgt <- matrix(sqrt(n_vec), nrow = length(n_vec), ncol = length(items))
+  colnames(wgt) <- items
+  rownames(wgt) <- group_key$country
+
+  # FREE-like first
+  free_res <- tryCatch(
+    sirt::invariance.alignment(
+      lambda = lambda,
+      nu = nu,
+      wgt = wgt,
+      align.scale = c(1, 1),
+      align.pow = c(.5, .5),
+      center = FALSE,
+      fixed = FALSE,
+      meth = 4
+    ),
+    error = function(e) NULL
+  )
+
+  chosen <- free_res
+  chosen_method <- "FREE-like (sirt meth=4)"
+  fallback_used <- FALSE
+
+  if (is.null(chosen)) {
+    fallback_used <- TRUE
+  } else {
+    bad_pars <- any(!is.finite(chosen$pars$alpha0)) ||
+      any(!is.finite(chosen$pars$psi0)) ||
+      any(chosen$pars$psi0 <= 0)
+
+    if (bad_pars) fallback_used <- TRUE
+  }
+
+  if (fallback_used) {
+    chosen <- sirt::invariance.alignment(
+      lambda = lambda,
+      nu = nu,
+      wgt = wgt,
+      align.scale = c(1, 1),
+      align.pow = c(.5, .5),
+      center = FALSE,
+      fixed = TRUE,
+      meth = 3
+    )
+    chosen_method <- "FIXED-like (sirt meth=3)"
+  }
+
+  pars <- as.data.frame(chosen$pars)
+  pars$country <- group_key$country
+  pars$scale <- scale_name
+  pars$method <- chosen_method
+  pars$n_complete <- n_vec
+
+  # Re-express on England-referenced metric
+  eng_idx <- which(group_key$is_reference)
+  alpha_eng <- pars$alpha0[eng_idx]
+  psi_eng   <- pars$psi0[eng_idx]
+
+  pars$mean_eng_ref     <- (pars$alpha0 - alpha_eng) / psi_eng
+  pars$sd_eng_ref       <- pars$psi0 / psi_eng
+  pars$variance_eng_ref <- pars$sd_eng_ref^2
+
+  # Alignment effect sizes and R2
+  es_r2_out <- extract_alignment_es_r2(chosen, scale_name, chosen_method)
+  es         <- es_r2_out$es_long
+  r2_tbl     <- es_r2_out$r2_tbl
+  r2_summary <- es_r2_out$r2_summary
+
+  # Residual non-invariance tables
+  lambda_resid <- as.data.frame(chosen$lambda.resid)
+  lambda_resid$country <- rownames(lambda_resid)
+
+  nu_resid <- as.data.frame(chosen$nu.resid)
+  nu_resid$country <- rownames(nu_resid)
+
+  lambda_noninv <- lambda_resid |>
+    tidyr::pivot_longer(-country, names_to = "item", values_to = "resid") |>
+    dplyr::mutate(
+      parameter = "loading",
+      abs_resid = abs(resid),
+      flagged = abs_resid > LAMBDA_TOL,
+      scale = scale_name,
+      method = chosen_method
+    )
+
+  nu_noninv <- nu_resid |>
+    tidyr::pivot_longer(-country, names_to = "item", values_to = "resid") |>
+    dplyr::mutate(
+      parameter = "threshold/intercept",
+      abs_resid = abs(resid),
+      flagged = abs_resid > NU_TOL,
+      scale = scale_name,
+      method = chosen_method
+    )
+
+  noninv <- dplyr::bind_rows(lambda_noninv, nu_noninv)
+
+  config_lambda <- as.data.frame(lambda)
+  config_lambda$country <- rownames(config_lambda)
+  config_lambda$scale <- scale_name
+
+  config_nu <- as.data.frame(nu)
+  config_nu$country <- rownames(config_nu)
+  config_nu$scale <- scale_name
+
+  list(
+    scale = scale_name,
+    items = items,
+    method = chosen_method,
+    config_est = config_est,
+    config_lambda = config_lambda,
+    config_nu = config_nu,
+    alignment = chosen,
+    pars = pars,
+    es = es,
+    r2_tbl = r2_tbl,
+    r2_summary = r2_summary,
+    noninv = noninv
+  )
+}
+
+# ---- 5. READ GROUPS ----------------------------------------------------------
+
+archival_files <- list.files(
+  ARCHIVAL_DIR,
+  pattern = "\\.(xls|xlsx)$",
+  full.names = TRUE
+)
+
+if (length(archival_files) == 0) {
+  stop("No archival Excel files found in: ", ARCHIVAL_DIR)
+}
+
+archival_groups <- purrr::map(archival_files, read_archival_country)
+bangla_group    <- read_bangla_country(epq_items)
+
+all_groups <- c(archival_groups, list(bangla_group))
+
+source_files <- purrr::map_chr(
+  all_groups,
+  ~ if (is.null(.x$source_file) || all(is.na(.x$source_file))) "" else basename(.x$source_file)
+)
+
+eng_idx <- which(source_files == ENGLAND_FILE)
+
+if (length(eng_idx) == 0) {
+  stop("England reference file was not found. Expected file name: ", ENGLAND_FILE)
+}
+
+reorder_idx <- c(eng_idx[1], setdiff(seq_along(all_groups), eng_idx[1]))
+all_groups  <- all_groups[reorder_idx]
+
+group_key <- tibble::tibble(
+  code = seq_along(all_groups),
+  country = purrr::map_chr(all_groups, "country"),
+  n_raw = purrr::map_int(all_groups, "n_raw"),
+  source_file = purrr::map_chr(
+    all_groups,
+    ~ if (is.null(.x$source_file) || all(is.na(.x$source_file))) "" else basename(.x$source_file)
+  )
+) |>
+  dplyr::mutate(
+    is_bangla = country == BANGLA_LABEL,
+    is_reference = source_file == ENGLAND_FILE
+  )
+
+readr::write_csv(group_key, file.path(OUT_DIR, "country_key.csv"))
+
+message(
+  "England reference group: ",
+  group_key$country[group_key$is_reference][1],
+  " [", group_key$source_file[group_key$is_reference][1], "]"
+)
+
+# ---- 6. RUN ALIGNMENT --------------------------------------------------------
+
+alignment_results <- purrr::map(
+  names(epq_common_item_sets),
+  ~ run_alignment_one_scale(.x, all_groups = all_groups, group_key = group_key)
+)
+names(alignment_results) <- names(epq_common_item_sets)
+
+# ---- 7. EXPORT RESULTS -------------------------------------------------------
+
+aligned_means <- dplyr::bind_rows(purrr::map(alignment_results, "pars"))
+alignment_es  <- dplyr::bind_rows(purrr::map(alignment_results, "es"))
+alignment_r2  <- dplyr::bind_rows(purrr::map(alignment_results, "r2_tbl"))
+r2_summary    <- dplyr::bind_rows(purrr::map(alignment_results, "r2_summary"))
+noninv_tbl    <- dplyr::bind_rows(purrr::map(alignment_results, "noninv"))
+config_lambda <- dplyr::bind_rows(purrr::map(alignment_results, "config_lambda"))
+config_nu     <- dplyr::bind_rows(purrr::map(alignment_results, "config_nu"))
+
+readr::write_csv(aligned_means, file.path(OUT_DIR, "aligned_factor_means_variances.csv"))
+readr::write_csv(alignment_es,  file.path(OUT_DIR, "alignment_effect_sizes.csv"))
+readr::write_csv(alignment_r2,  file.path(OUT_DIR, "alignment_r2_long.csv"))
+readr::write_csv(r2_summary,    file.path(OUT_DIR, "alignment_r2_summary.csv"))
+readr::write_csv(noninv_tbl,    file.path(OUT_DIR, "noninvariant_params.csv"))
+readr::write_csv(config_lambda, file.path(OUT_DIR, "configural_loadings.csv"))
+readr::write_csv(config_nu,     file.path(OUT_DIR, "configural_nu.csv"))
+
+# ---- 8. BANGLA PERCENTILE ----------------------------------------------------
+
+bangla_percentile <- aligned_means |>
+  dplyr::group_by(scale) |>
+  dplyr::mutate(
+    z_against_groups = as.numeric(scale(mean_eng_ref)),
+    percentile = dplyr::percent_rank(mean_eng_ref) * 100
+  ) |>
+  dplyr::ungroup() |>
+  dplyr::filter(country == BANGLA_LABEL)
+
+readr::write_csv(bangla_percentile, file.path(OUT_DIR, "bangla_percentile.csv"))
+
+# ---- 9. SUMMARIES ------------------------------------------------------------
+
+noninv_summary <- noninv_tbl |>
+  dplyr::group_by(scale, parameter) |>
+  dplyr::summarise(
+    flagged_n = sum(flagged, na.rm = TRUE),
+    total = dplyr::n(),
+    pct_flagged = 100 * flagged_n / total,
+    .groups = "drop"
+  )
+
+readr::write_csv(noninv_summary, file.path(OUT_DIR, "noninvariance_summary.csv"))
+
+# ---- 10. PLOT ----------------------------------------------------------------
+
+plot_df <- aligned_means |>
+  dplyr::mutate(
+    is_bangla = country == BANGLA_LABEL,
+    scale = factor(scale, levels = c("Psychoticism", "Extraversion", "Neuroticism", "Lie"))
+  )
+
+p <- ggplot2::ggplot(
+  plot_df,
+  ggplot2::aes(
+    x = mean_eng_ref,
+    y = reorder(country, mean_eng_ref),
+    colour = is_bangla,
+    size = is_bangla
+  )
+) +
+  ggplot2::geom_point(alpha = 0.85) +
+  ggplot2::facet_wrap(~ scale, scales = "free_x", ncol = 2) +
+  ggplot2::geom_vline(xintercept = 0, linetype = "dashed", colour = "grey40", linewidth = 0.4) +
+  ggplot2::scale_colour_manual(
+    values = c("FALSE" = "grey60", "TRUE" = "#C0392B"),
+    labels = c("Other group", BANGLA_LABEL),
+    name = NULL
+  ) +
+  ggplot2::scale_size_manual(values = c("FALSE" = 1.8, "TRUE" = 4), guide = "none") +
+  ggplot2::labs(
+    title = "Aligned factor means relative to England",
+    subtitle = paste0(
+      "R-only approximation to McLarnon/Web Note 18 logic; England reference file = ",
+      ENGLAND_FILE
+    ),
+    x = "Aligned latent mean (England = 0)",
+    y = NULL
+  ) +
+  ggplot2::theme_minimal(base_size = 10) +
+  ggplot2::theme(
+    legend.position = "top",
+    strip.text = ggplot2::element_text(face = "bold")
+  )
+
+ggplot2::ggsave(
+  filename = file.path(OUT_DIR, "benchmark_plot.pdf"),
+  plot = p,
+  width = 12,
+  height = max(10, 0.22 * dplyr::n_distinct(plot_df$country))
+)
+
+# ---- 11. SAVE WORKSPACE ------------------------------------------------------
+
+saveRDS(
+  list(
+    group_key = group_key,
+    alignment_results = alignment_results,
+    aligned_means = aligned_means,
+    alignment_es = alignment_es,
+    alignment_r2 = alignment_r2,
+    r2_summary = r2_summary,
+    noninv_tbl = noninv_tbl,
+    noninv_summary = noninv_summary,
+    bangla_percentile = bangla_percentile
+  ),
+  file = file.path(OUT_DIR, "alignment_workspace.rds")
+)
+
+print(r2_summary)
+
+message("\nDone. Output folder: ", normalizePath(OUT_DIR, winslash = "/"))
+```
+
 ## Item Response Theory
 
 ```{r unidimentionality, include=FALSE}
@@ -3558,6 +5660,192 @@ for (sc in names(rasch_dif_results)) {
     cat("  No items flagged after BH adjustment.\n")
   }
 }
+```
+
+```{r 2PLDIF}
+library(mirt)
+library(dplyr)
+library(tibble)
+
+fmt_p <- function(p) {
+  dplyr::case_when(
+    is.na(p) ~ NA_character_,
+    p < .001 ~ "< .001",
+    TRUE     ~ sub("^0", "", sprintf("%.3f", p))
+  )
+}
+
+# ============================================================
+# Example: Neuroticism
+# ============================================================
+
+sc <- "Neuroticism"
+ref_group <- "Female"
+
+items_vec <- epq_item_sets[[sc]]
+
+dat_raw <- as.data.frame(epq_items[, items_vec, drop = FALSE])
+grp_raw <- demographics$gender
+
+keep <- complete.cases(dat_raw, grp_raw)
+dat  <- dat_raw[keep, , drop = FALSE]
+grp  <- droplevels(factor(grp_raw[keep]))
+
+if (ref_group %in% levels(grp)) {
+  grp <- relevel(grp, ref = ref_group)
+}
+
+dat[] <- lapply(dat, function(x) as.numeric(as.character(x)))
+
+# Keep binary items varying within both groups
+item_ok <- vapply(names(dat), function(nm) {
+  x <- dat[[nm]]
+  binary_ok <- all(na.omit(x) %in% c(0, 1))
+  var_by_group <- tapply(x, grp, function(z) length(unique(na.omit(z))) > 1)
+  binary_ok && all(var_by_group)
+}, logical(1))
+
+dat <- dat[, item_ok, drop = FALSE]
+
+cat("N =", nrow(dat), "\n")
+print(table(grp))
+cat("Items retained:", paste(names(dat), collapse = ", "), "\n")
+
+# ------------------------------------------------------------
+# STEP 1. Initial anchored baseline model
+# All items constrained equal across groups
+# Means/variances free in focal group
+# ------------------------------------------------------------
+mg_base <- multipleGroup(
+  data       = dat,
+  model      = 1,
+  group      = grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", colnames(dat)),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+# ------------------------------------------------------------
+# STEP 2. DIF tests
+# ------------------------------------------------------------
+dif_uniform <- DIF(
+  MGmodel    = mg_base,
+  which.par  = "d",
+  items2test = colnames(dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+dif_nonuniform <- DIF(
+  MGmodel    = mg_base,
+  which.par  = "a1",
+  items2test = colnames(dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+dif_both <- DIF(
+  MGmodel    = mg_base,
+  which.par  = c("a1", "d"),
+  items2test = colnames(dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+# Convert combined DIF to table
+dif_both_df <- as.data.frame(dif_both)
+dif_both_df$Item <- rownames(dif_both_df)
+
+dif_both_tbl <- tibble(
+  Scale     = sc,
+  Item      = dif_both_df$Item,
+  X2        = dif_both_df$X2,
+  df        = dif_both_df$df,
+  p         = dif_both_df$p,
+  adj_p     = dif_both_df$adj_p,
+  p_fmt     = fmt_p(dif_both_df$p),
+  adj_p_fmt = fmt_p(dif_both_df$adj_p),
+  DIF_flag  = ifelse(!is.na(dif_both_df$adj_p) & dif_both_df$adj_p < .05, "Flagged", "No")
+)
+
+print(dif_both_tbl)
+
+# ------------------------------------------------------------
+# STEP 3. Define anchor items from non-flagged combined DIF
+# ------------------------------------------------------------
+anchor_items <- dif_both_tbl %>%
+  filter(DIF_flag == "No") %>%
+  pull(Item)
+
+flagged_items <- dif_both_tbl %>%
+  filter(DIF_flag == "Flagged") %>%
+  pull(Item)
+
+cat("Anchor items:", paste(anchor_items, collapse = ", "), "\n")
+cat("Flagged items:", paste(flagged_items, collapse = ", "), "\n")
+
+# Need at least 1-2 anchors; ideally more
+if (length(anchor_items) < 2) {
+  stop("Too few anchor items for an identified partially anchored model.")
+}
+
+# ------------------------------------------------------------
+# STEP 4. Partially anchored model
+# Anchor items constrained equal
+# Flagged items free across groups
+# ------------------------------------------------------------
+mg_anchor <- multipleGroup(
+  data       = dat,
+  model      = 1,
+  group      = grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", anchor_items),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+# ------------------------------------------------------------
+# STEP 5. Extract group-specific parameters
+# NOTE:
+# - anchor items will be equal across groups by design
+# - flagged items can differ across groups
+# ------------------------------------------------------------
+pars_anchor <- coef(mg_anchor, IRTpars = TRUE, simplify = TRUE)
+
+group_item_pars <- bind_rows(
+  {
+    x <- as.data.frame(pars_anchor[[levels(grp)[1]]]$items)
+    x$Item  <- rownames(x)
+    x$Group <- levels(grp)[1]
+    x$Scale <- sc
+    x
+  },
+  {
+    x <- as.data.frame(pars_anchor[[levels(grp)[2]]]$items)
+    x$Item  <- rownames(x)
+    x$Group <- levels(grp)[2]
+    x$Scale <- sc
+    x
+  }
+)
+
+print(group_item_pars)
+
+# ------------------------------------------------------------
+# STEP 6. Optional omnibus comparison:
+# Compare fully anchored baseline vs partially anchored model
+# This is an identified omnibus test of whether freeing flagged
+# items improves fit.
+# ------------------------------------------------------------
+omni <- as.data.frame(anova(mg_base, mg_anchor))
+print(omni)
 ```
 
 
