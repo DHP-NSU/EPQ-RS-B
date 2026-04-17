@@ -299,28 +299,48 @@ All data were screened for incomplete responses. Participants who failed to comp
 
 ## Analysis Plan
 
-All analyses were conducted in R (version 4.5.2) using a reproducible pipeline [@rcore2016]. Data preparation and scoring were handled with the *tidyverse* [@wickham2019tidyverse]; descriptive statistics and correlations were calculated using *psych* [@revelle2025psych]; ESEM target-rotation was implemented using *esemComp* [@silvestrin2025esemcomp]; IRT analyses were estimated using *mirt* [@chalmers2012mirt].
+All analyses were conducted in R.  In the IRT analyses, marginal reliability and empirical reliability were additionally reported from the fitted models.
+### Descriptive analyses and Reliability
+Descriptive statistics were computed using the *psych* package, and reliability estimates were obtained using *psych* and *semTools*. For the dichotomous EPQ-RS-B items, we reported item endorsement proportions and descriptive indices at the item level, and we summarized internal consistency at the subscale level using Cronbach’s alpha, and McDonald’s omega. 
 
-*Descriptive statistics.* Mean, standard deviation, median, skewness, and kurtosis were computed for all subscale and domain scores. Internal consistency was estimated using Cronbach's $\alpha$ (numerically equivalent to KR-20 for the dichotomous EPQ-RS-B), ordinal $\alpha$ from tetrachoric correlations, and McDonald's $\omega_t$.
+### Structural validity
+The latent structure of the Bangla EPQ-RS-B was examined using exploratory structural equation modeling (ESEM) via *esemComp*. Competing three-factor and four-factor solutions were estimated, with all items treated as ordered categorical indicators and modeled using weighted least squares with mean and variance adjustment (WLSMV) under theta parameterization. An oblique target rotation was used so that hypothesized primary loadings were estimated freely while allowing non-target loadings to remain near, but not fixed at, zero. Model adequacy was summarized using the scaled chi-square statistic, the comparative fit index (CFI), the Tucker-Lewis index (TLI), the root mean square error of approximation (RMSEA), and the standardized root mean square residual (SRMR), and the preferred solution was selected on the basis of overall fit, interpretability, and the substantive clarity of the loading pattern (Asparouhov & Muthén, 2009). [Add hu & Bentler's Cutoff]
 
-*Structural validity.* Structural validity was evaluated using ESEM with an a priori target structure (4 factors $\times$ 48 items for EPQ-RS-B). ESEM was preferred over strict independent-clusters CFA because personality inventories frequently exhibit small but theoretically meaningful cross-loadings; imposing zero cross-loadings can produce inflated interfactor correlations and distorted fit statistics [@asparouhov2009esem; @marsh2010esem]. Conventional CFA was also fitted for comparison. All models used weighted least squares mean- and variance-adjusted (WLSMV) estimation with items treated as ordered categorical. Model fit was assessed using CFI, TLI, RMSEA, and SRMR, with @hu1999cutoff cutoff values treated as heuristics rather than decision rules [@marsh2004golden].
+### Measurement invariance across sex and language
+Measurement invariance was evaluated across sex (within the current sample) and across  English (UK)  versions (on the 44 common items between EPQ-RS and EPQ data set from XX) using multigroup categorical factor models fit . We tested progressively more restrictive models beginning with configural invariance and then imposing equality constraints on factor loadings, thresholds, and more stringent structural parameters as appropriate. Invariance was retained when the decrease in CFI did not exceed .010 and the increase in RMSEA did not exceed .015, while also considering the overall pattern of results across nested models (Meredith, 1993; Vandenberg & Lance, 2000; Cheung & Rensvold, 2002; Chen, 2007). 
 
-*Measurement Invariance.* Sex measurement invariance of the EPQ-RS-B was evaluated using a 13-model taxonomy (M1 to M13), which tests progressively restrictive equality constraints across groups (Marsh et al., 2009). The sequence begins with configural invariance (M1), which establishes whether the same factor structure holds for males and females without imposing cross-group equality on any parameters. Subsequent models add metric (factor loading) constraints, residual variance constraints, factor variance/covariance constraints, scalar (intercept) constraints, and latent mean constraints in various combinations. This cumulative approach allows researchers to identify precisely which class of parameters, if any, produces misfit when equated across groups.
-Invariance decisions were based on changes in approximate fit indices rather than on the chi-square difference test, which is well known to be overly sensitive in moderate to large samples (Cheung & Rensvold, 2002). The primary criterion was ΔCFI ≥ −.01 (Cheung & Rensvold, 2002), supplemented by ΔRMSEA ≤ .015 (Chen, 2007). Because the delta columns in the raw output were unpopulated, incremental changes were computed by comparing each successive model to the least restrictive model within its constraint class. The 13-model taxonomy is designed so that the tenability of the final, most restrictive model (M13: scalar + residuals + factor variances/covariances + latent means) serves as the primary inferential target, while intermediate steps are inspected for localized sources of strain (Marsh et al., 2009; Chiorri et al., 2016).
+###EPQ-RS alignment benchmarking analysis
 
-*MI Language*
-*Factor Allignmnet*
+To evaluate the cross-cultural comparability of Bangla EPQ-RS-B scores, we benchmarked the Bangla sample against the archival cross-cultural EPQ files and restricted the analysis to the 44 binary items shared across the Bangla and archival datasets. The UK-scored archival files were used as the benchmark set, and England served as the reference group. Following the logic of the factor alignment method, we fit separate one-factor configural models for Psychoticism, Extraversion, Neuroticism, and Lie using lavaan, treating all indicators as ordered categorical and estimating the models with WLSMV under theta parameterization. Unstandardized factor loadings and thresholds were extracted and passed to the sirt alignment routine to recover group-specific latent means and variances under approximate invariance. The aligned factor means and standard deviations were then re-expressed relative to England (M = 0, SD = 1). We examined aligned latent means and variances, residual non-invariance in loadings and thresholds, and alignment R² values to judge the extent to which Bangla scores could be placed on a common latent metric with the archival benchmark countries (Asparouhov & Muthén, 2014; Eysenck & Barrett, 2013; McLarnon & Romero, 2020). 
 
-*Item response theory.* Item-level measurement precision for the EPQ-RS-B was examined using item response theory (IRT). Two-parameter logistic (2PL) models were estimated separately for each of the four subscales (Psychoticism, Extraversion, Neuroticism, Lie) via marginal maximum likelihood using the Metropolis-Hastings Robbins-Monro algorithm implemented in the mirt package (Cai, 2010; Chalmers, 2012). The 2PL model was selected because it is appropriate for dichotomous response data and has been applied to Eysenck scales in prior IRT investigations (Colledani et al., 2019; Smits et al., 2021).
-Item fit was evaluated using Orlando and Thissen's (2000) S-X² statistic, with items flagged when RMSEA.S-X² exceeded .05 or p < .01. Infit and outfit mean-square statistics were also inspected, with values exceeding 1.4 treated as indicative of misfit (Kang & Chen, 2011). Person fit was assessed using Zh statistics.
-IRT item parameters were interpreted using the discrimination (a) and difficulty (b) estimates from each 2PL model. Discrimination values were categorized following Baker's (2001) guidelines: very low (a < 0.35), low (0.35 to 0.64), moderate (0.65 to 1.34), high (1.35 to 1.69), and very high (a ≥ 1.70).
-Scale-level measurement precision was quantified through marginal reliability (the IRT analogue of classical reliability) and empirical reliability. Test information curves (TICs) were examined to identify the theta (θ) location of peak information, the standard error at peak, and the breadth of the θ range over which the scale provides reliable measurement. The θ range meeting a marginal reliability threshold of .70 (corresponding to test information ≥ 2.33) was computed for each subscale to characterize the "reliable measurement window" of each scale. Item characteristic curves (ICCs) were visually inspected for monotonicity violations, unexpectedly flat slopes, and extreme threshold locations.
+### IRT analyses
+IRT analyses were conducted separately for the Psychoticism, Extraversion, Neuroticism, and Lie subscales using unidimensional two-parameter logistic (2PL) models estimated in the mirt package with maximum marginal likelihood and the Metropolis-Hastings Robbins-Monro (MHRM) algorithm. For each subscale, we reported item discrimination (a) and difficulty/location (b) parameters, the M2 limited-information model-fit statistic, marginal reliability, empirical reliability, item fit, and person fit. Item fit was evaluated using the S-X² statistic, together with infit and outfit mean-square indices. Person fit was examined using Zh, with values below -2.00 flagged as aberrant response patterns. We also inspected item characteristic curves (ICCs), item information curves (IICs), and test information curves (TICs) across the latent continuum to evaluate monotonicity, item-level precision, and scale-level precision. These diagnostics were integrated to classify items as satisfactory, borderline, or problematic within each subscale (Cai, 2010; Cai et al., 2006; Chalmers, 2012; Drasgow et al., 1985; Orlando & Thissen, 2003). 
 
+### Sex-based differential item functioning
+Sex-based differential item functioning (DIF) was examined separately for the Psychoticism, Extraversion, Neuroticism, and Lie subscales using multiple-group 2PL IRT models. Because the EPQ-RS-B items were dichotomously scored, analyses were conducted within each subscale after retaining only participants with complete item and sex data and items showing valid binary responses with nonzero variance in both sex groups. Female participants were treated as the reference group. For each subscale, an anchored baseline model was first estimated in which all item parameters were constrained to equality across groups, while the latent mean and variance were freely estimated in the focal group. Item-level likelihood-ratio tests were then used to evaluate uniform DIF by freeing the item location parameter, nonuniform DIF by freeing the discrimination parameter, and combined DIF by freeing both simultaneously. The combined DIF test was treated as the primary screening criterion because it captured both forms of item noninvariance within a single comparison. Because multiple item-level tests were conducted within each subscale, p values were adjusted using the Benjamini-Hochberg false discovery rate procedure. Items with adjusted p values below .05 in the combined DIF analysis were flagged as showing potential sex-based DIF. Partially anchored multiple-group 2PL models were then estimated using non-flagged items as anchors and allowing flagged items to vary across groups, and these models were used to obtain group-specific a and b parameters for interpretation (Benjamini & Hochberg, 1995; Chalmers, 2012; Kim & Cohen, 1995). 
+### Concurrent validity
+Concurrent validity was examined using bivariate correlations between the EPQ-RS-B subscales  BFI-2-B domains/facets  
 
-**Differential Item Functioning (DIF)**
+References
+Asparouhov, T., & Muthén, B. (2009). Exploratory structural equation modeling. Structural Equation Modeling: A Multidisciplinary Journal, 16(3), 397–438. https://doi.org/10.1080/10705510903008204
+Asparouhov, T., & Muthén, B. (2014). Multiple-group factor analysis alignment. Structural Equation Modeling: A Multidisciplinary Journal, 21(4), 495–508. https://doi.org/10.1080/10705511.2014.919210
+Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate: A practical and powerful approach to multiple testing. Journal of the Royal Statistical Society: Series B (Methodological), 57(1), 289–300. https://doi.org/10.1111/j.2517-6161.1995.tb02031.x
+Cai, L. (2010). High-dimensional exploratory item factor analysis by a Metropolis-Hastings Robbins-Monro algorithm. Psychometrika, 75(1), 33–57. https://doi.org/10.1007/s11336-009-9136-x
+Cai, L., Maydeu-Olivares, A., Coffman, D. L., & Thissen, D. (2006). Limited-information goodness-of-fit testing of item response theory models for sparse 2^P tables. British Journal of Mathematical and Statistical Psychology, 59(1), 173–194. https://doi.org/10.1348/000711005X66419
+Chalmers, R. P. (2012). mirt: A multidimensional item response theory package for the R environment. Journal of Statistical Software, 48(6), 1–29. https://doi.org/10.18637/jss.v048.i06
+Chen, F. F. (2007). Sensitivity of goodness of fit indexes to lack of measurement invariance. Structural Equation Modeling: A Multidisciplinary Journal, 14(3), 464–504. https://doi.org/10.1080/10705510701301834
+Cheung, G. W., & Rensvold, R. B. (2002). Evaluating goodness-of-fit indexes for testing measurement invariance. Structural Equation Modeling: A Multidisciplinary Journal, 9(2), 233–255. https://doi.org/10.1207/S15328007SEM0902_5
+Drasgow, F., Levine, M. V., & Williams, E. A. (1985). Appropriateness measurement with polychotomous item response models and standardized indices. British Journal of Mathematical and Statistical Psychology, 38(1), 67–86. https://doi.org/10.1111/j.2044-8317.1985.tb00817.x
+Eysenck, S., & Barrett, P. (2013). Re-introduction to cross-cultural studies of the EPQ. Personality and Individual Differences, 54(4), 485–489. https://doi.org/10.1016/j.paid.2012.09.022
+Kim, S.-H., & Cohen, A. S. (1995). A comparison of Lord’s chi-square, Raju’s area measures, and the likelihood ratio test on detection of differential item functioning. Applied Measurement in Education, 8(4), 291–312. https://doi.org/10.1207/S15324818AME0804_2
+McCrae, R. R., & Costa, P. T., Jr. (1985). Comparison of EPI and psychoticism scales with measures of the five-factor model of personality. Personality and Individual Differences, 6(5), 587–597. https://doi.org/10.1016/0191-8869(85)90008-X
+McLarnon, M. J. W., & Romero, E. F. (2020). Cross-cultural equivalence of shortened versions of the Eysenck Personality Questionnaire: An application of the alignment method. Personality and Individual Differences, 163, Article 110074. https://doi.org/10.1016/j.paid.2020.110074
+Meredith, W. (1993). Measurement invariance, factor analysis and factorial invariance. Psychometrika, 58(4), 525–543. https://doi.org/10.1007/BF02294825
+Mor, N. (2010). Eysenck personality questionnaire. In I. B. Weiner & W. E. Craighead (Eds.), The Corsini encyclopedia of psychology (pp. 1–2). Wiley.
+Orlando, M., & Thissen, D. (2003). Further investigation of the performance of S-X²: An item fit index for use with dichotomous item response theory models. Applied Psychological Measurement, 27(4), 289–298. https://doi.org/10.1177/0146621603027004004
+Vandenberg, R. J., & Lance, C. E. (2000). A review and synthesis of the measurement invariance literature: Suggestions, practices, and recommendations for organizational research. Organizational Research Methods, 3(1), 4–70. https://doi.org/10.1177/109442810031002
+If you want, I can next turn this into a single continuous Method subsection with no headings, ready to paste into the manuscript.
 
-
-*Concurrent validity.* Concurrent validity was assessed through Pearson correlations (Holm-adjusted) between EPQ-RS-B subscale scores and BFI-2-B domain scores.
 
 # Results
 
@@ -3567,9 +3587,7 @@ readr::write_csv(epq_reliable_range, "outputs/tables/epq_marginal_reliable_range
 
 # Differential Item Functioning
 
-
-
-```{r 2PL DIF}
+```{r 2PLDIF, include=FALSE}
 # ============================================================
 # EPQ-RS DIF Analysis (Gender) — 2PL, no loops
 # Four subscales tested independently using anchored baselines
@@ -4268,16 +4286,77 @@ write_csv(flagged_group_pars_apa,    file.path(out_dir, "apa_flagged_item_parame
 # Run these in your R Markdown / papaja document
 # ============================================================
 
-papaja::apa_table(
-  dif_summary_apa,
-  caption = "Summary of 2PL differential item functioning results across EPQ-RS-B subscales.",
-  note = "DIF was evaluated using multiple-group 2PL models. Flagged items are based on the combined DIF test (a1 + d) with Benjamini-Hochberg adjusted p values."
-)
-
 
 
 # quick check
 print(dif_summary_apa)
+
+
+# ------------------------------------------------------------
+# 1. By subscale
+# ------------------------------------------------------------
+
+uniform_summary <- epq_2pl_uniform_tbl %>%
+  group_by(Scale) %>%
+  summarise(
+    n_uniform = sum(DIF_flag == "Flagged", na.rm = TRUE),
+    uniform_items = ifelse(
+      n_uniform == 0,
+      "",
+      paste(Item[DIF_flag == "Flagged"], collapse = ", ")
+    ),
+    .groups = "drop"
+  )
+
+nonuniform_summary <- epq_2pl_nonuniform_tbl %>%
+  group_by(Scale) %>%
+  summarise(
+    n_nonuniform = sum(DIF_flag == "Flagged", na.rm = TRUE),
+    nonuniform_items = ifelse(
+      n_nonuniform == 0,
+      "",
+      paste(Item[DIF_flag == "Flagged"], collapse = ", ")
+    ),
+    .groups = "drop"
+  )
+
+both_summary <- epq_2pl_both_tbl %>%
+  group_by(Scale) %>%
+  summarise(
+    n_both = sum(DIF_flag == "Flagged", na.rm = TRUE),
+    both_items = ifelse(
+      n_both == 0,
+      "",
+      paste(Item[DIF_flag == "Flagged"], collapse = ", ")
+    ),
+    .groups = "drop"
+  )
+
+dif_summary_by_scale <- uniform_summary %>%
+  full_join(nonuniform_summary, by = "Scale") %>%
+  full_join(both_summary, by = "Scale") %>%
+  arrange(Scale)
+
+dif_summary_by_scale
+# ------------------------------------------------------------
+# APA-friendly version
+# ------------------------------------------------------------
+
+dif_summary_apa <- dif_summary_by_scale %>%
+  transmute(
+    Subscale = Scale,
+    `Uniform DIF, n` = n_uniform,
+    `Uniform DIF items` = uniform_items,
+    `Nonuniform DIF, n` = n_nonuniform,
+    `Nonuniform DIF items` = nonuniform_items,
+    `Combined DIF, n` = n_both,
+    `Combined DIF items` = both_items
+  )
+
+dif_summary_apa
+# Optional export
+write_csv(dif_summary_apa, file.path(out_dir, "dif_summary_apa.csv"))
+
 ```
 
 ```{r}
@@ -4307,6 +4386,10 @@ papaja::apa_table(
 )
 
 ```
+
+
+
+
 
 ## Concurrent Validity With BFI-2
 
