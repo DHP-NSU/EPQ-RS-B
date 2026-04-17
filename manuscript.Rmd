@@ -1,17 +1,20 @@
 ---
-title             : "Psychometric Evaluation of the Bangla Eysenck Personality Questionnaire-Revised Short Form (EPQ-RS-B): Structural Validity, Item Response Theory, and Concurrent Validity With the Big Five Inventory-2"
+title             : "Psychometric Evaluation of the  Eysenck Personality Questionnaire-Revised Short Form (EPQ-RS-B) in Bangla"
 shorttitle        : "Bangla EPQ-RS Validation"
 
 author: 
   - name          : "Mushfiqul Anwar Siraji"
     affiliation   : "1"
-    corresponding : yes
+    corresponding : no
     address       : "Department of History and Philosophy, North South University, Dhaka, Bangladesh"
     email         : "mushfiqul.siraji@northsouth.edu"
   - name          : "Fahria Karim"
     affiliation   : "1"
   - name          : "Shamsul Haque"
     affiliation   : "2"
+    corresponding : yes
+    address       : "Department of Psychology, Jeffrey Cheah School of Medicine and Health Sciences, Monash University Malaysia"
+    email         : "shamsul@monash.edu"
 
 affiliation:
   - id            : "1"
@@ -20,7 +23,7 @@ affiliation:
     institution   : "Department of Psychology, Jeffrey Cheah School of Medicine and Health Sciences, Monash University Malaysia"
 
 authornote: |
-  Correspondence concerning this article should be addressed to Shamsul Haque, Department of Psychology, Jeffrey Cheah School of Medicine and Health Sciences, Monash University Malaysia. Email: shamsul@monash.edu
+
 
 abstract: |
   Eysenck's Psychoticism-Extraversion-Neuroticism (PEN) model remains influential in cross-cultural personality research, yet the Revised Eysenck Personality Questionnaire Short Form (EPQ-RS) has never been adapted for Bangla-speaking populations. We developed and evaluated a Bangla version (EPQ-RS-B) in a community sample of 550 Bangladeshi adults (320 women, 230 men; *M*~age~ = 29.02, *SD* = 7.63). Psychometric properties were assessed through multiple complementary approaches: internal consistency (Cronbach's $\alpha$, ordinal $\alpha$, McDonald's $\omega_t$), exploratory structural equation modeling (ESEM) with target rotation, confirmatory factor analysis (CFA), two-parameter logistic (2PL) item response theory (IRT) models, sex-based measurement invariance, and concurrent validity with the Bangla Big Five Inventory-2 (BFI-2-B). Results indicated that Extraversion, Neuroticism, and the Lie scale demonstrated acceptable reliability and structural validity, consistent with cross-cultural patterns. The Psychoticism scale, however, exhibited low internal consistency, weak item discrimination, and poor measurement precision, replicating the well-documented fragility of this subscale across languages and cultures. ESEM yielded a cleaner factor structure than strict CFA. Concurrent validity analyses confirmed theoretically expected convergent and discriminant associations between EPQ-RS-B subscales and BFI-2 domains. These findings support the use of the EPQ-RS-B Extraversion and Neuroticism scales in Bangladeshi research contexts but urge caution with the Psychoticism subscale. We discuss implications for cross-cultural PEN assessment and the comparative utility of the Giant Three and Big Five frameworks.
@@ -1859,6 +1862,7 @@ row_sum_safe <- function(df, cols) {
 # 4. Read USA spreadsheet
 # ------------------------------------------------------------
 usa_file <- "EPQ- Invariance/Analysis-Files/Raw/Total/Excel/USA-total sample EPQ item data.xls"
+
 usa_sheets <- readxl::excel_sheets(usa_file)
 usa_raw <- readxl::read_excel(usa_file, sheet = usa_sheets[1])
 
@@ -2394,6 +2398,724 @@ readr::write_csv(
 )
 ```
 
+```{r MIUK, eval=FALSE, include=FALSE}
+# ============================================================
+# BUILD 44-ITEM LANGUAGE INVARIANCE DATA
+# English source: England-total sample UK scored EPQ item data.xls
+# Bangla source: epq_items (must already be keyed 0/1 in the same direction)
+# ============================================================
+
+library(dplyr)
+library(tibble)
+library(purrr)
+library(readxl)
+library(readr)
+
+# ------------------------------------------------------------
+# 1. Verified 44 common items between 90-item EPQ and 48-item EPQ-RS
+#    Excluded short-form-only items: EYP2, EYP14, EYP26, EYP43
+# ------------------------------------------------------------
+common_item_map <- tibble::tribble(
+  ~EYP,    ~epq90_item, ~scale,
+  "EYP1",    3,  "Neuroticism",
+  "EYP3",    5,  "Extraversion",
+  "EYP4",   13,  "Lie",
+  "EYP5",    7,  "Neuroticism",
+  "EYP6",    6,  "Psychoticism",
+  "EYP7",   10,  "Extraversion",
+  "EYP8",    8,  "Lie",
+  "EYP9",   15,  "Neuroticism",
+  "EYP10",  22,  "Psychoticism",
+  "EYP11",  17,  "Extraversion",
+  "EYP12",  16,  "Lie",
+  "EYP13",  19,  "Neuroticism",
+  "EYP15",  14,  "Extraversion",
+  "EYP16",  20,  "Lie",
+  "EYP17",  23,  "Neuroticism",
+  "EYP18",  37,  "Psychoticism",
+  "EYP19",  40,  "Extraversion",
+  "EYP20",  24,  "Lie",
+  "EYP21",  31,  "Neuroticism",
+  "EYP22",  43,  "Psychoticism",
+  "EYP23",  45,  "Extraversion",
+  "EYP24",  39,  "Lie",
+  "EYP25",  34,  "Neuroticism",
+  "EYP27",  21,  "Extraversion",
+  "EYP28",  53,  "Psychoticism",
+  "EYP29",  48,  "Lie",
+  "EYP30",  41,  "Neuroticism",
+  "EYP31",  67,  "Psychoticism",
+  "EYP32",  52,  "Extraversion",
+  "EYP33",  51,  "Lie",
+  "EYP34",  72,  "Neuroticism",
+  "EYP35",  71,  "Psychoticism",
+  "EYP36",  82,  "Extraversion",
+  "EYP37",  59,  "Lie",
+  "EYP38",  75,  "Neuroticism",
+  "EYP39",  83,  "Psychoticism",
+  "EYP40",  63,  "Lie",
+  "EYP41",  42,  "Extraversion",
+  "EYP42",  77,  "Neuroticism",
+  "EYP44",  86,  "Extraversion",
+  "EYP45",  78,  "Lie",
+  "EYP46",  27,  "Neuroticism",
+  "EYP47",  85,  "Lie",
+  "EYP48",  70,  "Extraversion"
+)
+
+common_items <- common_item_map$EYP
+
+# ------------------------------------------------------------
+# 2. 44-item subscale definitions
+# ------------------------------------------------------------
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP10","EYP22","EYP31","EYP39","EYP6","EYP18","EYP28","EYP35"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP32","EYP36","EYP44","EYP48","EYP27","EYP41"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30","EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33","EYP37","EYP40","EYP45","EYP47")
+)
+
+# ------------------------------------------------------------
+# 3. Helper
+# ------------------------------------------------------------
+row_sum_safe <- function(df, cols) {
+  out <- rowSums(df[, cols, drop = FALSE], na.rm = TRUE)
+  all_missing <- rowSums(!is.na(df[, cols, drop = FALSE])) == 0
+  out[all_missing] <- NA_real_
+  out
+}
+
+# ------------------------------------------------------------
+# 4. Map original EPQ item numbers to UK-scored column names
+#    UK-scored files are already keyed and stored in SCALE ORDER.
+#    So do NOT use positional extraction from a binary block.
+# ------------------------------------------------------------
+prefix_map <- c(
+  Psychoticism = "P",
+  Extraversion = "E",
+  Neuroticism  = "N",
+  Lie          = "L"
+)
+
+common_item_map <- common_item_map %>%
+  mutate(
+    uk_col = paste0(unname(prefix_map[scale]), "_", epq90_item)
+  )
+
+# ------------------------------------------------------------
+# 5. Read England UK-scored spreadsheet
+#    Change the path if needed in your project
+# ------------------------------------------------------------
+eng_file <- "EPQ- Invariance/Analysis-Files/UKscored//Total/Excel/England-total sample UK scored EPQ item data.xls"
+
+eng_raw <- readxl::read_excel(eng_file, sheet = 1)
+names(eng_raw) <- trimws(names(eng_raw))
+
+# ------------------------------------------------------------
+# 6. Check required item columns exist
+# ------------------------------------------------------------
+missing_cols <- setdiff(common_item_map$uk_col, names(eng_raw))
+
+if (length(missing_cols) > 0) {
+  stop(
+    "These expected UK-scored item columns were not found in the England file:\n",
+    paste(missing_cols, collapse = ", ")
+  )
+}
+
+# ------------------------------------------------------------
+# 7. Extract the 44 common UK-English items
+#    IMPORTANT:
+#    This spreadsheet is already UK-scored, so do NOT reverse-code again
+# ------------------------------------------------------------
+uk_english_common <- tibble(ID = seq_len(nrow(eng_raw))) %>%
+  bind_cols(
+    purrr::map_dfc(seq_len(nrow(common_item_map)), function(i) {
+      src <- common_item_map$uk_col[i]
+      dst <- common_item_map$EYP[i]
+      tibble(!!dst := suppressWarnings(as.numeric(eng_raw[[src]])))
+    })
+  ) %>%
+  filter(if_all(all_of(common_items), ~ !is.na(.x))) %>%
+  mutate(
+    Language = "UK-English",
+    .before = 1
+  ) %>%
+  select(Language, ID, all_of(common_items))
+
+# ------------------------------------------------------------
+# 8. Extract the 44 common Bangla items
+#    epq_items must already be keyed in the same 0/1 direction
+# ------------------------------------------------------------
+bangla_common <- epq_items %>%
+  select(all_of(common_items)) %>%
+  mutate(
+    Language = "Bangla",
+    ID = seq_len(n()),
+    .before = 1
+  ) %>%
+  select(Language, ID, all_of(common_items))
+
+# ------------------------------------------------------------
+# 9. Build combined language invariance data
+# ------------------------------------------------------------
+epq_language44_data_uk <- bind_rows(uk_english_common, bangla_common) %>%
+  mutate(Language = factor(Language, levels = c("UK-English", "Bangla")))
+
+epq_language44_data_ord_uk <- epq_language44_data %>%
+  mutate(across(all_of(common_items), ~ ordered(.x, levels = c(0, 1))))
+
+# ------------------------------------------------------------
+# 10. Optional 44-item scale scores
+# ------------------------------------------------------------
+epq_language44_scores <- epq_language44_data %>%
+  transmute(
+    Language,
+    ID,
+    Psychoticism = row_sum_safe(., epq_common_item_sets$Psychoticism),
+    Extraversion = row_sum_safe(., epq_common_item_sets$Extraversion),
+    Neuroticism  = row_sum_safe(., epq_common_item_sets$Neuroticism),
+    Lie          = row_sum_safe(., epq_common_item_sets$Lie)
+  )
+
+epq_language44_core_scores <- epq_language44_scores %>%
+  select(Language, ID, Psychoticism, Extraversion, Neuroticism)
+
+# ------------------------------------------------------------
+# 11. Save
+# ------------------------------------------------------------
+saveRDS(
+  epq_language44_data_uk,
+  "outputs/Language Invariance/epq_language44_data_from_England_UKscored_EPQ.rds"
+)
+
+saveRDS(
+  epq_language44_data_ord_uk,
+  "outputs/Language Invariance/epq_language44_data_from_England_UKscored_EPQ_ordered.rds"
+)
+
+readr::write_csv(
+  common_item_map,
+  "outputs/Language Invariance/epq_language44_item_map_England_UKscored.csv"
+)
+
+readr::write_csv(
+  epq_language44_scores,
+  "outputs/Language Invariance/epq_language44_scores_England_UKscored.csv"
+)
+
+# ------------------------------------------------------------
+# 12. Quick checks
+# ------------------------------------------------------------
+table(epq_language44_data_uk$Language)
+
+colSums(is.na(epq_language44_data_uk[, common_items, drop = FALSE]))
+
+glimpse(epq_language44_data_uk)
+```
+
+```{r MIUKMI}
+# ============================================================
+# EPQ ESEM LANGUAGE INVARIANCE TESTING (44 common items)
+# UK-English vs Bangla
+# Marsh 13-model taxonomy + progress bar
+# Separate UK-specific version
+# ============================================================
+
+# NOTE:
+# This script expects the following objects to be available in the
+# workspace before it is sourced:
+#   * epq_items          data.frame of Bangla EPQ items (used for EFA)
+# and the following packages loaded:
+#   * dplyr, tibble, readr, lavaan, esemComp
+
+# ------------------------------------------------------------
+# 1. Read 44-item UK language invariance data
+# ------------------------------------------------------------
+epq_language_data_uk_raw <- readRDS(
+  "outputs/Language Invariance/epq_language44_data_from_England_UKscored_EPQ.rds"
+)
+
+epq_language_data_uk <- readRDS(
+  "outputs/Language Invariance/epq_language44_data_from_England_UKscored_EPQ_ordered.rds"
+)
+
+# 44 common items (EYP2, EYP14, EYP26, EYP43 excluded)
+common_items <- c(
+  "EYP1","EYP3","EYP4","EYP5","EYP6","EYP7","EYP8","EYP9","EYP10","EYP11",
+  "EYP12","EYP13","EYP15","EYP16","EYP17","EYP18","EYP19","EYP20","EYP21",
+  "EYP22","EYP23","EYP24","EYP25","EYP27","EYP28","EYP29","EYP30","EYP31",
+  "EYP32","EYP33","EYP34","EYP35","EYP36","EYP37","EYP38","EYP39","EYP40",
+  "EYP41","EYP42","EYP44","EYP45","EYP46","EYP47","EYP48"
+)
+
+epq_ordered_items <- common_items
+
+epq_common_item_sets <- list(
+  Psychoticism = c("EYP10","EYP22","EYP31","EYP39","EYP6","EYP18","EYP28","EYP35"),
+  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP32","EYP36","EYP44","EYP48","EYP27","EYP41"),
+  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30","EYP34","EYP38","EYP42","EYP46"),
+  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33","EYP37","EYP40","EYP45","EYP47")
+)
+
+# ------------------------------------------------------------
+# 2. Sanity checks
+# ------------------------------------------------------------
+if (!exists("epq_items")) {
+  stop("`epq_items` not found. Load the Bangla EPQ item data before sourcing this script.")
+}
+
+if (!"Language" %in% names(epq_language_data_uk)) {
+  stop("`Language` column not found in epq_language_data_uk.")
+}
+
+expected_groups <- c("UK-English", "Bangla")
+found_groups <- levels(factor(epq_language_data_uk$Language))
+
+if (!all(expected_groups %in% found_groups)) {
+  warning(
+    "Expected Language groups: ",
+    paste(expected_groups, collapse = ", "),
+    ". Found: ",
+    paste(found_groups, collapse = ", ")
+  )
+}
+
+# ------------------------------------------------------------
+# 3. Build 44-item Bangla data for EFA
+# ------------------------------------------------------------
+epq_items_4f_44 <- epq_items %>%
+  dplyr::select(
+    # Psychoticism (8)
+    EYP10, EYP22, EYP31, EYP39, EYP6, EYP18, EYP28, EYP35,
+    # Extraversion (12)
+    EYP3, EYP7, EYP11, EYP15, EYP19, EYP23, EYP32, EYP36, EYP44, EYP48, EYP27, EYP41,
+    # Neuroticism (12)
+    EYP1, EYP5, EYP9, EYP13, EYP17, EYP21, EYP25, EYP30, EYP34, EYP38, EYP42, EYP46,
+    # Lie (12)
+    EYP4, EYP16, EYP45, EYP8, EYP12, EYP20, EYP24, EYP29, EYP33, EYP37, EYP40, EYP47
+  )
+
+# ------------------------------------------------------------
+# 4. Target matrix and ESEM-EFA
+# ------------------------------------------------------------
+target_4f_44 <- make_target(
+  nitems       = 44,
+  mainloadings = list(
+    Psychoticism = 1:8,
+    Extraversion = 9:20,
+    Neuroticism  = 21:32,
+    Lie          = 33:44
+  )
+)
+
+efa_4f_44_uk <- esem_efa(
+  data     = epq_items_4f_44,
+  nfactors = 4,
+  target   = target_4f_44,
+  fm       = "uls",
+  cor      = "tet"
+)
+
+ref_4f_44_uk <- find_referents(
+  efa_4f_44_uk,
+  factor_names = c("Neuroticism", "Extraversion", "Lie", "Psychoticism")
+)
+
+syn_4f_44_uk <- syntax_composer(efa_4f_44_uk, ref_4f_44_uk)
+
+# lavaan model syntax used downstream
+epq_invariance_model_uk <- syn_4f_44_uk
+
+# ------------------------------------------------------------
+# 5. Marsh 13 invariance specifications
+# ------------------------------------------------------------
+SCALAR_PARAM <- "thresholds"
+
+epq_marsh13_equal_uk <- list(
+  M1  = NULL,
+  M2  = c("loadings"),
+  M3  = c("loadings", "residuals"),
+  M4  = c("loadings", "lv.variances", "lv.covariances"),
+  M5  = c("loadings", SCALAR_PARAM),
+  M6  = c("loadings", "residuals", "lv.variances", "lv.covariances"),
+  M7  = c("loadings", SCALAR_PARAM, "residuals"),
+  M8  = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances"),
+  M9  = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances"),
+  M10 = c("loadings", SCALAR_PARAM, "means"),
+  M11 = c("loadings", SCALAR_PARAM, "residuals", "means"),
+  M12 = c("loadings", SCALAR_PARAM, "lv.variances", "lv.covariances", "means"),
+  M13 = c("loadings", SCALAR_PARAM, "residuals", "lv.variances", "lv.covariances", "means")
+)
+
+epq_model_partial_uk    <- setNames(vector("list", 13), paste0("M", 1:13))
+epq_model_extra_args_uk <- setNames(vector("list", 13), paste0("M", 1:13))
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+# ------------------------------------------------------------
+# 6. Fitting function
+# ------------------------------------------------------------
+fit_epq_language_M_uk <- function(id) {
+  base_args <- list(
+    model            = epq_invariance_model_uk,
+    data             = epq_language_data_uk,
+    group            = "Language",
+    ordered          = epq_ordered_items,
+    estimator        = "WLSMV",
+    parameterization = "theta",
+    std.lv           = TRUE,
+    meanstructure    = TRUE,
+    group.equal      = epq_marsh13_equal_uk[[id]],
+    group.partial    = epq_model_partial_uk[[id]]
+  )
+
+  args <- modifyList(base_args, epq_model_extra_args_uk[[id]] %||% list())
+  do.call(lavaan::cfa, args)
+}
+
+# ------------------------------------------------------------
+# 7. Fit all 13 models with progress bar (error-safe)
+# ------------------------------------------------------------
+model_ids_uk <- paste0("M", 1:13)
+
+epq_language_models_uk <- setNames(vector("list", length(model_ids_uk)), model_ids_uk)
+
+epq_language_fit_status_uk <- tibble::tibble(
+  Model         = model_ids_uk,
+  fitted        = FALSE,
+  converged     = NA,
+  error_message = NA_character_
+)
+
+pb <- txtProgressBar(min = 0, max = length(model_ids_uk), style = 3)
+
+for (i in seq_along(model_ids_uk)) {
+  id <- model_ids_uk[i]
+  cat(sprintf("\nFitting EPQ UK Language %s ...\n", id))
+
+  fit_obj <- tryCatch(
+    fit_epq_language_M_uk(id),
+    error   = function(e) e,
+    warning = function(w) w
+  )
+
+  if (inherits(fit_obj, "error")) {
+    epq_language_models_uk[[id]]                <- NULL
+    epq_language_fit_status_uk$fitted[i]        <- FALSE
+    epq_language_fit_status_uk$converged[i]     <- NA
+    epq_language_fit_status_uk$error_message[i] <- conditionMessage(fit_obj)
+  } else {
+    epq_language_models_uk[[id]]            <- fit_obj
+    epq_language_fit_status_uk$fitted[i]    <- TRUE
+    epq_language_fit_status_uk$converged[i] <- tryCatch(
+      lavaan::lavInspect(fit_obj, "converged"),
+      error = function(e) NA
+    )
+  }
+
+  setTxtProgressBar(pb, i)
+}
+close(pb)
+
+# ------------------------------------------------------------
+# 8. Save model objects + fit status as separate UK files
+# ------------------------------------------------------------
+saveRDS(
+  epq_language_models_uk,
+  "outputs/Language Invariance/EYP_language44_UK_models.rds"
+)
+
+saveRDS(
+  epq_language_fit_status_uk,
+  "outputs/Language Invariance/EYP_language44_UK_fit_status.rds"
+)
+
+readr::write_csv(
+  epq_language_fit_status_uk,
+  "outputs/Language Invariance/EYP_language44_UK_fit_status.csv"
+)
+
+# ------------------------------------------------------------
+# 9. Helper: pick robust fit index with fallback
+# ------------------------------------------------------------
+.pick <- function(fm, primary, fallback = NULL) {
+  if (!is.null(fm[[primary]]) && !is.na(fm[[primary]])) {
+    return(unname(fm[[primary]]))
+  }
+  if (!is.null(fallback) && !is.null(fm[[fallback]]) && !is.na(fm[[fallback]])) {
+    return(unname(fm[[fallback]]))
+  }
+  NA_real_
+}
+
+# ------------------------------------------------------------
+# 10. Extract fit indices
+# ------------------------------------------------------------
+epq_language_fit_tbl_uk <- dplyr::bind_rows(lapply(model_ids_uk, function(id) {
+  fit <- epq_language_models_uk[[id]]
+
+  if (is.null(fit)) {
+    return(tibble::tibble(
+      Model      = id,
+      converged  = NA,
+      Chi_Square = NA_real_,
+      df         = NA_real_,
+      CFI        = NA_real_,
+      TLI        = NA_real_,
+      RMSEA      = NA_real_,
+      RMSEA_90_L = NA_real_,
+      RMSEA_90_U = NA_real_,
+      SRMR       = NA_real_
+    ))
+  }
+
+  conv <- tryCatch(lavaan::lavInspect(fit, "converged"), error = function(e) NA)
+  fm   <- tryCatch(lavaan::fitMeasures(fit), error = function(e) NULL)
+
+  if (is.null(fm)) {
+    return(tibble::tibble(
+      Model      = id,
+      converged  = conv,
+      Chi_Square = NA_real_,
+      df         = NA_real_,
+      CFI        = NA_real_,
+      TLI        = NA_real_,
+      RMSEA      = NA_real_,
+      RMSEA_90_L = NA_real_,
+      RMSEA_90_U = NA_real_,
+      SRMR       = NA_real_
+    ))
+  }
+
+  tibble::tibble(
+    Model      = id,
+    converged  = conv,
+    Chi_Square = .pick(fm, "chisq.scaled",          "chisq"),
+    df         = .pick(fm, "df.scaled",             "df"),
+    CFI        = .pick(fm, "cfi.scaled",            "cfi"),
+    TLI        = .pick(fm, "tli.scaled",            "tli"),
+    RMSEA      = .pick(fm, "rmsea.scaled",          "rmsea"),
+    RMSEA_90_L = .pick(fm, "rmsea.ci.lower.scaled", "rmsea.ci.lower"),
+    RMSEA_90_U = .pick(fm, "rmsea.ci.upper.scaled", "rmsea.ci.upper"),
+    SRMR       = .pick(fm, "srmr",                  "srmr_bentler")
+  )
+})) %>%
+  dplyr::mutate(Model = factor(Model, levels = model_ids_uk)) %>%
+  dplyr::arrange(Model)
+
+# ------------------------------------------------------------
+# 11. Sequential LRT
+# ------------------------------------------------------------
+safe_LRT <- function(prev, curr) {
+  if (is.null(prev) || is.null(curr)) {
+    return(c(chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_))
+  }
+
+  tab <- tryCatch(lavaan::lavTestLRT(prev, curr), error = function(e) NULL)
+  if (is.null(tab)) {
+    return(c(chisq_diff = NA_real_, df_diff = NA_real_, p = NA_real_))
+  }
+
+  tab <- as.data.frame(tab)
+  i   <- nrow(tab)
+
+  chisq <- if ("Chisq diff" %in% names(tab)) tab[["Chisq diff"]][i] else NA_real_
+  df    <- if ("Df diff"    %in% names(tab)) tab[["Df diff"]][i]    else NA_real_
+  p     <- if ("Pr(>Chisq)" %in% names(tab)) tab[["Pr(>Chisq)"]][i] else NA_real_
+
+  c(
+    chisq_diff = as.numeric(chisq),
+    df_diff    = as.numeric(df),
+    p          = as.numeric(p)
+  )
+}
+
+epq_language_diff_tbl_uk <- tibble::tibble(
+  Model      = model_ids_uk,
+  chisq_diff = NA_real_,
+  df_diff    = NA_real_,
+  p          = NA_real_
+)
+
+for (i in 2:length(model_ids_uk)) {
+  d <- safe_LRT(
+    epq_language_models_uk[[model_ids_uk[i - 1]]],
+    epq_language_models_uk[[model_ids_uk[i]]]
+  )
+  epq_language_diff_tbl_uk$chisq_diff[i] <- d[["chisq_diff"]]
+  epq_language_diff_tbl_uk$df_diff[i]    <- d[["df_diff"]]
+  epq_language_diff_tbl_uk$p[i]          <- d[["p"]]
+}
+
+# ------------------------------------------------------------
+# 12. Combined table with delta criteria
+# ------------------------------------------------------------
+epq_language_invariance_table_uk <- epq_language_fit_tbl_uk %>%
+  dplyr::left_join(epq_language_diff_tbl_uk, by = "Model") %>%
+  dplyr::mutate(
+    dCFI             = CFI   - dplyr::lag(CFI),
+    dTLI             = TLI   - dplyr::lag(TLI),
+    dRMSEA           = RMSEA - dplyr::lag(RMSEA),
+    CFI_invariance   = dCFI   >= -0.01,
+    RMSEA_invariance = dRMSEA <=  0.01
+  )
+
+# ------------------------------------------------------------
+# 13. Pretty table
+# ------------------------------------------------------------
+epq_language_invariance_pretty_uk <- epq_language_invariance_table_uk %>%
+  dplyr::transmute(
+    Model,
+    `Chi-Square`            = Chi_Square,
+    df,
+    CFI,
+    TLI,
+    RMSEA,
+    `RMSEA 90% Lower CI`    = RMSEA_90_L,
+    `RMSEA 90% Upper CI`    = RMSEA_90_U,
+    `Chi-Square Difference` = chisq_diff,
+    `df difference`         = df_diff,
+    p,
+    CFI_diff                = dCFI,
+    TLI_diff                = dTLI,
+    RMSEA_diff              = dRMSEA,
+    CFI_invariance,
+    RMSEA_invariance,
+    converged
+  )
+
+# ------------------------------------------------------------
+# 14. Formatting helpers
+# ------------------------------------------------------------
+fmt2 <- function(x) ifelse(is.na(x), "", sprintf("%.2f", x))
+fmt3 <- function(x) ifelse(is.na(x), "", sprintf("%.3f", x))
+
+apa_p <- function(p) {
+  ifelse(
+    is.na(p), "",
+    ifelse(p < .001, "p < .001",
+           sub("^0", "", sprintf("%.3f", p)))
+  )
+}
+
+# ------------------------------------------------------------
+# 15. Final table formatter
+# ------------------------------------------------------------
+prep_invariance_tbl <- function(df, model_col = "Model") {
+  m13_labels <- c(
+    M1  = "M1 (Configural)",
+    M2  = "M2 (Metric)",
+    M3  = "M3 (Metric + Residuals)",
+    M4  = "M4 (Metric + Factor Var/Cov)",
+    M5  = "M5 (Scalar)",
+    M6  = "M6 (Metric + Residuals + Factor Var/Cov)",
+    M7  = "M7 (Scalar + Residuals)",
+    M8  = "M8 (Scalar + Factor Var/Cov)",
+    M9  = "M9 (Scalar + Residuals + Factor Var/Cov)",
+    M10 = "M10 (Scalar + Means)",
+    M11 = "M11 (Scalar + Residuals + Means)",
+    M12 = "M12 (Scalar + Factor Var/Cov + Means)",
+    M13 = "M13 (Scalar + Residuals + Factor Var/Cov + Means)"
+  )
+
+  df <- df %>%
+    dplyr::mutate(
+      Model_disp = if ("Model_Label" %in% names(.)) .data[["Model_Label"]] else .data[[model_col]],
+      Model_disp = dplyr::recode(
+        as.character(Model_disp),
+        !!!as.list(m13_labels),
+        .default = as.character(Model_disp)
+      ),
+      RMSEA_CI = ifelse(
+        is.na(.data[["RMSEA 90% Lower CI"]]) | is.na(.data[["RMSEA 90% Upper CI"]]),
+        "",
+        paste0(
+          "[", fmt3(.data[["RMSEA 90% Lower CI"]]),
+          ", ", fmt3(.data[["RMSEA 90% Upper CI"]]), "]"
+        )
+      )
+    )
+
+  df %>%
+    dplyr::transmute(
+      Model          = Model_disp,
+      `χ²`           = fmt2(.data[["Chi-Square"]]),
+      df             = ifelse(is.na(.data[["df"]]), "",
+                              as.character(as.integer(.data[["df"]]))),
+      CFI            = fmt3(.data[["CFI"]]),
+      TLI            = fmt3(.data[["TLI"]]),
+      RMSEA          = fmt3(.data[["RMSEA"]]),
+      `RMSEA 90% CI` = RMSEA_CI,
+      `Δχ²`          = fmt2(.data[["Chi-Square Difference"]]),
+      `Δdf`          = ifelse(is.na(.data[["df difference"]]), "",
+                              as.character(as.integer(.data[["df difference"]]))),
+      p              = apa_p(.data[["p"]]),
+      `ΔCFI`         = fmt3(.data[["CFI_diff"]]),
+      `ΔTLI`         = fmt3(.data[["TLI_diff"]]),
+      `ΔRMSEA`       = fmt3(.data[["RMSEA_diff"]]),
+      CFI_inv        = ifelse(is.na(.data[["CFI_invariance"]]), "",
+                              ifelse(.data[["CFI_invariance"]], "Yes", "No")),
+      RMSEA_inv      = ifelse(is.na(.data[["RMSEA_invariance"]]), "",
+                              ifelse(.data[["RMSEA_invariance"]], "Yes", "No")),
+      Converged      = ifelse(is.na(.data[["converged"]]), "",
+                              ifelse(.data[["converged"]], "Yes", "No"))
+    )
+}
+
+# ------------------------------------------------------------
+# 16. Create APA-ready table
+# ------------------------------------------------------------
+epq_language44_invariance_apa_uk <- prep_invariance_tbl(epq_language_invariance_pretty_uk)
+
+# ------------------------------------------------------------
+# 17. Save all outputs as separate UK files
+# ------------------------------------------------------------
+saveRDS(
+  epq_language_fit_tbl_uk,
+  "outputs/tables/EYP_language44_UK_fit_table.rds"
+)
+
+saveRDS(
+  epq_language_invariance_table_uk,
+  "outputs/tables/EYP_language44_UK_invariance_table.rds"
+)
+
+saveRDS(
+  epq_language_invariance_pretty_uk,
+  "outputs/tables/EYP_language44_UK_invariance_raw.rds"
+)
+
+saveRDS(
+  epq_language44_invariance_apa_uk,
+  "outputs/tables/EYP_language44_UK_invariance_APA.rds"
+)
+
+readr::write_csv(
+  epq_language_fit_tbl_uk,
+  "outputs/tables/EYP_language44_UK_fit_table.csv"
+)
+
+readr::write_csv(
+  epq_language_invariance_pretty_uk,
+  "outputs/tables/EYP_language44_UK_invariance_raw.csv"
+)
+
+readr::write_csv(
+  epq_language44_invariance_apa_uk,
+  "outputs/tables/EYP_language44_UK_invariance_APA.csv"
+)
+
+# ------------------------------------------------------------
+# 18. Optional quick checks
+# ------------------------------------------------------------
+table(epq_language_data_uk_raw$Language)
+
+dplyr::glimpse(epq_language_data_uk_raw)
+
+epq_language_fit_status_uk
+epq_language44_invariance_apa_uk
+```
 
 ## Item Response Theory
 
