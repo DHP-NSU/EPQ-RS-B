@@ -308,20 +308,17 @@ All analyses were conducted in R (version 4.5.2) using a reproducible pipeline [
 *Measurement Invariance.* Sex measurement invariance of the EPQ-RS-B was evaluated using a 13-model taxonomy (M1 to M13), which tests progressively restrictive equality constraints across groups (Marsh et al., 2009). The sequence begins with configural invariance (M1), which establishes whether the same factor structure holds for males and females without imposing cross-group equality on any parameters. Subsequent models add metric (factor loading) constraints, residual variance constraints, factor variance/covariance constraints, scalar (intercept) constraints, and latent mean constraints in various combinations. This cumulative approach allows researchers to identify precisely which class of parameters, if any, produces misfit when equated across groups.
 Invariance decisions were based on changes in approximate fit indices rather than on the chi-square difference test, which is well known to be overly sensitive in moderate to large samples (Cheung & Rensvold, 2002). The primary criterion was ΔCFI ≥ −.01 (Cheung & Rensvold, 2002), supplemented by ΔRMSEA ≤ .015 (Chen, 2007). Because the delta columns in the raw output were unpopulated, incremental changes were computed by comparing each successive model to the least restrictive model within its constraint class. The 13-model taxonomy is designed so that the tenability of the final, most restrictive model (M13: scalar + residuals + factor variances/covariances + latent means) serves as the primary inferential target, while intermediate steps are inspected for localized sources of strain (Marsh et al., 2009; Chiorri et al., 2016).
 
+*MI Language*
+*Factor Allignmnet*
+
 *Item response theory.* Item-level measurement precision for the EPQ-RS-B was examined using item response theory (IRT). Two-parameter logistic (2PL) models were estimated separately for each of the four subscales (Psychoticism, Extraversion, Neuroticism, Lie) via marginal maximum likelihood using the Metropolis-Hastings Robbins-Monro algorithm implemented in the mirt package (Cai, 2010; Chalmers, 2012). The 2PL model was selected because it is appropriate for dichotomous response data and has been applied to Eysenck scales in prior IRT investigations (Colledani et al., 2019; Smits et al., 2021).
 Item fit was evaluated using Orlando and Thissen's (2000) S-X² statistic, with items flagged when RMSEA.S-X² exceeded .05 or p < .01. Infit and outfit mean-square statistics were also inspected, with values exceeding 1.4 treated as indicative of misfit (Kang & Chen, 2011). Person fit was assessed using Zh statistics.
 IRT item parameters were interpreted using the discrimination (a) and difficulty (b) estimates from each 2PL model. Discrimination values were categorized following Baker's (2001) guidelines: very low (a < 0.35), low (0.35 to 0.64), moderate (0.65 to 1.34), high (1.35 to 1.69), and very high (a ≥ 1.70).
 Scale-level measurement precision was quantified through marginal reliability (the IRT analogue of classical reliability) and empirical reliability. Test information curves (TICs) were examined to identify the theta (θ) location of peak information, the standard error at peak, and the breadth of the θ range over which the scale provides reliable measurement. The θ range meeting a marginal reliability threshold of .70 (corresponding to test information ≥ 2.33) was computed for each subscale to characterize the "reliable measurement window" of each scale. Item characteristic curves (ICCs) were visually inspected for monotonicity violations, unexpectedly flat slopes, and extreme threshold locations.
 
-*DIF*. Looking at the code, this uses a Rasch-based approach (eRm package) with Wald and Andersen LR tests, which test for uniform DIF only. There is no non-uniform DIF test in this code. Let me check project knowledge for additional context.Here is the data analysis plan text for the DIF section:
 
 **Differential Item Functioning (DIF)**
 
-Sex-based differential item functioning was evaluated for each EPQ-RS-B subscale (Psychoticism, Extraversion, Neuroticism) using a conditional maximum likelihood (CML) Rasch modelling framework implemented in the eRm package (Mair & Hatzinger, 2007). The Rasch model was selected for DIF analysis because its specific objectivity property provides a principled basis for comparing item parameters across groups: if the model holds, person and item parameters are separable, and any group-level departure in item difficulty constitutes direct evidence of measurement non-invariance (Fischer, 1993).
-
-For each subscale, a joint Rasch model was first estimated on the full sample (after excluding persons with extreme, i.e., minimum or maximum possible, total scores, as these are uninformative under CML estimation). Two complementary tests of uniform DIF were then applied. First, the Andersen likelihood ratio (LR) test (Andersen, 1973) provided an omnibus evaluation of whether the full set of item parameters was invariant across gender groups. A statistically significant LR test indicates that at least one item functions differently for males and females, though it does not identify which item(s) are responsible. Second, per-item Wald tests were conducted by splitting the calibration by gender and testing the null hypothesis that each item's difficulty parameter was equal across groups (Fischer & Molenaar, 1995). Because multiple items were tested simultaneously within each subscale, p-values from the Wald tests were adjusted using the Benjamini-Hochberg (BH) procedure to control the false discovery rate. Items were flagged as exhibiting DIF if the BH-adjusted p-value fell below .05. For descriptive purposes, separate Rasch models were also estimated within each gender group to obtain group-specific item difficulty estimates, and the difference in difficulty (delta-beta) was computed for each item to index the direction and magnitude of any detected DIF.
-
- limitation should be borne in mind when interpreting the results.
 
 *Concurrent validity.* Concurrent validity was assessed through Pearson correlations (Holm-adjusted) between EPQ-RS-B subscale scores and BFI-2-B domain scores.
 
@@ -2003,1415 +2000,6 @@ papaja::apa_table(
 
 ## EPQ-RS ALIGNMENT BENCHMARKING ANALYSIS
 
-```{r claude}
-################################################################################
-# EPQ-RS FACTOR ALIGNMENT BENCHMARKING  —  FINAL CORRECTED VERSION
-#
-# Based directly on:
-#   Asparouhov, T. & Muthén, B. (2013). Multiple-group factor analysis
-#   alignment. Mplus Web Notes No. 18.
-#
-# ── WHAT THE PAPER SPECIFIES ──────────────────────────────────────────────────
-#
-#  Model (paper eq. 1):   y_ipg = ν_pg  +  λ_pg × η_ig  +  ε_ipg
-#    ν_pg  = item INTERCEPT  (higher ν → higher P(Y=1) for binary items)
-#    λ_pg  = factor loading
-#    η_ig ~ N(α_g, ψ_g)
-#
-#  For BINARY items with WLSMV + theta parameterization:
-#    P(Y=1 | η) = Φ(λη − τ)   where τ = item THRESHOLD from lavaan
-#    Rewrite as  = Φ(λη + ν)  where ν = −τ
-#    Therefore:   ν  =  −τ                    
-#
-#  Alignment loss (paper eq. 4) is minimized w.r.t. α_g, ψ_g.
-#  Weight (paper p. 8):  w_{g1,g2} = sqrt(N_{g1} × N_{g2})
-#  sirt implements this via a G×I matrix where wgt[g, i] = sqrt(N_g).  
-#
-#  Reference group (FIXED alignment, paper p. 8–9):
-#    α_1 = 0 fixed; sirt always uses ROW 1 as reference.
-#    We REORDER so England is row 1.                                    
-#
-#  R² formula (sirt source sirt_rsquared.R):
-#    R² = 1  −  Σ(x − expl)²  /  Σ(x²)
-#    This is the no-intercept coefficient of determination, not standard R².
-#    It is bounded by 1 from above and goes deeply negative when the
-#    optimizer diverges (which happened because of un-negated thresholds).
-#    With correct inputs it returns values near 1 and the 0.90 threshold
-#    from Asparouhov & Muthén (2014) still applies.
-#
-#
-# ── REFERENCE GROUP FILE NAME ─────────────────────────────────────────────────
-#  "England-total sample UK scored EPQ item data.xls"
-#  tools::file_path_sans_ext strips the extension, leaving the label:
-#  "England-total sample UK scored EPQ item data"
-#  The code matches this label exactly.
-################################################################################
-
-
-# ==============================================================================
-# 0. PACKAGES
-# ==============================================================================
-
-required_pkgs <- c(
-  "readxl", "dplyr", "purrr", "lavaan",
-  "sirt", "ggplot2", "tibble", "tools", "stringr"
-)
-
-invisible(lapply(required_pkgs, function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE))
-    install.packages(pkg, dependencies = TRUE)
-  library(pkg, character.only = TRUE)
-}))
-
-
-# ==============================================================================
-# 1. CONFIGURATION  —  edit only these paths
-# ==============================================================================
-
-ARCHIVAL_DIR <- "EPQ- Invariance/Analysis-Files/UKscored/Total/Excel/"
-BANGLA_LABEL <- "Bangladesh (Bangla)"
-OUT_DIR      <- "outputs/alignment_output_final"
-R2_THRESHOLD <- 0.90
-
-# Exact label produced by tools::file_path_sans_ext on the England file.
-# File name: "England-total sample UK scored EPQ item data.xls"
-ENGLAND_LABEL <- "England-total sample UK scored EPQ item data"
-
-dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
-
-
-# ==============================================================================
-# 2. VERIFY BANGLA INPUT
-# ==============================================================================
-
-if (!exists("epq_items"))
-  stop("`epq_items` not found in environment. Load your Bangla item data first.")
-epq_items <- as.data.frame(epq_items)
-
-
-# ==============================================================================
-# 3. ITEM MAP  (44 common items between IPQ-RS and EPQ-90)
-# ==============================================================================
-
-common_item_map <- tibble::tribble(
-  ~EYP,    ~archival_col, ~scale,
-  "EYP1",  "N_3",  "Neuroticism",
-  "EYP3",  "E_5",  "Extraversion",
-  "EYP4",  "L_13", "Lie",
-  "EYP5",  "N_7",  "Neuroticism",
-  "EYP6",  "P_6",  "Psychoticism",
-  "EYP7",  "E_10", "Extraversion",
-  "EYP8",  "L_8",  "Lie",
-  "EYP9",  "N_15", "Neuroticism",
-  "EYP10", "P_22", "Psychoticism",
-  "EYP11", "E_17", "Extraversion",
-  "EYP12", "L_16", "Lie",
-  "EYP13", "N_19", "Neuroticism",
-  "EYP15", "E_14", "Extraversion",
-  "EYP16", "L_20", "Lie",
-  "EYP17", "N_23", "Neuroticism",
-  "EYP18", "P_37", "Psychoticism",
-  "EYP19", "E_40", "Extraversion",
-  "EYP20", "L_24", "Lie",
-  "EYP21", "N_31", "Neuroticism",
-  "EYP22", "P_43", "Psychoticism",
-  "EYP23", "E_45", "Extraversion",
-  "EYP24", "L_39", "Lie",
-  "EYP25", "N_34", "Neuroticism",
-  "EYP27", "E_21", "Extraversion",
-  "EYP28", "P_53", "Psychoticism",
-  "EYP29", "L_48", "Lie",
-  "EYP30", "N_41", "Neuroticism",
-  "EYP31", "P_67", "Psychoticism",
-  "EYP32", "E_52", "Extraversion",
-  "EYP33", "L_51", "Lie",
-  "EYP34", "N_72", "Neuroticism",
-  "EYP35", "P_71", "Psychoticism",
-  "EYP36", "E_82", "Extraversion",
-  "EYP37", "L_59", "Lie",
-  "EYP38", "N_75", "Neuroticism",
-  "EYP39", "P_83", "Psychoticism",
-  "EYP40", "L_63", "Lie",
-  "EYP41", "E_42", "Extraversion",
-  "EYP42", "N_77", "Neuroticism",
-  "EYP44", "E_86", "Extraversion",
-  "EYP45", "L_78", "Lie",
-  "EYP46", "N_27", "Neuroticism",
-  "EYP47", "L_85", "Lie",
-  "EYP48", "E_70", "Extraversion"
-)
-
-epq_common_item_sets <- list(
-  Psychoticism = c("EYP6","EYP10","EYP18","EYP22","EYP28","EYP31","EYP35","EYP39"),
-  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP27","EYP32",
-                   "EYP36","EYP41","EYP44","EYP48"),
-  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30",
-                   "EYP34","EYP38","EYP42","EYP46"),
-  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33",
-                   "EYP37","EYP40","EYP45","EYP47")
-)
-
-archival_to_eyp <- setNames(common_item_map$EYP,          common_item_map$archival_col)
-eyp_to_archival <- setNames(common_item_map$archival_col, common_item_map$EYP)
-
-
-# ==============================================================================
-# 4. HELPER: PER-GROUP SINGLE-FACTOR WLSMV CFA
-# ==============================================================================
-
-# Returns a list with:
-#   $loadings    — named vector of std. factor loadings (std.all from lavaan)
-#   $thresholds  — named vector of RAW thresholds τ from lavaan (will be
-#                  negated later to obtain intercepts ν = −τ)
-#   $n, $converged, $items_used, $dropped_zv, $error
-
-fit_group_cfa <- function(data_subset, factor_name, item_names,
-                          group_label = "") {
-
-  df <- as.data.frame(lapply(
-    data_subset[, item_names, drop = FALSE],
-    function(x) {
-      if (is.factor(x) || is.character(x)) x <- suppressWarnings(as.numeric(x))
-      if (is.logical(x)) x <- as.integer(x)
-      as.numeric(x)
-    }
-  ))
-
-  # Drop zero-variance items (would crash WLSMV)
-  zv <- sapply(df, function(x) length(unique(stats::na.omit(x))) < 2)
-  dropped_zv <- names(df)[zv]
-  df         <- df[, !zv, drop = FALSE]
-  item_names <- names(df)
-
-  if (length(dropped_zv) > 0)
-    message(sprintf("  [%s | %s] zero-variance dropped: %s",
-                    group_label, factor_name, paste(dropped_zv, collapse = ", ")))
-
-  if (length(item_names) < 3)
-    return(list(loadings = NULL, thresholds = NULL, n = nrow(df),
-                converged = FALSE, items_used = item_names,
-                dropped_zv = dropped_zv,
-                error = "fewer than 3 usable items after zero-variance filter"))
-
-  # WLSMV CFA with theta parameterization for binary items.
-  # std.lv = TRUE fixes factor variance to 1 (identification).
-  fit <- tryCatch(
-    lavaan::cfa(
-      model            = paste0(factor_name, " =~ ",
-                                paste(item_names, collapse = " + ")),
-      data             = df,
-      estimator        = "WLSMV",
-      ordered          = item_names,
-      parameterization = "theta",
-      std.lv           = TRUE
-    ),
-    error = function(e) e
-  )
-
-  if (inherits(fit, "error"))
-    return(list(loadings = NULL, thresholds = NULL, n = nrow(df),
-                converged = FALSE, items_used = item_names,
-                dropped_zv = dropped_zv,
-                error = conditionMessage(fit)))
-
-  converged <- tryCatch(lavaan::lavInspect(fit, "converged"),
-                        error = function(e) FALSE)
-  if (!isTRUE(converged))
-    return(list(loadings = NULL, thresholds = NULL, n = nrow(df),
-                converged = FALSE, items_used = item_names,
-                dropped_zv = dropped_zv,
-                error = "lavaan did not converge"))
-
-  pars <- lavaan::parameterEstimates(fit, standardized = TRUE)
-
-  # Factor loadings: use std.all (fully standardised)
-  lam_df   <- pars[pars$op == "=~", c("rhs", "std.all"), drop = FALSE]
-  loadings <- setNames(rep(NA_real_, length(item_names)), item_names)
-  cl       <- intersect(item_names, lam_df$rhs)
-  loadings[cl] <- lam_df$std.all[match(cl, lam_df$rhs)]
-
-  # Thresholds τ  (one per binary item, from op == "|")
-  # IMPORTANT: these are RAW thresholds, NOT yet negated.
-  # Negation to intercepts  ν = −τ  happens in run_alignment (FIX A).
-  thr_df <- pars[pars$op == "|", c("lhs", "est"), drop = FALSE]
-  thr_df <- thr_df[!duplicated(thr_df$lhs), ]         # keep first threshold
-  thresholds <- setNames(rep(NA_real_, length(item_names)), item_names)
-  ct         <- intersect(item_names, thr_df$lhs)
-  thresholds[ct] <- thr_df$est[match(ct, thr_df$lhs)]
-
-  list(
-    loadings   = loadings,
-    thresholds = thresholds,     # τ — caller negates to get ν
-    n          = nrow(df),
-    converged  = TRUE,
-    items_used = item_names,
-    dropped_zv = dropped_zv,
-    error      = NA_character_
-  )
-}
-
-
-# ==============================================================================
-# 5. LOAD AND PROCESS ARCHIVAL FILES
-# ==============================================================================
-
-excel_files <- list.files(ARCHIVAL_DIR, pattern = "\\.xlsx?$",
-                          full.names = TRUE, ignore.case = TRUE)
-if (length(excel_files) == 0)
-  stop("No Excel files found in: ", ARCHIVAL_DIR)
-message("Found ", length(excel_files), " archival files.")
-
-process_country <- function(filepath) {
-  label <- tools::file_path_sans_ext(basename(filepath))
-  message("\nProcessing: ", label)
-
-  dat <- tryCatch(as.data.frame(readxl::read_excel(filepath)),
-                  error = function(e) e)
-  if (inherits(dat, "error")) {
-    message("  READ ERROR: ", conditionMessage(dat))
-    return(list(country = label, n = NA_integer_,
-                results  = setNames(vector("list", 4), names(epq_common_item_sets)),
-                read_error = conditionMessage(dat)))
-  }
-
-  needed    <- common_item_map$archival_col
-  present   <- intersect(needed, names(dat))
-  missing   <- setdiff(needed, names(dat))
-  if (length(missing) > 0)
-    message("  Missing archival columns: ", paste(missing, collapse = ", "))
-
-  dat_c          <- dat[, present, drop = FALSE]
-  names(dat_c)   <- archival_to_eyp[present]
-
-  results <- lapply(names(epq_common_item_sets), function(sc) {
-    items <- intersect(epq_common_item_sets[[sc]], names(dat_c))
-    message(sprintf("  %s: %d items", sc, length(items)))
-    fit_group_cfa(dat_c, sc, items, label)
-  })
-  names(results) <- names(epq_common_item_sets)
-
-  list(country = label, n = nrow(dat_c),
-       results = results, read_error = NA_character_)
-}
-
-archival_results <- lapply(excel_files, process_country)
-names(archival_results) <- vapply(archival_results, `[[`, character(1), "country")
-
-
-# ==============================================================================
-# 6. PROCESS BANGLA DATA
-# ==============================================================================
-
-message("\nProcessing Bangla data from `epq_items`.")
-
-required_bangla <- common_item_map$EYP
-missing_bangla  <- setdiff(required_bangla, names(epq_items))
-if (length(missing_bangla) > 0)
-  message("Bangla data missing items: ", paste(missing_bangla, collapse = ", "))
-
-bangla_dat <- as.data.frame(
-  epq_items[, intersect(required_bangla, names(epq_items)), drop = FALSE]
-)
-
-bangla_cfas <- lapply(names(epq_common_item_sets), function(sc) {
-  items <- intersect(epq_common_item_sets[[sc]], names(bangla_dat))
-  message(sprintf("  Bangla %s: %d items", sc, length(items)))
-  fit_group_cfa(bangla_dat, sc, items, BANGLA_LABEL)
-})
-names(bangla_cfas) <- names(epq_common_item_sets)
-
-bangla_entry <- list(
-  country    = BANGLA_LABEL,
-  n          = nrow(bangla_dat),
-  results    = bangla_cfas,
-  read_error = NA_character_
-)
-
-
-# ==============================================================================
-# 7. COMBINE ALL GROUPS  AND  PLACE ENGLAND FIRST  (FIX C)
-#
-#  sirt::invariance.alignment() always uses ROW 1 as the FIXED reference group
-#  (α_1 = 0, paper p. 8-9).  We reorder so England is row 1.
-#  The England file label (after stripping extension) is exactly:
-#    "England-total sample UK scored EPQ item data"
-# ==============================================================================
-
-all_groups  <- c(archival_results, list(Bangladesh = bangla_entry))
-all_labels  <- vapply(all_groups, `[[`, character(1), "country")
-all_ns      <- vapply(all_groups,
-                      function(x) ifelse(is.na(x$n), 0L, as.integer(x$n)),
-                      integer(1))
-
-# Locate England by exact label match first, then partial as fallback
-england_idx <- which(all_labels == ENGLAND_LABEL)
-if (length(england_idx) == 0) {
-  england_idx <- which(grepl("^England", all_labels, ignore.case = TRUE))
-  if (length(england_idx) == 0)
-    stop("England file not found. Check ENGLAND_LABEL or ARCHIVAL_DIR.\n",
-         "Available labels:\n  ", paste(all_labels, collapse = "\n  "))
-  warning("Exact England label not matched; using first partial match: ",
-          all_labels[england_idx[1]])
-}
-england_idx <- england_idx[1]
-message("\nReference group (row 1): ", all_labels[england_idx])
-
-# Reorder: England first, then all others in original order
-reorder_idx <- c(england_idx, setdiff(seq_along(all_groups), england_idx))
-all_groups  <- all_groups[reorder_idx]
-all_labels  <- all_labels[reorder_idx]
-all_ns      <- all_ns[reorder_idx]
-
-# Confirm England is now row 1
-stopifnot(grepl("England", all_labels[1], ignore.case = TRUE))
-message("Groups after reordering: ", length(all_groups))
-message("Row 1 (reference): ", all_labels[1])
-message("Bangladesh at row: ", which(all_labels == BANGLA_LABEL))
-
-
-# ==============================================================================
-# 8. RUN ALIGNMENT PER SUBSCALE
-#
-#  Paper formulas implemented:
-#    ν = −τ           (FIX A: negate thresholds to get intercepts)
-#    wgt[g,i] = sqrt(N_g)  as G×I matrix  (FIX B: correct sirt input type)
-#    Row 1 = England  (FIX C: correct reference group)
-#
-#  R² interpretation (sirt_rsquared.R):
-#    R² = 1 − Σ(x − expl)² / Σ(x²)
-#    For loadings:   expl[g,i] = ψ_g × mean_aligned_loading[i]
-#    For intercepts: expl[g,i] = mean_aligned_nu[i] + α_g × mean_aligned_loading[i]
-#    Threshold ≥ 0.90 (Asparouhov & Muthén 2014)
-# ==============================================================================
-
-run_alignment <- function(scale_name) {
-  message("\n=== Alignment: ", scale_name, " ===")
-
-  target_items <- epq_common_item_sets[[scale_name]]
-  G <- length(all_groups)
-  I <- length(target_items)
-
-  # ── Build parameter matrices (groups × items) ────────────────────────────
-  lambda_mat <- matrix(NA_real_, G, I,
-                       dimnames = list(all_labels, target_items))
-  nu_mat     <- matrix(NA_real_, G, I,
-                       dimnames = list(all_labels, target_items))
-  # nu_mat will hold INTERCEPTS ν = −τ  (see FIX A below)
-
-  converged_flag <- logical(G)
-
-  for (g in seq_len(G)) {
-    res <- all_groups[[g]]$results[[scale_name]]
-    if (is.null(res) || !isTRUE(res$converged)) next
-    converged_flag[g] <- TRUE
-
-    lam <- res$loadings
-    thr <- res$thresholds
-
-    if (!is.null(lam)) {
-      ci <- intersect(names(lam), target_items)
-      lambda_mat[g, ci] <- lam[ci]
-    }
-
-    if (!is.null(thr)) {
-      ci <- intersect(names(thr), target_items)
-      # ── FIX A: ν = −τ ─────────────────────────────────────────────────
-      # lavaan returns τ (threshold, where P(Y=1) DECREASES as τ increases).
-      # sirt alignment expects ν (intercept, where P(Y=1) INCREASES as ν increases).
-      # Paper eq. (1): y_ipg = ν_pg + λ_pg × η_ig  →  for binary items ν = −τ.
-      nu_mat[g, ci] <- -thr[ci]
-    }
-  }
-
-  n_conv <- sum(converged_flag)
-  message("  Groups converged: ", n_conv, " / ", G)
-
-  if (n_conv < 2) {
-    message("  Skipping: need at least 2 converged groups.")
-    return(NULL)
-  }
-
-  # ── Drop items with < 50% coverage across CONVERGED groups ───────────────
-  coverage   <- colMeans(!is.na(lambda_mat[converged_flag, , drop = FALSE]))
-  keep_items <- names(coverage)[coverage >= 0.50]
-  drop_items <- setdiff(target_items, keep_items)
-
-  if (length(drop_items) > 0)
-    message("  Items dropped (< 50% coverage): ", paste(drop_items, collapse = ", "))
-  if (length(keep_items) < 3) {
-    message("  Skipping: fewer than 3 items with adequate coverage.")
-    return(NULL)
-  }
-
-  lambda_mat <- lambda_mat[, keep_items, drop = FALSE]
-  nu_mat     <- nu_mat[,    keep_items, drop = FALSE]
-
-  # ── Keep groups that have at least one valid entry in BOTH matrices ───────
-  usable <- rowSums(!is.na(lambda_mat)) > 0 & rowSums(!is.na(nu_mat)) > 0
-  if (sum(usable) < 2) {
-    message("  Skipping: fewer than 2 usable groups after item trim.")
-    return(NULL)
-  }
-
-  # Confirm England (reference, row 1) is still present after filtering
-  if (!usable[1]) {
-    message("  WARNING: England (reference group) was dropped as unusable.",
-            " Cannot proceed with this subscale.")
-    return(NULL)
-  }
-
-  lambda_mat  <- lambda_mat[usable, , drop = FALSE]
-  nu_mat      <- nu_mat[usable,     , drop = FALSE]
-  used_labels <- rownames(lambda_mat)
-  used_ns     <- all_ns[match(used_labels, all_labels)]
-
-  # ── Mean-impute remaining NAs cell-by-cell ────────────────────────────────
-  had_imputation <- anyNA(lambda_mat) || anyNA(nu_mat)
-  if (had_imputation) {
-    message("  Imputing remaining NA cells by column mean.")
-    for (j in seq_len(ncol(lambda_mat))) {
-      na_l <- is.na(lambda_mat[, j])
-      na_n <- is.na(nu_mat[, j])
-      if (any(na_l)) lambda_mat[na_l, j] <- mean(lambda_mat[, j], na.rm = TRUE)
-      if (any(na_n)) nu_mat[na_n,     j] <- mean(nu_mat[,     j], na.rm = TRUE)
-    }
-  }
-
-  # ── FIX B: Weight matrix ──────────────────────────────────────────────────
-  # Paper p.8: w_{g1,g2} = sqrt(N_{g1} × N_{g2}).
-  # sirt implements this internally from a G×I matrix where wgt[g,i] = sqrt(N_g).
-  # sirt IMMEDIATELY calls dim(wgt) and colSums(wgt) — it MUST be a matrix.
-  # A vector has no dim and crashes the function silently (caught by tryCatch → NULL).
-  #
-  # Documentation example: wgt <- matrix(sqrt(Ng), length(Ng), ncol(nu))
-  # This fills column-by-column, giving row g the value sqrt(N_g) in every column.
-  wgt_mat <- matrix(
-    sqrt(used_ns),
-    nrow = length(used_ns),
-    ncol = ncol(lambda_mat)      # fills column-by-column: correct
-  )
-  dimnames(wgt_mat) <- dimnames(lambda_mat)
-
-  # Sanity check: first row must be England (reference)
-  stopifnot(grepl("England", rownames(lambda_mat)[1], ignore.case = TRUE))
-
-  # ── Call sirt alignment ───────────────────────────────────────────────────
-  align_res <- tryCatch(
-    sirt::invariance.alignment(
-      lambda    = lambda_mat,
-      nu        = nu_mat,         # intercepts ν = −τ  (FIX A applied above)
-      wgt       = wgt_mat,        # G×I matrix  (FIX B)
-      align.pow = c(0.5, 0.5),   # default; matches A&M 2014 (sirt halves internally)
-      eps       = 1e-4
-    ),
-    error   = function(e) { message("  sirt ERROR: ",   conditionMessage(e)); NULL },
-    warning = function(w) { message("  sirt WARNING: ", conditionMessage(w)); NULL }
-  )
-
-  if (is.null(align_res)) {
-    message("  Alignment failed. Check sirt error message above.")
-    return(NULL)
-  }
-
-  # ── Extract R² ────────────────────────────────────────────────────────────
-  # From sirt source sirt_rsquared.R:
-  #   R² = 1 − Σ(x − expl)² / Σ(x²)
-  # For loadings:   x = lambda (input), expl = psi0[g] × mean_aligned_lambda[i]
-  # For intercepts: x = nu     (input), expl = mean_aligned_nu[i] + alpha0[g] × mean_aligned_lambda[i]
-  # Both consistent with paper equations (2) and (3).
-  # Threshold ≥ 0.90 following Asparouhov & Muthén (2014).
-  es <- align_res$es.invariance
-  r2_load <- if (!is.null(es) && "R2" %in% rownames(es) &&
-                  "loadings"   %in% colnames(es)) es["R2", "loadings"]   else NA_real_
-  r2_int  <- if (!is.null(es) && "R2" %in% rownames(es) &&
-                  "intercepts" %in% colnames(es)) es["R2", "intercepts"] else NA_real_
-
-  message(sprintf("  R2 loadings = %.4f  |  R2 intercepts = %.4f  |  Acceptable: %s",
-                  r2_load, r2_int,
-                  ifelse(!is.na(r2_load) && r2_load >= R2_THRESHOLD, "YES", "NO")))
-
-  list(
-    scale            = scale_name,
-    model            = align_res,
-    items_used       = keep_items,
-    groups_used      = used_labels,
-    # alpha0: aligned factor means; England fixed at 0 (FIXED alignment)
-    alpha0           = setNames(align_res$pars$alpha0, rownames(align_res$pars)),
-    # psi0:  aligned factor scale factors (sqrt of factor variance)
-    psi0             = setNames(align_res$pars$psi0,   rownames(align_res$pars)),
-    itempars_aligned = align_res$itempars.aligned,
-    es_invariance    = align_res$es.invariance,
-    R2_loadings      = r2_load,
-    R2_intercepts    = r2_int,
-    acceptable       = !is.na(r2_load) && r2_load >= R2_THRESHOLD,
-    had_imputation   = had_imputation
-  )
-}
-
-alignment_results <- lapply(names(epq_common_item_sets), run_alignment)
-names(alignment_results) <- names(epq_common_item_sets)
-
-
-# ==============================================================================
-# 9. OUTPUT TABLES
-# ==============================================================================
-
-# Helper: expand aligned values to the full group vector (NA for absent groups)
-to_full_vec <- function(named_vec, full_labels) {
-  out <- setNames(rep(NA_real_, length(full_labels)), full_labels)
-  if (!is.null(named_vec)) out[names(named_vec)] <- named_vec
-  out
-}
-
-# 9a. Aligned factor means
-means_df <- tibble::tibble(Group = all_labels, n = all_ns)
-for (sc in names(alignment_results)) {
-  res          <- alignment_results[[sc]]
-  means_df[[sc]] <- to_full_vec(if (!is.null(res)) res$alpha0 else NULL, all_labels)
-}
-write.csv(means_df, file.path(OUT_DIR, "aligned_factor_means.csv"), row.names = FALSE)
-
-# 9b. Aligned factor variances (psi0)
-vars_df <- tibble::tibble(Group = all_labels)
-for (sc in names(alignment_results)) {
-  res         <- alignment_results[[sc]]
-  vars_df[[sc]] <- to_full_vec(if (!is.null(res)) res$psi0 else NULL, all_labels)
-}
-write.csv(vars_df, file.path(OUT_DIR, "aligned_factor_vars.csv"), row.names = FALSE)
-
-# 9c. Alignment fit summary
-fit_df <- tibble::tibble(
-  Subscale       = names(alignment_results),
-  R2_loadings    = sapply(alignment_results, function(r) if (is.null(r)) NA_real_ else r$R2_loadings),
-  R2_intercepts  = sapply(alignment_results, function(r) if (is.null(r)) NA_real_ else r$R2_intercepts),
-  Acceptable     = sapply(alignment_results, function(r) if (is.null(r)) NA       else r$acceptable),
-  N_items_used   = sapply(alignment_results, function(r) if (is.null(r)) NA_integer_ else length(r$items_used)),
-  N_groups_used  = sapply(alignment_results, function(r) if (is.null(r)) NA_integer_ else length(r$groups_used)),
-  Had_imputation = sapply(alignment_results, function(r) if (is.null(r)) NA       else r$had_imputation)
-)
-write.csv(fit_df, file.path(OUT_DIR, "alignment_fit.csv"), row.names = FALSE)
-message("\n=== Alignment fit ===")
-print(fit_df)
-
-# 9d. Aligned item parameters (non-invariance diagnostics)
-noninv_df <- purrr::map_dfr(names(alignment_results), function(sc) {
-  res <- alignment_results[[sc]]
-  if (is.null(res) || is.null(res$itempars_aligned)) return(NULL)
-  out          <- as.data.frame(res$itempars_aligned)
-  out$Subscale <- sc
-  out
-})
-write.csv(noninv_df, file.path(OUT_DIR, "noninvariant_params.csv"), row.names = FALSE)
-
-# 9e. Bangladesh percentile table
-# Values are ALWAYS written with an Interpret column flagging acceptability.
-# The R2 guard that produced all-NAs has been removed.
-bangla_percentile <- purrr::map_dfr(names(alignment_results), function(sc) {
-  res <- alignment_results[[sc]]
-
-  # Alignment failed entirely for this subscale
-  if (is.null(res)) {
-    message("  [", sc, "] alignment NULL — all values NA.")
-    return(tibble::tibble(
-      Subscale = sc, R2_loadings = NA_real_, R2_intercepts = NA_real_,
-      R2_acceptable = NA, Bangla_in_model = FALSE,
-      Bangla_mean = NA_real_, Mean_36groups = NA_real_, SD_36groups = NA_real_,
-      Percentile_rank = NA_real_, Z_score = NA_real_,
-      Interpret = "DO NOT INTERPRET: alignment skipped"
-    ))
-  }
-
-  in_model <- BANGLA_LABEL %in% names(res$alpha0)
-
-  if (!in_model) {
-    message("  [", sc, "] Bangladesh absent from aligned groups.",
-            " Check convergence_log for Bangla ", sc, ".")
-    return(tibble::tibble(
-      Subscale = sc, R2_loadings = res$R2_loadings, R2_intercepts = res$R2_intercepts,
-      R2_acceptable = res$acceptable, Bangla_in_model = FALSE,
-      Bangla_mean = NA_real_,
-      Mean_36groups = mean(unname(res$alpha0), na.rm = TRUE),
-      SD_36groups   = sd(unname(res$alpha0),   na.rm = TRUE),
-      Percentile_rank = NA_real_, Z_score = NA_real_,
-      Interpret = "DO NOT INTERPRET: Bangladesh absent from alignment"
-    ))
-  }
-
-  all_means <- unname(res$alpha0)
-  bgd_mean  <- res$alpha0[[BANGLA_LABEL]]
-  mu        <- mean(all_means, na.rm = TRUE)
-  s         <- sd(all_means,   na.rm = TRUE)
-  pct       <- round(mean(all_means <= bgd_mean, na.rm = TRUE) * 100, 1)
-  z         <- if (!is.na(s) && s > 0) round((bgd_mean - mu) / s, 2) else NA_real_
-
-  interp <- if (isTRUE(res$acceptable)) {
-    "OK to interpret (R2 >= 0.90)"
-  } else {
-    sprintf("CAUTION: R2_loadings = %.3f < %.2f; interpret with caution",
-            res$R2_loadings, R2_THRESHOLD)
-  }
-
-  tibble::tibble(
-    Subscale = sc, R2_loadings = res$R2_loadings, R2_intercepts = res$R2_intercepts,
-    R2_acceptable = res$acceptable, Bangla_in_model = TRUE,
-    Bangla_mean = bgd_mean, Mean_36groups = mu, SD_36groups = s,
-    Percentile_rank = pct, Z_score = z, Interpret = interp
-  )
-})
-write.csv(bangla_percentile, file.path(OUT_DIR, "bangla_percentile.csv"), row.names = FALSE)
-message("\n=== Bangladesh percentile ===")
-print(bangla_percentile[, c("Subscale","R2_loadings","R2_acceptable",
-                             "Bangla_mean","Percentile_rank","Z_score","Interpret")])
-
-
-# ==============================================================================
-# 10. CONVERGENCE LOG
-# ==============================================================================
-
-convergence_log <- purrr::map_dfr(seq_along(all_groups), function(g) {
-  grp <- all_groups[[g]]
-  purrr::map_dfr(names(epq_common_item_sets), function(sc) {
-    res <- grp$results[[sc]]
-    if (is.null(res)) {
-      tibble::tibble(Group = grp$country, Subscale = sc, n = grp$n,
-                     Converged = FALSE, Items_used = NA_character_,
-                     Dropped_zv = NA_character_, Error = "no result object")
-    } else {
-      tibble::tibble(
-        Group      = grp$country,  Subscale = sc,       n = res$n,
-        Converged  = isTRUE(res$converged),
-        Items_used = paste(res$items_used, collapse = ", "),
-        Dropped_zv = paste(res$dropped_zv, collapse = ", "),
-        Error      = ifelse(is.na(res$error), "", res$error)
-      )
-    }
-  })
-})
-write.csv(convergence_log, file.path(OUT_DIR, "convergence_log.csv"), row.names = FALSE)
-
-n_fail <- sum(!convergence_log$Converged)
-message(sprintf("\nConvergence: %d failures out of %d group-subscale combinations.",
-                n_fail, nrow(convergence_log)))
-
-
-# ==============================================================================
-# 11. BENCHMARK PLOT
-#
-# All 4 subscales shown. Panels where R2 < 0.90 get an orange strip label.
-# Reference line at 0 = England.
-# Bangladesh highlighted in red.
-# ==============================================================================
-
-plot_data <- purrr::map_dfr(names(alignment_results), function(sc) {
-  res <- alignment_results[[sc]]
-  if (is.null(res)) return(NULL)
-  ok    <- isTRUE(res$acceptable)
-  label <- sprintf("%s  [R\u00b2=%.3f%s]", sc, res$R2_loadings,
-                   if (ok) " \u2713" else " \u26a0 CAUTION")
-  tibble::tibble(
-    panel     = label,
-    panel_ok  = ok,
-    group     = names(res$alpha0),
-    mean      = unname(res$alpha0),
-    is_bangla = names(res$alpha0) == BANGLA_LABEL
-  )
-})
-
-if (nrow(plot_data) > 0) {
-  ok_panels  <- unique(plot_data$panel[plot_data$panel_ok])
-  bad_panels <- unique(plot_data$panel[!plot_data$panel_ok])
-  plot_data$panel <- factor(plot_data$panel, levels = c(ok_panels, bad_panels))
-
-  strip_fills <- setNames(
-    ifelse(levels(plot_data$panel) %in% ok_panels, "#FFFFFF", "#FFE0B2"),
-    levels(plot_data$panel)
-  )
-
-  p <- ggplot2::ggplot(
-    plot_data,
-    ggplot2::aes(x = mean, y = reorder(group, mean),
-                 colour = is_bangla, size = is_bangla)
-  ) +
-    ggplot2::geom_point(alpha = 0.85) +
-    ggplot2::scale_colour_manual(
-      values = c("FALSE" = "grey60", "TRUE" = "#C0392B"),
-      labels = c("Other group", BANGLA_LABEL), name = NULL
-    ) +
-    ggplot2::scale_size_manual(values = c("FALSE" = 1.8, "TRUE" = 4),
-                               guide = "none") +
-    ggplot2::facet_wrap(~ panel, scales = "free_x", ncol = 2) +
-    ggplot2::geom_vline(xintercept = 0, linetype = "dashed",
-                        colour = "grey30", linewidth = 0.4) +
-    ggplot2::labs(
-      title    = "Aligned Factor Means: 35 Archival Countries + Bangladesh (EPQ-RS)",
-      subtitle = paste0(
-        "Reference group = England (UK-scored, \u03b1 = 0).  ",
-        "Red point = Bangladesh.  \u26a0 panels: R\u00b2 < ", R2_THRESHOLD,
-        ", interpret with caution."
-      ),
-      x       = "Aligned factor mean (\u03b10)",
-      y       = NULL,
-      caption = paste0(
-        "Alignment method: Asparouhov & Muth\u00e9n (2013, Web Note 18) ",
-        "via sirt (Robitzsch).  ",
-        "44 common items (IPQ-RS \u2229 EPQ-90).  ",
-        "Intercepts computed as \u03bd = \u2212\u03c4 from WLSMV theta parameterization."
-      )
-    ) +
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      legend.position    = "top",
-      strip.background   = ggplot2::element_rect(
-        fill  = strip_fills[levels(plot_data$panel)],
-        color = "grey80"
-      ),
-      strip.text         = ggplot2::element_text(face = "bold", size = 8),
-      panel.grid.major.x = ggplot2::element_blank(),
-      panel.grid.minor.x = ggplot2::element_blank()
-    )
-
-  ggplot2::ggsave(
-    filename = file.path(OUT_DIR, "benchmark_plot.pdf"),
-    plot     = p,
-    width    = 12,
-    height   = max(10, 0.22 * dplyr::n_distinct(plot_data$group)),
-    device   = cairo_pdf
-  )
-  message("Benchmark plot saved.")
-}
-
-
-# ==============================================================================
-# 12. SAVE RDS WORKSPACE
-# ==============================================================================
-
-saveRDS(
-  list(
-    common_item_map      = common_item_map,
-    epq_common_item_sets = epq_common_item_sets,
-    archival_results     = archival_results,
-    bangla_entry         = bangla_entry,
-    all_groups           = all_groups,
-    all_labels           = all_labels,
-    all_ns               = all_ns,
-    alignment_results    = alignment_results,
-    means_df             = means_df,
-    vars_df              = vars_df,
-    fit_df               = fit_df,
-    bangla_percentile    = bangla_percentile,
-    convergence_log      = convergence_log
-  ),
-  file = file.path(OUT_DIR, "alignment_workspace.rds")
-)
-
-message("\n==============================")
-message("DONE. Output: ", normalizePath(OUT_DIR, winslash = "/"))
-message("==============================")
-message("\nKey file: ", file.path(OUT_DIR, "bangla_percentile.csv"))
-message("Key file: ", file.path(OUT_DIR, "alignment_fit.csv"))
-message("Key file: ", file.path(OUT_DIR, "benchmark_plot.pdf"))
-```
-
-```{r gpt1}
-################################################################################
-# EPQ-RS CROSS-CULTURAL ALIGNMENT BENCHMARKING
-# R-only approximation to the logic used in:
-# - McLarnon & Romero (2020)
-# - Asparouhov & Muthén, Web Note 18
-#
-# What this script does:
-#   1) Reads all archival UK-scored EPQ country files + Bangla epq_items
-#   2) Keeps England as the exact reference file
-#   3) Uses the common-item map you already worked with
-#   4) Estimates group-specific configural 1-factor CFAs for each scale
-#      using categorical/probit modeling in lavaan
-#   5) Feeds the configural loadings + thresholds into sirt alignment
-#   6) Tries a FREE-like alignment first, then FIXED-like if needed
-#   7) Re-expresses all aligned means/SDs relative to England
-#
-# Important:
-#   - This is the closest R-only approximation.
-#   - It is NOT the exact Mplus implementation from the paper.
-################################################################################
-
-# ---- 0. PACKAGES -------------------------------------------------------------
-
-required_pkgs <- c(
-  "readxl", "dplyr", "tidyr", "purrr", "stringr", "tibble",
-  "readr", "ggplot2", "lavaan", "sirt"
-)
-
-invisible(lapply(required_pkgs, function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    install.packages(pkg, dependencies = TRUE)
-  }
-  library(pkg, character.only = TRUE)
-}))
-
-# ---- 1. CONFIGURATION --------------------------------------------------------
-
-ARCHIVAL_DIR   <- "EPQ- Invariance/Analysis-Files/UKscored/Total/Excel/"
-OUT_DIR        <- "outputs/alignment_output_r_approx"
-BANGLA_LABEL   <- "Bangladesh (Bangla)"
-ENGLAND_FILE   <- "England-total sample UK scored EPQ item data.xls"
-
-# These tolerances are heuristic and only used to flag larger residual non-invariance.
-# You can tighten or loosen them later.
-LAMBDA_TOL <- 0.20
-NU_TOL     <- 0.40
-
-dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
-
-# ---- 2. VERIFY BANGLA INPUT --------------------------------------------------
-
-if (!exists("epq_items")) {
-  stop("Object `epq_items` was not found in the R environment.")
-}
-epq_items <- as.data.frame(epq_items)
-
-# ---- 3. ITEM MAP -------------------------------------------------------------
-
-common_item_map <- tibble::tribble(
-  ~EYP,    ~archival_col, ~scale,
-  "EYP1",  "N_3",  "Neuroticism",
-  "EYP3",  "E_5",  "Extraversion",
-  "EYP4",  "L_13", "Lie",
-  "EYP5",  "N_7",  "Neuroticism",
-  "EYP6",  "P_6",  "Psychoticism",
-  "EYP7",  "E_10", "Extraversion",
-  "EYP8",  "L_8",  "Lie",
-  "EYP9",  "N_15", "Neuroticism",
-  "EYP10", "P_22", "Psychoticism",
-  "EYP11", "E_17", "Extraversion",
-  "EYP12", "L_16", "Lie",
-  "EYP13", "N_19", "Neuroticism",
-  "EYP15", "E_14", "Extraversion",
-  "EYP16", "L_20", "Lie",
-  "EYP17", "N_23", "Neuroticism",
-  "EYP18", "P_37", "Psychoticism",
-  "EYP19", "E_40", "Extraversion",
-  "EYP20", "L_24", "Lie",
-  "EYP21", "N_31", "Neuroticism",
-  "EYP22", "P_43", "Psychoticism",
-  "EYP23", "E_45", "Extraversion",
-  "EYP24", "L_39", "Lie",
-  "EYP25", "N_34", "Neuroticism",
-  "EYP27", "E_21", "Extraversion",
-  "EYP28", "P_53", "Psychoticism",
-  "EYP29", "L_48", "Lie",
-  "EYP30", "N_41", "Neuroticism",
-  "EYP31", "P_67", "Psychoticism",
-  "EYP32", "E_52", "Extraversion",
-  "EYP33", "L_51", "Lie",
-  "EYP34", "N_72", "Neuroticism",
-  "EYP35", "P_71", "Psychoticism",
-  "EYP36", "E_82", "Extraversion",
-  "EYP37", "L_59", "Lie",
-  "EYP38", "N_75", "Neuroticism",
-  "EYP39", "P_83", "Psychoticism",
-  "EYP40", "L_63", "Lie",
-  "EYP41", "E_42", "Extraversion",
-  "EYP42", "N_77", "Neuroticism",
-  "EYP44", "E_86", "Extraversion",
-  "EYP45", "L_78", "Lie",
-  "EYP46", "N_27", "Neuroticism",
-  "EYP47", "L_85", "Lie",
-  "EYP48", "E_70", "Extraversion"
-)
-
-epq_common_item_sets <- list(
-  Psychoticism = c("EYP6","EYP10","EYP18","EYP22","EYP28","EYP31","EYP35","EYP39"),
-  Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19","EYP23","EYP27","EYP32",
-                   "EYP36","EYP41","EYP44","EYP48"),
-  Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17","EYP21","EYP25","EYP30",
-                   "EYP34","EYP38","EYP42","EYP46"),
-  Lie          = c("EYP4","EYP8","EYP12","EYP16","EYP20","EYP24","EYP29","EYP33",
-                   "EYP37","EYP40","EYP45","EYP47")
-)
-
-archival_to_eyp <- setNames(common_item_map$EYP, common_item_map$archival_col)
-
-# ---- 4. HELPERS --------------------------------------------------------------
-
-infer_country_from_filename <- function(path) {
-  x <- basename(path)
-  x <- stringr::str_remove(x, "\\.[^.]+$")
-  x <- stringr::str_replace_all(x, "_", " ")
-  x <- stringr::str_replace_all(x, "-", " ")
-  x <- stringr::str_replace(
-    x,
-    regex("total sample uk scored epq item data", ignore_case = TRUE),
-    ""
-  )
-  stringr::str_squish(x)
-}
-
-normalize_binary <- function(x) {
-  if (is.factor(x)) x <- as.character(x)
-  if (is.logical(x)) x <- as.integer(x)
-
-  if (is.character(x)) {
-    x_clean <- stringr::str_to_lower(stringr::str_trim(x))
-    x <- dplyr::case_when(
-      x_clean %in% c("yes", "y", "1", "true", "t") ~ 1,
-      x_clean %in% c("no",  "n", "0", "false", "f") ~ 0,
-      x_clean %in% c("", "na", "n/a", ".", "missing") ~ NA_real_,
-      TRUE ~ suppressWarnings(as.numeric(x_clean))
-    )
-  } else {
-    x <- suppressWarnings(as.numeric(x))
-  }
-
-  vals <- sort(unique(stats::na.omit(x)))
-
-  # Common archival coding from Eysenck & Barrett (2013)-style files:
-  # 1 = No, 3 = Yes, 2 = missing
-  if (all(vals %in% c(1, 2, 3))) {
-    x <- dplyr::case_when(
-      x == 1 ~ 0,
-      x == 3 ~ 1,
-      x == 2 ~ NA_real_,
-      TRUE   ~ x
-    )
-    return(x)
-  }
-
-  if (identical(vals, c(1, 2))) {
-    x <- x - 1
-    return(x)
-  }
-
-  if (identical(vals, c(1, 3))) {
-    x <- ifelse(is.na(x), NA_real_, ifelse(x == 3, 1, 0))
-    return(x)
-  }
-
-  bad <- setdiff(sort(unique(stats::na.omit(x))), c(0, 1))
-  if (length(bad) > 0) {
-    warning("Non-binary values detected: ", paste(bad, collapse = ", "))
-  }
-
-  x
-}
-
-coerce_binary_df <- function(df) {
-  as.data.frame(lapply(df, normalize_binary))
-}
-
-read_archival_country <- function(path) {
-  raw <- readxl::read_excel(path)
-  raw <- as.data.frame(raw)
-  names(raw) <- stringr::str_squish(names(raw))
-
-  needed <- common_item_map$archival_col
-  missing_cols <- setdiff(needed, names(raw))
-  if (length(missing_cols) > 0) {
-    stop("Missing archival columns in ", basename(path), ": ",
-         paste(missing_cols, collapse = ", "))
-  }
-
-  dat <- raw[, needed, drop = FALSE]
-  names(dat) <- archival_to_eyp[names(dat)]
-  dat <- coerce_binary_df(dat)
-
-  list(
-    country = infer_country_from_filename(path),
-    source_file = path,
-    data = dat,
-    n_raw = nrow(dat)
-  )
-}
-
-read_bangla_country <- function(epq_items_df) {
-  needed <- common_item_map$EYP
-  missing_cols <- setdiff(needed, names(epq_items_df))
-  if (length(missing_cols) > 0) {
-    stop("Bangla epq_items is missing: ", paste(missing_cols, collapse = ", "))
-  }
-
-  dat <- epq_items_df[, needed, drop = FALSE]
-  dat <- coerce_binary_df(dat)
-
-  list(
-    country = BANGLA_LABEL,
-    source_file = NA_character_,
-    data = dat,
-    n_raw = nrow(dat)
-  )
-}
-
-fit_configural_group_cfa <- function(df, items, scale_name, country_name) {
-  dat <- df[, items, drop = FALSE]
-  dat <- dat[stats::complete.cases(dat), , drop = FALSE]
-
-  if (nrow(dat) == 0) {
-    stop("No complete cases for ", scale_name, " in ", country_name)
-  }
-
-  bad_items <- names(which(vapply(dat, function(x) length(unique(stats::na.omit(x))) < 2, logical(1))))
-  if (length(bad_items) > 0) {
-    stop(
-      "Zero-variance item(s) in ", country_name, " for ", scale_name, ": ",
-      paste(bad_items, collapse = ", ")
-    )
-  }
-
-  model_syntax <- paste0("F =~ ", paste(items, collapse = " + "))
-
-  fit <- lavaan::cfa(
-    model = model_syntax,
-    data = dat,
-    ordered = items,
-    estimator = "WLSMV",
-    parameterization = "theta",
-    std.lv = TRUE
-  )
-
-  pe <- lavaan::parameterEstimates(fit, standardized = FALSE)
-
-  # Loadings
-  loading_df <- pe |>
-    dplyr::filter(op == "=~", lhs == "F") |>
-    dplyr::select(rhs, est)
-
-  lambda <- setNames(rep(NA_real_, length(items)), items)
-  lambda[loading_df$rhs] <- loading_df$est
-
-  # Thresholds: binary items should have one threshold
-  thr_df <- pe |>
-    dplyr::filter(op == "|") |>
-    dplyr::select(lhs, est) |>
-    dplyr::distinct(lhs, .keep_all = TRUE)
-
-  tau <- setNames(rep(NA_real_, length(items)), items)
-  common_items <- intersect(items, thr_df$lhs)
-  tau[common_items] <- thr_df$est[match(common_items, thr_df$lhs)]
-
-  # Alignment works on intercept-like parameters.
-  # For binary probit CFA, use nu = -tau as the practical conversion.
-  nu <- -tau
-
-  list(
-    fit = fit,
-    n_complete = nrow(dat),
-    lambda = lambda,
-    nu = nu
-  )
-}
-
-run_alignment_one_scale <- function(scale_name, all_groups, group_key) {
-  message("\n==============================")
-  message("Running scale: ", scale_name)
-  message("==============================")
-
-  items <- epq_common_item_sets[[scale_name]]
-
-  config_est <- purrr::map(
-    all_groups,
-    ~ fit_configural_group_cfa(
-      df = .x$data,
-      items = items,
-      scale_name = scale_name,
-      country_name = .x$country
-    )
-  )
-
-  lambda <- do.call(rbind, purrr::map(config_est, "lambda"))
-  nu     <- do.call(rbind, purrr::map(config_est, "nu"))
-  n_vec  <- purrr::map_int(config_est, "n_complete")
-
-  rownames(lambda) <- group_key$country
-  rownames(nu)     <- group_key$country
-  colnames(lambda) <- items
-  colnames(nu)     <- items
-
-  # Web Note 18 uses weights based on sqrt(Ng1 * Ng2) in the loss function.
-  # In sirt, weights are supplied as a G x I matrix, commonly with sqrt(Ng).
-  wgt <- matrix(sqrt(n_vec), nrow = length(n_vec), ncol = length(items))
-  colnames(wgt) <- items
-  rownames(wgt) <- group_key$country
-
-  # FREE-like first
-  free_res <- tryCatch(
-    sirt::invariance.alignment(
-      lambda = lambda,
-      nu = nu,
-      wgt = wgt,
-      align.scale = c(1, 1),
-      align.pow = c(.5, .5),
-      center = FALSE,
-      fixed = FALSE,
-      meth = 4
-    ),
-    error = function(e) NULL
-  )
-
-  chosen <- free_res
-  chosen_method <- "FREE-like (sirt meth=4)"
-  fallback_used <- FALSE
-
-  if (is.null(chosen)) {
-    fallback_used <- TRUE
-  } else {
-    bad_pars <- any(!is.finite(chosen$pars$alpha0)) ||
-      any(!is.finite(chosen$pars$psi0)) ||
-      any(chosen$pars$psi0 <= 0)
-
-    if (bad_pars) fallback_used <- TRUE
-  }
-
-  if (fallback_used) {
-    chosen <- sirt::invariance.alignment(
-      lambda = lambda,
-      nu = nu,
-      wgt = wgt,
-      align.scale = c(1, 1),
-      align.pow = c(.5, .5),
-      center = FALSE,
-      fixed = TRUE,
-      meth = 3
-    )
-    chosen_method <- "FIXED-like (sirt meth=3)"
-  }
-
-  pars <- as.data.frame(chosen$pars)
-  pars$country <- group_key$country
-  pars$scale <- scale_name
-  pars$method <- chosen_method
-  pars$n_complete <- n_vec
-
-  # Re-express on England-referenced metric
-  eng_idx <- which(group_key$is_reference)
-  alpha_eng <- pars$alpha0[eng_idx]
-  psi_eng   <- pars$psi0[eng_idx]
-
-  pars$mean_eng_ref     <- (pars$alpha0 - alpha_eng) / psi_eng
-  pars$sd_eng_ref       <- pars$psi0 / psi_eng
-  pars$variance_eng_ref <- pars$sd_eng_ref^2
-
-  # Effect sizes of approximate invariance
-  es <- as.data.frame(chosen$es.invariance)
-  es$scale <- scale_name
-  es$method <- chosen_method
-
-  # Residual non-invariance tables
-  lambda_resid <- as.data.frame(chosen$lambda.resid)
-  lambda_resid$country <- rownames(lambda_resid)
-
-  nu_resid <- as.data.frame(chosen$nu.resid)
-  nu_resid$country <- rownames(nu_resid)
-
-  lambda_noninv <- lambda_resid |>
-    tidyr::pivot_longer(-country, names_to = "item", values_to = "resid") |>
-    dplyr::mutate(
-      parameter = "loading",
-      abs_resid = abs(resid),
-      flagged = abs_resid > LAMBDA_TOL,
-      scale = scale_name,
-      method = chosen_method
-    )
-
-  nu_noninv <- nu_resid |>
-    tidyr::pivot_longer(-country, names_to = "item", values_to = "resid") |>
-    dplyr::mutate(
-      parameter = "threshold/intercept",
-      abs_resid = abs(resid),
-      flagged = abs_resid > NU_TOL,
-      scale = scale_name,
-      method = chosen_method
-    )
-
-  noninv <- dplyr::bind_rows(lambda_noninv, nu_noninv)
-
-  config_lambda <- as.data.frame(lambda)
-  config_lambda$country <- rownames(config_lambda)
-  config_lambda$scale <- scale_name
-
-  config_nu <- as.data.frame(nu)
-  config_nu$country <- rownames(config_nu)
-  config_nu$scale <- scale_name
-
-  list(
-    scale = scale_name,
-    items = items,
-    method = chosen_method,
-    config_est = config_est,
-    config_lambda = config_lambda,
-    config_nu = config_nu,
-    alignment = chosen,
-    pars = pars,
-    es = es,
-    noninv = noninv
-  )
-}
-
-# ---- 5. READ GROUPS ----------------------------------------------------------
-
-archival_files <- list.files(
-  ARCHIVAL_DIR,
-  pattern = "\\.(xls|xlsx)$",
-  full.names = TRUE
-)
-
-if (length(archival_files) == 0) {
-  stop("No archival Excel files found in: ", ARCHIVAL_DIR)
-}
-
-archival_groups <- purrr::map(archival_files, read_archival_country)
-bangla_group    <- read_bangla_country(epq_items)
-
-all_groups <- c(archival_groups, list(bangla_group))
-
-source_files <- purrr::map_chr(
-  all_groups,
-  ~ if (is.null(.x$source_file) || all(is.na(.x$source_file))) "" else basename(.x$source_file)
-)
-
-eng_idx <- which(source_files == ENGLAND_FILE)
-
-if (length(eng_idx) == 0) {
-  stop("England reference file was not found. Expected file name: ", ENGLAND_FILE)
-}
-
-reorder_idx <- c(eng_idx[1], setdiff(seq_along(all_groups), eng_idx[1]))
-all_groups  <- all_groups[reorder_idx]
-
-group_key <- tibble::tibble(
-  code = seq_along(all_groups),
-  country = purrr::map_chr(all_groups, "country"),
-  n_raw = purrr::map_int(all_groups, "n_raw"),
-  source_file = purrr::map_chr(
-    all_groups,
-    ~ if (is.null(.x$source_file) || all(is.na(.x$source_file))) "" else basename(.x$source_file)
-  )
-) |>
-  dplyr::mutate(
-    is_bangla = country == BANGLA_LABEL,
-    is_reference = source_file == ENGLAND_FILE
-  )
-
-readr::write_csv(group_key, file.path(OUT_DIR, "country_key.csv"))
-
-message(
-  "England reference group: ",
-  group_key$country[group_key$is_reference][1],
-  " [", group_key$source_file[group_key$is_reference][1], "]"
-)
-
-# ---- 6. RUN ALIGNMENT --------------------------------------------------------
-
-alignment_results <- purrr::map(
-  names(epq_common_item_sets),
-  ~ run_alignment_one_scale(.x, all_groups = all_groups, group_key = group_key)
-)
-names(alignment_results) <- names(epq_common_item_sets)
-
-# ---- 7. EXPORT RESULTS -------------------------------------------------------
-
-aligned_means <- dplyr::bind_rows(purrr::map(alignment_results, "pars"))
-alignment_es  <- dplyr::bind_rows(purrr::map(alignment_results, "es"))
-noninv_tbl    <- dplyr::bind_rows(purrr::map(alignment_results, "noninv"))
-config_lambda <- dplyr::bind_rows(purrr::map(alignment_results, "config_lambda"))
-config_nu     <- dplyr::bind_rows(purrr::map(alignment_results, "config_nu"))
-
-readr::write_csv(aligned_means, file.path(OUT_DIR, "aligned_factor_means_variances.csv"))
-readr::write_csv(alignment_es,  file.path(OUT_DIR, "alignment_effect_sizes.csv"))
-readr::write_csv(noninv_tbl,    file.path(OUT_DIR, "noninvariant_params.csv"))
-readr::write_csv(config_lambda, file.path(OUT_DIR, "configural_loadings.csv"))
-readr::write_csv(config_nu,     file.path(OUT_DIR, "configural_nu.csv"))
-
-# ---- 8. BANGLA PERCENTILE ----------------------------------------------------
-
-bangla_percentile <- aligned_means |>
-  dplyr::group_by(scale) |>
-  dplyr::mutate(
-    z_against_groups = as.numeric(scale(mean_eng_ref)),
-    percentile = dplyr::percent_rank(mean_eng_ref) * 100
-  ) |>
-  dplyr::ungroup() |>
-  dplyr::filter(country == BANGLA_LABEL)
-
-readr::write_csv(bangla_percentile, file.path(OUT_DIR, "bangla_percentile.csv"))
-
-# ---- 9. SUMMARY OF FLAGGED NONINVARIANCE ------------------------------------
-
-noninv_summary <- noninv_tbl |>
-  dplyr::group_by(scale, parameter) |>
-  dplyr::summarise(
-    flagged_n = sum(flagged, na.rm = TRUE),
-    total = dplyr::n(),
-    pct_flagged = 100 * flagged_n / total,
-    .groups = "drop"
-  )
-
-readr::write_csv(noninv_summary, file.path(OUT_DIR, "noninvariance_summary.csv"))
-
-# ---- 10. PLOT ----------------------------------------------------------------
-
-plot_df <- aligned_means |>
-  dplyr::mutate(
-    is_bangla = country == BANGLA_LABEL,
-    scale = factor(scale, levels = c("Psychoticism", "Extraversion", "Neuroticism", "Lie"))
-  )
-
-p <- ggplot2::ggplot(
-  plot_df,
-  ggplot2::aes(
-    x = mean_eng_ref,
-    y = reorder(country, mean_eng_ref),
-    colour = is_bangla,
-    size = is_bangla
-  )
-) +
-  ggplot2::geom_point(alpha = 0.85) +
-  ggplot2::facet_wrap(~ scale, scales = "free_x", ncol = 2) +
-  ggplot2::geom_vline(xintercept = 0, linetype = "dashed", colour = "grey40", linewidth = 0.4) +
-  ggplot2::scale_colour_manual(
-    values = c("FALSE" = "grey60", "TRUE" = "#C0392B"),
-    labels = c("Other group", BANGLA_LABEL),
-    name = NULL
-  ) +
-  ggplot2::scale_size_manual(values = c("FALSE" = 1.8, "TRUE" = 4), guide = "none") +
-  ggplot2::labs(
-    title = "Aligned factor means relative to England",
-    subtitle = paste0(
-      "R-only approximation to McLarnon/Web Note 18 logic; England reference file = ",
-      ENGLAND_FILE
-    ),
-    x = "Aligned latent mean (England = 0)",
-    y = NULL
-  ) +
-  ggplot2::theme_minimal(base_size = 10) +
-  ggplot2::theme(
-    legend.position = "top",
-    strip.text = ggplot2::element_text(face = "bold")
-  )
-
-ggplot2::ggsave(
-  filename = file.path(OUT_DIR, "benchmark_plot.pdf"),
-  plot = p,
-  width = 12,
-  height = max(10, 0.22 * dplyr::n_distinct(plot_df$country))
-)
-
-# ---- 11. SAVE WORKSPACE ------------------------------------------------------
-
-saveRDS(
-  list(
-    group_key = group_key,
-    alignment_results = alignment_results,
-    aligned_means = aligned_means,
-    alignment_es = alignment_es,
-    noninv_tbl = noninv_tbl,
-    noninv_summary = noninv_summary,
-    bangla_percentile = bangla_percentile
-  ),
-  file = file.path(OUT_DIR, "alignment_workspace.rds")
-)
-
-message("\nDone. Output folder: ", normalizePath(OUT_DIR, winslash = "/"))
-```
-
 ```{r gpt2}
 ################################################################################
 # EPQ-RS CROSS-CULTURAL ALIGNMENT BENCHMARKING
@@ -4979,693 +3567,28 @@ readr::write_csv(epq_reliable_range, "outputs/tables/epq_marginal_reliable_range
 
 # Differential Item Functioning
 
-Gender DIF was examined for each EPQ-RS subscale using the Rasch model estimated via conditional maximum likelihood. Persons with extreme total scores (all items endorsed or none endorsed) were excluded from the CML estimation, as these response patterns are uninformative under the conditional framework. The reference group was female and the focal group was male. The Andersen likelihood ratio (LR) test assessed omnibus measurement invariance, and item-level Wald tests, with BH-adjusted p values, identified specific items exhibiting DIF. Effect sizes were expressed as the difference in group-specific Rasch difficulty parameters (delta-beta), with positive values indicating that an item was more difficult (less likely to be endorsed) for males relative to females. Results are presented in Table X.
-The omnibus Andersen LR test was statistically significant for all four scales: Psychoticism (LR = 34.56, df = 11, p < .001), Extraversion (LR = 36.64, df = 11, p < .001), Neuroticism (LR = 48.77, df = 11, p < .001), and Lie (LR = 30.98, df = 11, p = .001). These results indicate that perfect measurement invariance across gender does not hold for any scale at the omnibus level. However, omnibus significance does not specify which items are responsible, nor does it establish practical importance; item-level tests are needed to localise and quantify the effects.
-Psychoticism. After BH adjustment, one item was flagged: EYP43 (z = 4.02, adjusted p < .001, delta-beta = 0.78), indicating that this item was substantially harder to endorse for males than for females at the same trait level. Several other items showed unadjusted p values below .05 (EYP14, p = .014; EYP18, p = .034; EYP26, p = .025), but none survived correction (adjusted p values: .082, .101, .100, respectively). The remaining items showed negligible difficulty differences across groups (|delta-beta| range: 0.02 to 0.56).
 
-Extraversion. One item was flagged: EYP48 (z = -5.35, adjusted p < .001, delta-beta = -1.07), indicating that this item was considerably easier to endorse for males at equivalent trait levels. This was the largest item-level effect observed across all four scales. No other Extraversion item approached significance after adjustment, and 9 of the remaining 11 items showed difficulty differences of 0.27 or smaller.
-Neuroticism. This scale showed the most extensive DIF, with five items flagged after BH adjustment. EYP9 (z = -3.89, adjusted p < .001, delta-beta = -0.99) and EYP13 (z = 3.93, adjusted p < .001, delta-beta = 0.94) displayed the largest effects, with EYP9 being easier and EYP13 being harder to endorse for males. Three additional items were flagged: EYP17 (z = 2.77, adjusted p = .022, delta-beta = 0.60), EYP38 (z = 2.32, adjusted p = .048, delta-beta = 0.52), and EYP42 (z = -2.37, adjusted p = .048, delta-beta = -0.50). The direction of these effects was mixed: EYP17 and EYP38 were harder for males, whereas EYP42 was easier. The remaining seven items showed no evidence of DIF (adjusted p values ranging from .109 to .981).
-Lie. Despite the significant omnibus LR test (LR = 30.98, p = .001), no individual item reached significance after BH adjustment. Several items approached conventional thresholds at the unadjusted level (EYP12, p = .009; EYP20, p = .013; EYP40, p = .022; EYP16, p = .040), but all adjusted p values exceeded .05 (range: .079 to .973). The difficulty differences for these items ranged from |0.42| to |0.56|, suggesting modest but non-significant trends.
-In summary, 7 of 48 items displayed statistically significant gender DIF after correction: 1 on Psychoticism (EYP43), 1 on Extraversion (EYP48), 5 on Neuroticism (EYP9, EYP13, EYP17, EYP38, EYP42), and none on the Lie scale. The Neuroticism scale exhibited both the strongest omnibus departure from invariance and the greatest number of individually flagged items.
 
-```{r DIF, eval=FALSE, include=FALSE}
-# ============================================================ Not in Use
-# EPQ DIF Analysis (Gender) -- full script
-# Uses printed Raju output extraction
-# Stores raw Lord and Raju results for each subscale
+```{r 2PL DIF}
+# ============================================================
+# EPQ-RS DIF Analysis (Gender) — 2PL, no loops
+# Four subscales tested independently using anchored baselines
 # ============================================================
 
-library(difR)
-library(dplyr)
-library(tibble)
-library(readr)
-
-# ---------------------------
-# Settings
-# ---------------------------
-use_purify <- TRUE
-max_purify_iter <- 10
-
-# ============================================================
-# Helper function:
-# Extract Raju table from printed output
-# ============================================================
-extract_raju_from_print <- function(x) {
-  txt <- capture.output(print(x))
-  
-  start_line <- grep("^Raju's statistic:", txt)
-  end_line   <- grep("^Signif\\. codes:", txt)
-  
-  if (length(start_line) == 0) {
-    stop("Could not find 'Raju's statistic:' in printed output.")
-  }
-  if (length(end_line) == 0) {
-    stop("Could not find 'Signif. codes:' in printed output.")
-  }
-  
-  # Keep only the printed table block
-  block <- txt[(start_line + 1):(end_line - 1)]
-  block <- block[nzchar(trimws(block))]
-  
-  # Remove table header
-  block <- block[!grepl("^\\s*Stat\\.\\s+P-value\\s+Adj\\. P", block)]
-  
-  # Parse each line of the printed table
-  out_list <- lapply(block, function(line) {
-    line <- trimws(line)
-    
-    # Remove trailing significance symbols (*, **, ***, .)
-    line_clean <- sub("\\s+[*\\.]+\\s*$", "", line)
-    
-    parts <- strsplit(line_clean, "\\s+")[[1]]
-    
-    if (length(parts) < 4) {
-      return(NULL)
-    }
-    
-    data.frame(
-      Item       = parts[1],
-      Raju_Z     = as.numeric(parts[2]),
-      Raju_p     = as.numeric(parts[3]),
-      Raju_p_adj = as.numeric(parts[4]),
-      stringsAsFactors = FALSE
-    )
-  })
-  
-  out <- do.call(rbind, out_list)
-  
-  if (is.null(out) || nrow(out) == 0) {
-    stop("Could not parse any rows from printed Raju output.")
-  }
-  
-  # Extract flagged DIF items from the printed output
-  dif_line <- grep("^Items detected as DIF items:", txt)
-  flagged_items <- character(0)
-  
-  if (length(dif_line) > 0) {
-    tail_block <- txt[(dif_line + 1):length(txt)]
-    tail_block <- tail_block[nzchar(trimws(tail_block))]
-    
-    if (length(tail_block) > 0) {
-      flagged_items <- unlist(strsplit(paste(tail_block, collapse = " "), "\\s+"))
-      flagged_items <- flagged_items[nzchar(flagged_items)]
-    }
-  }
-  
-  out$Raju_flag <- ifelse(out$Item %in% flagged_items, "DIF", "")
-  
-  out
-}
-
-# ============================================================
-# Objects to store everything
-# ============================================================
-dif_inputs   <- list()
-lord_objects <- list()
-raju_objects <- list()
-
-lord_tables  <- list()
-raju_tables  <- list()
-scale_tables <- list()
-
-# ============================================================
-# Run DIF analysis for each EPQ subscale
-# ============================================================
-for (sc in names(epq_item_sets)) {
-  
-  cat("\n=====================================\n")
-  cat("Running DIF for:", sc, "\n")
-  cat("=====================================\n")
-  
-  # ---------------------------
-  # Step 1: subset scale data
-  # ---------------------------
-  dat   <- as.data.frame(epq_items[, epq_item_sets[[sc]], drop = FALSE])
-  group <- demographics$gender
-  
-  # ---------------------------
-  # Step 2: complete cases only
-  # ---------------------------
-  keep  <- complete.cases(dat, group)
-  dat   <- dat[keep, , drop = FALSE]
-  group <- factor(group[keep])
-  
-  if (nlevels(group) < 2) {
-    message("Skipping ", sc, ": gender has fewer than 2 groups.")
-    next
-  }
-  
-  items   <- names(dat)
-  n_items <- length(items)
-  focal   <- levels(group)[2]
-  
-  # Save clean inputs so you can inspect later
-  dif_inputs[[sc]] <- list(
-    dat = dat,
-    group = group,
-    focal = focal,
-    items = items
-  )
-  
-  # ============================================================
-  # LORD
-  # ============================================================
-  dif_lord <- tryCatch(
-    difLord(
-      Data            = dat,
-      group           = group,
-      focal.name      = focal,
-      model           = "2PL",
-      purify          = use_purify,
-      nrIter          = max_purify_iter,
-      p.adjust.method = "BH"
-    ),
-    error = function(e) {
-      message("Lord failed for ", sc, ": ", e$message)
-      NULL
-    }
-  )
-  
-  lord_objects[[sc]] <- dif_lord
-  
-  if (!is.null(dif_lord)) {
-    
-    lord_chi <- as.numeric(dif_lord$LordChi)
-    lord_p   <- as.numeric(dif_lord$p.value)
-    
-    if (!is.null(dif_lord$adjusted.p)) {
-      lord_p_adj <- as.numeric(dif_lord$adjusted.p)
-    } else {
-      lord_p_adj <- p.adjust(lord_p, method = "BH")
-    }
-    
-    lord_flagged <- dif_lord$DIFitems
-    if (is.null(lord_flagged) || identical(lord_flagged, "No DIF item detected")) {
-      lord_flagged <- integer(0)
-    }
-    
-    if (!is.null(dif_lord$convergence)) {
-      if (isTRUE(dif_lord$convergence)) {
-        lord_convergence <- "converged"
-      } else {
-        lord_convergence <- "not converged"
-      }
-    } else {
-      lord_convergence <- NA_character_
-    }
-    
-    if (!is.null(dif_lord$nrPur)) {
-      lord_nrPur <- as.numeric(dif_lord$nrPur)
-    } else {
-      lord_nrPur <- NA_real_
-    }
-    
-    if (!is.null(dif_lord$itemParFinal)) {
-      all_pars <- dif_lord$itemParFinal
-    } else {
-      all_pars <- dif_lord$itemParInit
-    }
-    
-    pars_ref <- all_pars[1:n_items, , drop = FALSE]
-    pars_foc <- all_pars[(n_items + 1):(2 * n_items), , drop = FALSE]
-    
-    a_ref <- as.numeric(pars_ref[, 1])
-    b_ref <- as.numeric(pars_ref[, 2])
-    a_foc <- as.numeric(pars_foc[, 1])
-    b_foc <- as.numeric(pars_foc[, 2])
-    
-    delta_b <- b_foc - b_ref
-    
-    ETS_class <- ifelse(
-      is.na(delta_b), "",
-      ifelse(abs(delta_b) < 0.43, "A (Negligible)",
-      ifelse(abs(delta_b) < 0.64, "B (Moderate)",
-                                 "C (Large)"))
-    )
-    
-    lord_tbl <- tibble(
-      Scale            = sc,
-      Item             = items,
-      Lord_status      = "completed",
-      Lord_convergence = lord_convergence,
-      Lord_nrPur       = lord_nrPur,
-      Lord_X2          = lord_chi,
-      Lord_p           = lord_p,
-      Lord_p_adj       = lord_p_adj,
-      Lord_flag        = ifelse(seq_len(n_items) %in% lord_flagged, "DIF", ""),
-      a_ref            = a_ref,
-      b_ref            = b_ref,
-      a_foc            = a_foc,
-      b_foc            = b_foc,
-      delta_b          = delta_b,
-      ETS_class        = ETS_class
-    )
-    
-  } else {
-    
-    lord_tbl <- tibble(
-      Scale            = sc,
-      Item             = items,
-      Lord_status      = "failed",
-      Lord_convergence = NA_character_,
-      Lord_nrPur       = NA_real_,
-      Lord_X2          = NA_real_,
-      Lord_p           = NA_real_,
-      Lord_p_adj       = NA_real_,
-      Lord_flag        = "",
-      a_ref            = NA_real_,
-      b_ref            = NA_real_,
-      a_foc            = NA_real_,
-      b_foc            = NA_real_,
-      delta_b          = NA_real_,
-      ETS_class        = ""
-    )
-  }
-  
-  lord_tables[[sc]] <- lord_tbl
-  
-  # ============================================================
-  # RAJU
-  # ============================================================
-  dif_raju <- tryCatch(
-    difRaju(
-      Data            = dat,
-      group           = group,
-      focal.name      = focal,
-      model           = "2PL",
-      purify          = use_purify,
-      nrIter          = max_purify_iter,
-      p.adjust.method = "BH"
-    ),
-    error = function(e) {
-      message("Raju failed for ", sc, ": ", e$message)
-      NULL
-    }
-  )
-  
-  raju_objects[[sc]] <- dif_raju
-  
-  if (!is.null(dif_raju)) {
-    
-    # This uses the printed output, not dif_raju$p.value
-    raju_tbl <- extract_raju_from_print(dif_raju)
-    
-    # Add scale name
-    raju_tbl$Scale <- sc
-    raju_tbl <- raju_tbl %>%
-      select(Scale, everything())
-    
-    # Add convergence info
-    if (!is.null(dif_raju$convergence)) {
-      if (isTRUE(dif_raju$convergence)) {
-        raju_convergence <- "converged"
-      } else {
-        raju_convergence <- "not converged"
-      }
-    } else {
-      raju_convergence <- NA_character_
-    }
-    
-    if (!is.null(dif_raju$nrPur)) {
-      raju_nrPur <- as.numeric(dif_raju$nrPur)
-    } else {
-      raju_nrPur <- NA_real_
-    }
-    
-    raju_tbl <- raju_tbl %>%
-      mutate(
-        Raju_status      = "completed",
-        Raju_convergence = raju_convergence,
-        Raju_nrPur       = raju_nrPur,
-        .before = Raju_Z
-      )
-    
-  } else {
-    
-    raju_tbl <- tibble(
-      Scale            = sc,
-      Item             = items,
-      Raju_status      = "failed",
-      Raju_convergence = NA_character_,
-      Raju_nrPur       = NA_real_,
-      Raju_Z           = NA_real_,
-      Raju_p           = NA_real_,
-      Raju_p_adj       = NA_real_,
-      Raju_flag        = ""
-    )
-  }
-  
-  raju_tables[[sc]] <- raju_tbl
-  
-  # ============================================================
-  # Merge Lord + Raju for this subscale
-  # ============================================================
-  scale_tbl <- left_join(
-    lord_tbl,
-    raju_tbl,
-    by = c("Scale", "Item")
-  )
-  
-  scale_tables[[sc]] <- scale_tbl
-}
-
-# ============================================================
-# Final combined table
-# ============================================================
-epq_dif_all <- bind_rows(scale_tables)
-
-# View final result
-epq_dif_all
-
-# ============================================================
-# Save results
-# ============================================================
-# write_csv(epq_dif_all, "EPQ_DIF_gender_all_scales.csv")
-
-# # Save each scale separately
-# for (sc in names(scale_tables)) {
-#   write_csv(
-#     scale_tables[[sc]],
-#     paste0("EPQ_DIF_gender_", sc, ".csv")
-#   )
-# }
-
-#Inspect
-
-# lord_objects$Psychoticism
-# raju_objects$Psychoticism
-# 
-# lord_tables$Psychoticism
-# raju_tables$Psychoticism
-# scale_tables$Psychoticism
-# 
-# lord_objects$Extraversion
-# raju_objects$Extraversion
-# 
-# lord_tables$Extraversion
-# raju_tables$Extraversion
-# scale_tables$Extraversion
-# 
-# 
-# lord_objects$Neuroticism
-# raju_objects$Neuroticism
-# 
-# lord_tables$Neuroticism
-# raju_tables$Neuroticism
-# scale_tables$Neuroticism
-# 
-# lord_objects$Lie
-# raju_objects$Lie
-# 
-# lord_tables$Lie
-# raju_tables$Lie
-# scale_tables$Lie
-
-```
-
-```{r DIFRash, include=FALSE}
-# ============================================================
-# EPQ-RS DIF Analysis (Gender) — Rasch Model, Joint Calibration
-# Method: Conditional ML Rasch (eRm) + Wald test & Andersen LR test
-# ============================================================
-
-library(eRm)
-library(dplyr)
-library(tibble)
-library(readr)
-
-# ---------------------------------------------------------
-# 0. Helper: format p values APA style
-# ---------------------------------------------------------
-fmt_p <- function(p) {
-  ifelse(
-    is.na(p), NA_character_,
-    ifelse(p < .001, "< .001", sub("^0", "", sprintf("%.3f", p)))
-  )
-}
-
-# ---------------------------------------------------------
-# 1. Prepare data
-#    Adjust the object names below to match your workspace.
-#    epq_items        : data.frame of all 48 binary item responses
-#    demographics     : data.frame with a column "gender"
-#    epq_item_sets    : named list mapping scale names to item columns
-# ---------------------------------------------------------
-
-# Example structure (uncomment / adapt as needed):
-# epq_item_sets <- list(
-#   Psychoticism = c("EYP10","EYP14","EYP22","EYP31","EYP39",
-#                     "EYP2","EYP6","EYP18","EYP26","EYP28",
-#                     "EYP35","EYP43"),
-#   Extraversion = c("EYP3","EYP7","EYP11","EYP15","EYP19",
-#                     "EYP23","EYP32","EYP36","EYP44","EYP48",
-#                     "EYP27","EYP41"),
-#   Neuroticism  = c("EYP1","EYP5","EYP9","EYP13","EYP17",
-#                     "EYP21","EYP25","EYP30","EYP34","EYP38",
-#                     "EYP42","EYP46")
-# )
-
-# ---------------------------------------------------------
-# 2. Analysis loop
-# ---------------------------------------------------------
-rasch_dif_results <- list()
-
-for (sc in names(epq_item_sets)) {
-  
-  cat("\n========================================\n")
-  cat("Scale:", sc, "\n")
-  cat("========================================\n")
-  
-  items_vec <- epq_item_sets[[sc]]
-  dat       <- as.data.frame(epq_items[, items_vec, drop = FALSE])
-  group     <- demographics$gender
-  
-  # Complete cases only
-  keep  <- complete.cases(dat, group)
-  dat   <- dat[keep, , drop = FALSE]
-  group <- factor(group[keep])
-  
-  if (nlevels(group) < 2) {
-    message("Skipping ", sc, ": fewer than 2 gender groups.")
-    next
-  }
-  
-  n_items <- ncol(dat)
-  items   <- names(dat)
-  
-  # --- Remove persons with perfect (all-0 or all-12) scores ---
-  # CML estimation conditions on total scores; extreme scores
-  # are not informative and must be excluded.
-  row_sums <- rowSums(dat)
-  non_extreme <- row_sums > 0 & row_sums < n_items
-  
-  dat_cml   <- dat[non_extreme, , drop = FALSE]
-  group_cml <- group[non_extreme]
-  
-  cat("  N after removing extreme scores:", nrow(dat_cml), "\n")
-  cat("  N removed (extreme):", sum(!non_extreme), "\n")
-  cat("  Group sizes:", table(group_cml), "\n")
-  
-  # ---------------------------------------------------------
-  # 2a. Fit the joint Rasch model (CML)
-  # ---------------------------------------------------------
-  rasch_fit <- tryCatch(
-    RM(dat_cml),
-    error = function(e) {
-      message("  Rasch model failed for ", sc, ": ", e$message)
-      NULL
-    }
-  )
-  
-  if (is.null(rasch_fit)) next
-  
-  # Item difficulty (beta) parameters — note eRm uses the
-  # "easiness" parameterisation by default; we reverse sign
-  # for conventional difficulty interpretation.
-  beta <- -coef(rasch_fit)  # positive = harder
-  
-  cat("  Item difficulties (beta, higher = harder):\n")
-  print(round(beta, 3))
-  
-  # ---------------------------------------------------------
-  # 2b. Wald test for DIF — split by gender
-  #     Tests H0: item parameters are equal across groups
-  #     One test per item; overall omnibus test also provided.
-  # ---------------------------------------------------------
-  wald_res <- tryCatch(
-    Waldtest(rasch_fit, splitcr = group_cml),
-    error = function(e) {
-      message("  Waldtest failed for ", sc, ": ", e$message)
-      NULL
-    }
-  )
-  
-  # ---------------------------------------------------------
-  # 2c. Andersen LR test — split by gender
-  #     Omnibus test of measurement invariance across groups.
-  # ---------------------------------------------------------
-  lr_res <- tryCatch(
-    LRtest(rasch_fit, splitcr = group_cml),
-    error = function(e) {
-      message("  LRtest failed for ", sc, ": ", e$message)
-      NULL
-    }
-  )
-  
-  if (!is.null(lr_res)) {
-    cat("\n  Andersen LR test (omnibus):\n")
-    cat("    LR =", round(lr_res$LR, 2),
-        "  df =", lr_res$df,
-        "  p =", fmt_p(lr_res$pvalue), "\n")
-  }
-  
-  # ---------------------------------------------------------
-  # 2d. Compute group-specific item difficulties
-  #     Fit separate Rasch models to extract beta per group.
-  #     This is for DESCRIPTIVE purposes only; the DIF test
-  #     itself uses the joint-calibration Wald/LR approach.
-  # ---------------------------------------------------------
-  lev <- levels(group_cml)
-  
-  rasch_g1 <- tryCatch(RM(dat_cml[group_cml == lev[1], ]), error = function(e) NULL)
-  rasch_g2 <- tryCatch(RM(dat_cml[group_cml == lev[2], ]), error = function(e) NULL)
-  
-  beta_g1 <- if (!is.null(rasch_g1)) -coef(rasch_g1) else rep(NA, n_items)
-  beta_g2 <- if (!is.null(rasch_g2)) -coef(rasch_g2) else rep(NA, n_items)
-  
-  # ---------------------------------------------------------
-  # 2e. Assemble results table
-  # ---------------------------------------------------------
-  
-  # Joint betas: eRm may return K-1 or K params depending on version.
-  # Standardise to length K (n_items) with sum-zero constraint.
-  raw_beta <- -coef(rasch_fit)
-  if (length(raw_beta) == n_items - 1) {
-    beta_joint_full <- c(raw_beta, -sum(raw_beta))
-    names(beta_joint_full) <- items
-  } else {
-    beta_joint_full <- raw_beta[1:n_items]
-    names(beta_joint_full) <- items
-  }
-  
-  # Wald test: extract per-item z and p.
-  # eRm returns all K items in model order; use positional indexing.
-  if (!is.null(wald_res)) {
-    wald_tab    <- wald_res$coef.table
-    wald_z_full <- wald_tab[, "z-statistic"]
-    wald_p_full <- wald_tab[, "p-value"]
-  } else {
-    wald_z_full <- rep(NA_real_, n_items)
-    wald_p_full <- rep(NA_real_, n_items)
-  }
-  
-  # BH adjustment
-  wald_p_adj_full <- p.adjust(wald_p_full, method = "BH")
-  
-  # Group-specific betas: standardise to length K
-  if (length(beta_g1) == n_items - 1) {
-    beta_g1_full <- c(beta_g1, -sum(beta_g1))
-  } else {
-    beta_g1_full <- beta_g1[1:n_items]
-  }
-  if (length(beta_g2) == n_items - 1) {
-    beta_g2_full <- c(beta_g2, -sum(beta_g2))
-  } else {
-    beta_g2_full <- beta_g2[1:n_items]
-  }
-  names(beta_g1_full) <- items
-  names(beta_g2_full) <- items
-  
-  delta_beta <- beta_g2_full - beta_g1_full
-  
-  tbl <- tibble(
-    Scale            = sc,
-    Item             = items,
-    beta_joint       = as.numeric(beta_joint_full),
-    beta_ref         = as.numeric(beta_g1_full),
-    beta_focal       = as.numeric(beta_g2_full),
-    delta_beta       = as.numeric(delta_beta),
-    Wald_z           = wald_z_full,
-    Wald_p           = wald_p_full,
-    Wald_p_adj       = wald_p_adj_full,
-    Wald_DIF         = ifelse(wald_p_adj_full < .05, "DIF", ""),
-    LR_chi2          = if (!is.null(lr_res)) lr_res$LR else NA_real_,
-    LR_df            = if (!is.null(lr_res)) lr_res$df  else NA_integer_,
-    LR_p             = if (!is.null(lr_res)) lr_res$pvalue else NA_real_
-  )
-  
-  rasch_dif_results[[sc]] <- tbl
-}
-
-# ---------------------------------------------------------
-# 3. Combine and format for APA reporting
-# ---------------------------------------------------------
-rasch_dif_all <- bind_rows(rasch_dif_results)
-
-rasch_dif_apa <- rasch_dif_all %>%
-  transmute(
-    Scale,
-    Item,
-    `beta (joint)`    = sprintf("%.2f", beta_joint),
-    `beta (Ref)`      = sprintf("%.2f", beta_ref),
-    `beta (Focal)`    = sprintf("%.2f", beta_focal),
-    `Delta beta`      = sprintf("%.2f", delta_beta),
-    `Wald z`          = sprintf("%.2f", Wald_z),
-    `Wald p`          = fmt_p(Wald_p),
-    `Wald p (adj)`    = fmt_p(Wald_p_adj),
-    `DIF flag`        = Wald_DIF,
-    `LR chi2 (omnibus)` = sprintf("%.2f", LR_chi2),
-    `LR df`           = as.character(LR_df),
-    `LR p (omnibus)`  = fmt_p(LR_p)
-  )
-
-readr::write_csv(rasch_dif_apa, "outputs/tables/EPQ_DIF_gender_Rasch_APA.csv")
-
-cat("\n\nDone. Results saved to outputs/tables/EPQ_DIF_gender_Rasch_APA.csv\n")
-
-# ---------------------------------------------------------
-# 4. Print summary to console
-# ---------------------------------------------------------
-cat("\n========= SUMMARY =========\n")
-for (sc in names(rasch_dif_results)) {
-  tbl <- rasch_dif_results[[sc]]
-  flagged <- tbl %>% filter(Wald_DIF == "DIF") %>% pull(Item)
-  cat("\n", sc, ":\n")
-  cat("  Andersen LR (omnibus): chi2 =", round(tbl$LR_chi2[1], 2),
-      ", df =", tbl$LR_df[1],
-      ", p =", fmt_p(tbl$LR_p[1]), "\n")
-  if (length(flagged) > 0) {
-    cat("  Items flagged (Wald, BH-adj p < .05):", paste(flagged, collapse = ", "), "\n")
-  } else {
-    cat("  No items flagged after BH adjustment.\n")
-  }
-}
-```
-
-```{r eval=FALSE, include=FALSE}
-# ---------------------------------------------------------
-# 4. Print summary to console
-# ---------------------------------------------------------
-cat("\n========= SUMMARY =========\n")
-for (sc in names(rasch_dif_results)) {
-  tbl <- rasch_dif_results[[sc]]
-  flagged <- tbl %>% filter(Wald_DIF == "DIF") %>% pull(Item)
-  cat("\n", sc, ":\n")
-  cat("  Andersen LR (omnibus): chi2 =", round(tbl$LR_chi2[1], 2),
-      ", df =", tbl$LR_df[1],
-      ", p =", fmt_p(tbl$LR_p[1]), "\n")
-  if (length(flagged) > 0) {
-    cat("  Items flagged (Wald, BH-adj p < .05):", paste(flagged, collapse = ", "), "\n")
-  } else {
-    cat("  No items flagged after BH adjustment.\n")
-  }
-}
-```
-
-```{r 2PLDIF}
 library(mirt)
 library(dplyr)
 library(tibble)
+library(readr)
+library(stringr)
+library(papaja)
+
+# ------------------------------------------------------------
+# 0. Settings
+# ------------------------------------------------------------
+
+ref_group <- "Female"
+out_dir <- "outputs/DIF"
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 fmt_p <- function(p) {
   dplyr::case_when(
@@ -5675,179 +3598,715 @@ fmt_p <- function(p) {
   )
 }
 
-# ============================================================
-# Example: Neuroticism
-# ============================================================
-
-sc <- "Neuroticism"
-ref_group <- "Female"
-
-items_vec <- epq_item_sets[[sc]]
-
-dat_raw <- as.data.frame(epq_items[, items_vec, drop = FALSE])
-grp_raw <- demographics$gender
-
-keep <- complete.cases(dat_raw, grp_raw)
-dat  <- dat_raw[keep, , drop = FALSE]
-grp  <- droplevels(factor(grp_raw[keep]))
-
-if (ref_group %in% levels(grp)) {
-  grp <- relevel(grp, ref = ref_group)
+fmt_num <- function(x, d = 2) {
+  ifelse(is.na(x), "", sprintf(paste0("%.", d, "f"), x))
 }
 
-dat[] <- lapply(dat, function(x) as.numeric(as.character(x)))
+# optional: if your groups are coded differently, recode here
+# demographics$gender <- factor(demographics$gender, levels = c("Female", "Male"))
 
-# Keep binary items varying within both groups
-item_ok <- vapply(names(dat), function(nm) {
-  x <- dat[[nm]]
+# ============================================================
+# 1. PSYCHOTICISM
+# ============================================================
+
+psy_scale <- "Psychoticism"
+psy_items <- epq_item_sets[[psy_scale]]
+
+psy_dat_raw <- as.data.frame(epq_items[, psy_items, drop = FALSE])
+psy_grp_raw <- demographics$gender
+
+psy_keep <- complete.cases(psy_dat_raw, psy_grp_raw)
+psy_dat  <- psy_dat_raw[psy_keep, , drop = FALSE]
+psy_grp  <- droplevels(factor(psy_grp_raw[psy_keep]))
+if (ref_group %in% levels(psy_grp)) psy_grp <- relevel(psy_grp, ref = ref_group)
+psy_dat[] <- lapply(psy_dat, function(x) as.numeric(as.character(x)))
+
+psy_item_ok <- vapply(names(psy_dat), function(nm) {
+  x <- psy_dat[[nm]]
   binary_ok <- all(na.omit(x) %in% c(0, 1))
-  var_by_group <- tapply(x, grp, function(z) length(unique(na.omit(z))) > 1)
+  var_by_group <- tapply(x, psy_grp, function(z) length(unique(na.omit(z))) > 1)
   binary_ok && all(var_by_group)
 }, logical(1))
 
-dat <- dat[, item_ok, drop = FALSE]
+psy_dat <- psy_dat[, psy_item_ok, drop = FALSE]
 
-cat("N =", nrow(dat), "\n")
-print(table(grp))
-cat("Items retained:", paste(names(dat), collapse = ", "), "\n")
+cat("\n--- Psychoticism ---\n")
+cat("N =", nrow(psy_dat), "\n")
+print(table(psy_grp))
+cat("Items retained:", paste(names(psy_dat), collapse = ", "), "\n")
 
-# ------------------------------------------------------------
-# STEP 1. Initial anchored baseline model
-# All items constrained equal across groups
-# Means/variances free in focal group
-# ------------------------------------------------------------
-mg_base <- multipleGroup(
-  data       = dat,
+psy_base <- multipleGroup(
+  data       = psy_dat,
   model      = 1,
-  group      = grp,
+  group      = psy_grp,
   itemtype   = "2PL",
-  invariance = c("free_means", "free_var", colnames(dat)),
+  invariance = c("free_means", "free_var", colnames(psy_dat)),
   SE         = FALSE,
   verbose    = FALSE
 )
 
-# ------------------------------------------------------------
-# STEP 2. DIF tests
-# ------------------------------------------------------------
-dif_uniform <- DIF(
-  MGmodel    = mg_base,
+psy_uniform <- DIF(
+  MGmodel    = psy_base,
   which.par  = "d",
-  items2test = colnames(dat),
+  items2test = colnames(psy_dat),
   scheme     = "drop",
   simplify   = TRUE,
   p.adjust   = "BH",
   verbose    = FALSE
 )
 
-dif_nonuniform <- DIF(
-  MGmodel    = mg_base,
+psy_nonuniform <- DIF(
+  MGmodel    = psy_base,
   which.par  = "a1",
-  items2test = colnames(dat),
+  items2test = colnames(psy_dat),
   scheme     = "drop",
   simplify   = TRUE,
   p.adjust   = "BH",
   verbose    = FALSE
 )
 
-dif_both <- DIF(
-  MGmodel    = mg_base,
+psy_both <- DIF(
+  MGmodel    = psy_base,
   which.par  = c("a1", "d"),
-  items2test = colnames(dat),
+  items2test = colnames(psy_dat),
   scheme     = "drop",
   simplify   = TRUE,
   p.adjust   = "BH",
   verbose    = FALSE
 )
 
-# Convert combined DIF to table
-dif_both_df <- as.data.frame(dif_both)
-dif_both_df$Item <- rownames(dif_both_df)
+psy_uniform_df <- as.data.frame(psy_uniform); psy_uniform_df$Item <- rownames(psy_uniform_df)
+psy_nonuniform_df <- as.data.frame(psy_nonuniform); psy_nonuniform_df$Item <- rownames(psy_nonuniform_df)
+psy_both_df <- as.data.frame(psy_both); psy_both_df$Item <- rownames(psy_both_df)
 
-dif_both_tbl <- tibble(
-  Scale     = sc,
-  Item      = dif_both_df$Item,
-  X2        = dif_both_df$X2,
-  df        = dif_both_df$df,
-  p         = dif_both_df$p,
-  adj_p     = dif_both_df$adj_p,
-  p_fmt     = fmt_p(dif_both_df$p),
-  adj_p_fmt = fmt_p(dif_both_df$adj_p),
-  DIF_flag  = ifelse(!is.na(dif_both_df$adj_p) & dif_both_df$adj_p < .05, "Flagged", "No")
+psy_uniform_tbl <- tibble(
+  Scale     = psy_scale,
+  Effect    = "Uniform DIF (d)",
+  Item      = psy_uniform_df$Item,
+  X2        = psy_uniform_df$X2,
+  df        = psy_uniform_df$df,
+  p         = psy_uniform_df$p,
+  adj_p     = psy_uniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(psy_uniform_df$adj_p) & psy_uniform_df$adj_p < .05, "Flagged", "No")
 )
 
-print(dif_both_tbl)
+psy_nonuniform_tbl <- tibble(
+  Scale     = psy_scale,
+  Effect    = "Nonuniform DIF (a1)",
+  Item      = psy_nonuniform_df$Item,
+  X2        = psy_nonuniform_df$X2,
+  df        = psy_nonuniform_df$df,
+  p         = psy_nonuniform_df$p,
+  adj_p     = psy_nonuniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(psy_nonuniform_df$adj_p) & psy_nonuniform_df$adj_p < .05, "Flagged", "No")
+)
 
-# ------------------------------------------------------------
-# STEP 3. Define anchor items from non-flagged combined DIF
-# ------------------------------------------------------------
-anchor_items <- dif_both_tbl %>%
-  filter(DIF_flag == "No") %>%
-  pull(Item)
+psy_both_tbl <- tibble(
+  Scale     = psy_scale,
+  Effect    = "Combined DIF (a1 + d)",
+  Item      = psy_both_df$Item,
+  X2        = psy_both_df$X2,
+  df        = psy_both_df$df,
+  p         = psy_both_df$p,
+  adj_p     = psy_both_df$adj_p,
+  DIF_flag  = ifelse(!is.na(psy_both_df$adj_p) & psy_both_df$adj_p < .05, "Flagged", "No")
+)
 
-flagged_items <- dif_both_tbl %>%
-  filter(DIF_flag == "Flagged") %>%
-  pull(Item)
+psy_anchor_items <- psy_both_tbl %>% filter(DIF_flag == "No") %>% pull(Item)
+psy_flagged_items <- psy_both_tbl %>% filter(DIF_flag == "Flagged") %>% pull(Item)
 
-cat("Anchor items:", paste(anchor_items, collapse = ", "), "\n")
-cat("Flagged items:", paste(flagged_items, collapse = ", "), "\n")
+if (length(psy_anchor_items) < 2) stop("Psychoticism: too few anchor items.")
 
-# Need at least 1-2 anchors; ideally more
-if (length(anchor_items) < 2) {
-  stop("Too few anchor items for an identified partially anchored model.")
-}
-
-# ------------------------------------------------------------
-# STEP 4. Partially anchored model
-# Anchor items constrained equal
-# Flagged items free across groups
-# ------------------------------------------------------------
-mg_anchor <- multipleGroup(
-  data       = dat,
+psy_anchor_model <- multipleGroup(
+  data       = psy_dat,
   model      = 1,
-  group      = grp,
+  group      = psy_grp,
   itemtype   = "2PL",
-  invariance = c("free_means", "free_var", anchor_items),
+  invariance = c("free_means", "free_var", psy_anchor_items),
   SE         = FALSE,
   verbose    = FALSE
 )
 
-# ------------------------------------------------------------
-# STEP 5. Extract group-specific parameters
-# NOTE:
-# - anchor items will be equal across groups by design
-# - flagged items can differ across groups
-# ------------------------------------------------------------
-pars_anchor <- coef(mg_anchor, IRTpars = TRUE, simplify = TRUE)
-
-group_item_pars <- bind_rows(
+psy_anchor_pars <- coef(psy_anchor_model, IRTpars = TRUE, simplify = TRUE)
+psy_group_pars_tbl <- bind_rows(
   {
-    x <- as.data.frame(pars_anchor[[levels(grp)[1]]]$items)
-    x$Item  <- rownames(x)
-    x$Group <- levels(grp)[1]
-    x$Scale <- sc
-    x
+    x <- as.data.frame(psy_anchor_pars[[levels(psy_grp)[1]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(psy_grp)[1]; x$Scale <- psy_scale; x
   },
   {
-    x <- as.data.frame(pars_anchor[[levels(grp)[2]]]$items)
-    x$Item  <- rownames(x)
-    x$Group <- levels(grp)[2]
-    x$Scale <- sc
-    x
+    x <- as.data.frame(psy_anchor_pars[[levels(psy_grp)[2]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(psy_grp)[2]; x$Scale <- psy_scale; x
   }
 )
 
-print(group_item_pars)
+psy_summary_tbl <- psy_both_tbl %>%
+  summarise(
+    Scale = psy_scale,
+    n_items_tested = n(),
+    n_flagged = sum(DIF_flag == "Flagged", na.rm = TRUE),
+    flagged_items = ifelse(n_flagged == 0, "", paste(Item[DIF_flag == "Flagged"], collapse = ", "))
+  )
 
-# ------------------------------------------------------------
-# STEP 6. Optional omnibus comparison:
-# Compare fully anchored baseline vs partially anchored model
-# This is an identified omnibus test of whether freeing flagged
-# items improves fit.
-# ------------------------------------------------------------
-omni <- as.data.frame(anova(mg_base, mg_anchor))
-print(omni)
+# ============================================================
+# 2. EXTRAVERSION
+# ============================================================
+
+ext_scale <- "Extraversion"
+ext_items <- epq_item_sets[[ext_scale]]
+
+ext_dat_raw <- as.data.frame(epq_items[, ext_items, drop = FALSE])
+ext_grp_raw <- demographics$gender
+
+ext_keep <- complete.cases(ext_dat_raw, ext_grp_raw)
+ext_dat  <- ext_dat_raw[ext_keep, , drop = FALSE]
+ext_grp  <- droplevels(factor(ext_grp_raw[ext_keep]))
+if (ref_group %in% levels(ext_grp)) ext_grp <- relevel(ext_grp, ref = ref_group)
+ext_dat[] <- lapply(ext_dat, function(x) as.numeric(as.character(x)))
+
+ext_item_ok <- vapply(names(ext_dat), function(nm) {
+  x <- ext_dat[[nm]]
+  binary_ok <- all(na.omit(x) %in% c(0, 1))
+  var_by_group <- tapply(x, ext_grp, function(z) length(unique(na.omit(z))) > 1)
+  binary_ok && all(var_by_group)
+}, logical(1))
+
+ext_dat <- ext_dat[, ext_item_ok, drop = FALSE]
+
+cat("\n--- Extraversion ---\n")
+cat("N =", nrow(ext_dat), "\n")
+print(table(ext_grp))
+cat("Items retained:", paste(names(ext_dat), collapse = ", "), "\n")
+
+ext_base <- multipleGroup(
+  data       = ext_dat,
+  model      = 1,
+  group      = ext_grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", colnames(ext_dat)),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+ext_uniform <- DIF(
+  MGmodel    = ext_base,
+  which.par  = "d",
+  items2test = colnames(ext_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+ext_nonuniform <- DIF(
+  MGmodel    = ext_base,
+  which.par  = "a1",
+  items2test = colnames(ext_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+ext_both <- DIF(
+  MGmodel    = ext_base,
+  which.par  = c("a1", "d"),
+  items2test = colnames(ext_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+ext_uniform_df <- as.data.frame(ext_uniform); ext_uniform_df$Item <- rownames(ext_uniform_df)
+ext_nonuniform_df <- as.data.frame(ext_nonuniform); ext_nonuniform_df$Item <- rownames(ext_nonuniform_df)
+ext_both_df <- as.data.frame(ext_both); ext_both_df$Item <- rownames(ext_both_df)
+
+ext_uniform_tbl <- tibble(
+  Scale     = ext_scale,
+  Effect    = "Uniform DIF (d)",
+  Item      = ext_uniform_df$Item,
+  X2        = ext_uniform_df$X2,
+  df        = ext_uniform_df$df,
+  p         = ext_uniform_df$p,
+  adj_p     = ext_uniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(ext_uniform_df$adj_p) & ext_uniform_df$adj_p < .05, "Flagged", "No")
+)
+
+ext_nonuniform_tbl <- tibble(
+  Scale     = ext_scale,
+  Effect    = "Nonuniform DIF (a1)",
+  Item      = ext_nonuniform_df$Item,
+  X2        = ext_nonuniform_df$X2,
+  df        = ext_nonuniform_df$df,
+  p         = ext_nonuniform_df$p,
+  adj_p     = ext_nonuniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(ext_nonuniform_df$adj_p) & ext_nonuniform_df$adj_p < .05, "Flagged", "No")
+)
+
+ext_both_tbl <- tibble(
+  Scale     = ext_scale,
+  Effect    = "Combined DIF (a1 + d)",
+  Item      = ext_both_df$Item,
+  X2        = ext_both_df$X2,
+  df        = ext_both_df$df,
+  p         = ext_both_df$p,
+  adj_p     = ext_both_df$adj_p,
+  DIF_flag  = ifelse(!is.na(ext_both_df$adj_p) & ext_both_df$adj_p < .05, "Flagged", "No")
+)
+
+ext_anchor_items <- ext_both_tbl %>% filter(DIF_flag == "No") %>% pull(Item)
+ext_flagged_items <- ext_both_tbl %>% filter(DIF_flag == "Flagged") %>% pull(Item)
+
+if (length(ext_anchor_items) < 2) stop("Extraversion: too few anchor items.")
+
+ext_anchor_model <- multipleGroup(
+  data       = ext_dat,
+  model      = 1,
+  group      = ext_grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", ext_anchor_items),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+ext_anchor_pars <- coef(ext_anchor_model, IRTpars = TRUE, simplify = TRUE)
+ext_group_pars_tbl <- bind_rows(
+  {
+    x <- as.data.frame(ext_anchor_pars[[levels(ext_grp)[1]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(ext_grp)[1]; x$Scale <- ext_scale; x
+  },
+  {
+    x <- as.data.frame(ext_anchor_pars[[levels(ext_grp)[2]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(ext_grp)[2]; x$Scale <- ext_scale; x
+  }
+)
+
+ext_summary_tbl <- ext_both_tbl %>%
+  summarise(
+    Scale = ext_scale,
+    n_items_tested = n(),
+    n_flagged = sum(DIF_flag == "Flagged", na.rm = TRUE),
+    flagged_items = ifelse(n_flagged == 0, "", paste(Item[DIF_flag == "Flagged"], collapse = ", "))
+  )
+
+# ============================================================
+# 3. NEUROTICISM
+# ============================================================
+
+neu_scale <- "Neuroticism"
+neu_items <- epq_item_sets[[neu_scale]]
+
+neu_dat_raw <- as.data.frame(epq_items[, neu_items, drop = FALSE])
+neu_grp_raw <- demographics$gender
+
+neu_keep <- complete.cases(neu_dat_raw, neu_grp_raw)
+neu_dat  <- neu_dat_raw[neu_keep, , drop = FALSE]
+neu_grp  <- droplevels(factor(neu_grp_raw[neu_keep]))
+if (ref_group %in% levels(neu_grp)) neu_grp <- relevel(neu_grp, ref = ref_group)
+neu_dat[] <- lapply(neu_dat, function(x) as.numeric(as.character(x)))
+
+neu_item_ok <- vapply(names(neu_dat), function(nm) {
+  x <- neu_dat[[nm]]
+  binary_ok <- all(na.omit(x) %in% c(0, 1))
+  var_by_group <- tapply(x, neu_grp, function(z) length(unique(na.omit(z))) > 1)
+  binary_ok && all(var_by_group)
+}, logical(1))
+
+neu_dat <- neu_dat[, neu_item_ok, drop = FALSE]
+
+cat("\n--- Neuroticism ---\n")
+cat("N =", nrow(neu_dat), "\n")
+print(table(neu_grp))
+cat("Items retained:", paste(names(neu_dat), collapse = ", "), "\n")
+
+neu_base <- multipleGroup(
+  data       = neu_dat,
+  model      = 1,
+  group      = neu_grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", colnames(neu_dat)),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+neu_uniform <- DIF(
+  MGmodel    = neu_base,
+  which.par  = "d",
+  items2test = colnames(neu_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+neu_nonuniform <- DIF(
+  MGmodel    = neu_base,
+  which.par  = "a1",
+  items2test = colnames(neu_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+neu_both <- DIF(
+  MGmodel    = neu_base,
+  which.par  = c("a1", "d"),
+  items2test = colnames(neu_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+neu_uniform_df <- as.data.frame(neu_uniform); neu_uniform_df$Item <- rownames(neu_uniform_df)
+neu_nonuniform_df <- as.data.frame(neu_nonuniform); neu_nonuniform_df$Item <- rownames(neu_nonuniform_df)
+neu_both_df <- as.data.frame(neu_both); neu_both_df$Item <- rownames(neu_both_df)
+
+neu_uniform_tbl <- tibble(
+  Scale     = neu_scale,
+  Effect    = "Uniform DIF (d)",
+  Item      = neu_uniform_df$Item,
+  X2        = neu_uniform_df$X2,
+  df        = neu_uniform_df$df,
+  p         = neu_uniform_df$p,
+  adj_p     = neu_uniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(neu_uniform_df$adj_p) & neu_uniform_df$adj_p < .05, "Flagged", "No")
+)
+
+neu_nonuniform_tbl <- tibble(
+  Scale     = neu_scale,
+  Effect    = "Nonuniform DIF (a1)",
+  Item      = neu_nonuniform_df$Item,
+  X2        = neu_nonuniform_df$X2,
+  df        = neu_nonuniform_df$df,
+  p         = neu_nonuniform_df$p,
+  adj_p     = neu_nonuniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(neu_nonuniform_df$adj_p) & neu_nonuniform_df$adj_p < .05, "Flagged", "No")
+)
+
+neu_both_tbl <- tibble(
+  Scale     = neu_scale,
+  Effect    = "Combined DIF (a1 + d)",
+  Item      = neu_both_df$Item,
+  X2        = neu_both_df$X2,
+  df        = neu_both_df$df,
+  p         = neu_both_df$p,
+  adj_p     = neu_both_df$adj_p,
+  DIF_flag  = ifelse(!is.na(neu_both_df$adj_p) & neu_both_df$adj_p < .05, "Flagged", "No")
+)
+
+neu_anchor_items <- neu_both_tbl %>% filter(DIF_flag == "No") %>% pull(Item)
+neu_flagged_items <- neu_both_tbl %>% filter(DIF_flag == "Flagged") %>% pull(Item)
+
+if (length(neu_anchor_items) < 2) stop("Neuroticism: too few anchor items.")
+
+neu_anchor_model <- multipleGroup(
+  data       = neu_dat,
+  model      = 1,
+  group      = neu_grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", neu_anchor_items),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+neu_anchor_pars <- coef(neu_anchor_model, IRTpars = TRUE, simplify = TRUE)
+neu_group_pars_tbl <- bind_rows(
+  {
+    x <- as.data.frame(neu_anchor_pars[[levels(neu_grp)[1]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(neu_grp)[1]; x$Scale <- neu_scale; x
+  },
+  {
+    x <- as.data.frame(neu_anchor_pars[[levels(neu_grp)[2]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(neu_grp)[2]; x$Scale <- neu_scale; x
+  }
+)
+
+neu_summary_tbl <- neu_both_tbl %>%
+  summarise(
+    Scale = neu_scale,
+    n_items_tested = n(),
+    n_flagged = sum(DIF_flag == "Flagged", na.rm = TRUE),
+    flagged_items = ifelse(n_flagged == 0, "", paste(Item[DIF_flag == "Flagged"], collapse = ", "))
+  )
+
+# ============================================================
+# 4. LIE
+# ============================================================
+
+lie_scale <- "Lie"
+lie_items <- epq_item_sets[[lie_scale]]
+
+lie_dat_raw <- as.data.frame(epq_items[, lie_items, drop = FALSE])
+lie_grp_raw <- demographics$gender
+
+lie_keep <- complete.cases(lie_dat_raw, lie_grp_raw)
+lie_dat  <- lie_dat_raw[lie_keep, , drop = FALSE]
+lie_grp  <- droplevels(factor(lie_grp_raw[lie_keep]))
+if (ref_group %in% levels(lie_grp)) lie_grp <- relevel(lie_grp, ref = ref_group)
+lie_dat[] <- lapply(lie_dat, function(x) as.numeric(as.character(x)))
+
+lie_item_ok <- vapply(names(lie_dat), function(nm) {
+  x <- lie_dat[[nm]]
+  binary_ok <- all(na.omit(x) %in% c(0, 1))
+  var_by_group <- tapply(x, lie_grp, function(z) length(unique(na.omit(z))) > 1)
+  binary_ok && all(var_by_group)
+}, logical(1))
+
+lie_dat <- lie_dat[, lie_item_ok, drop = FALSE]
+
+cat("\n--- Lie ---\n")
+cat("N =", nrow(lie_dat), "\n")
+print(table(lie_grp))
+cat("Items retained:", paste(names(lie_dat), collapse = ", "), "\n")
+
+lie_base <- multipleGroup(
+  data       = lie_dat,
+  model      = 1,
+  group      = lie_grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", colnames(lie_dat)),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+lie_uniform <- DIF(
+  MGmodel    = lie_base,
+  which.par  = "d",
+  items2test = colnames(lie_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+lie_nonuniform <- DIF(
+  MGmodel    = lie_base,
+  which.par  = "a1",
+  items2test = colnames(lie_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+lie_both <- DIF(
+  MGmodel    = lie_base,
+  which.par  = c("a1", "d"),
+  items2test = colnames(lie_dat),
+  scheme     = "drop",
+  simplify   = TRUE,
+  p.adjust   = "BH",
+  verbose    = FALSE
+)
+
+lie_uniform_df <- as.data.frame(lie_uniform); lie_uniform_df$Item <- rownames(lie_uniform_df)
+lie_nonuniform_df <- as.data.frame(lie_nonuniform); lie_nonuniform_df$Item <- rownames(lie_nonuniform_df)
+lie_both_df <- as.data.frame(lie_both); lie_both_df$Item <- rownames(lie_both_df)
+
+lie_uniform_tbl <- tibble(
+  Scale     = lie_scale,
+  Effect    = "Uniform DIF (d)",
+  Item      = lie_uniform_df$Item,
+  X2        = lie_uniform_df$X2,
+  df        = lie_uniform_df$df,
+  p         = lie_uniform_df$p,
+  adj_p     = lie_uniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(lie_uniform_df$adj_p) & lie_uniform_df$adj_p < .05, "Flagged", "No")
+)
+
+lie_nonuniform_tbl <- tibble(
+  Scale     = lie_scale,
+  Effect    = "Nonuniform DIF (a1)",
+  Item      = lie_nonuniform_df$Item,
+  X2        = lie_nonuniform_df$X2,
+  df        = lie_nonuniform_df$df,
+  p         = lie_nonuniform_df$p,
+  adj_p     = lie_nonuniform_df$adj_p,
+  DIF_flag  = ifelse(!is.na(lie_nonuniform_df$adj_p) & lie_nonuniform_df$adj_p < .05, "Flagged", "No")
+)
+
+lie_both_tbl <- tibble(
+  Scale     = lie_scale,
+  Effect    = "Combined DIF (a1 + d)",
+  Item      = lie_both_df$Item,
+  X2        = lie_both_df$X2,
+  df        = lie_both_df$df,
+  p         = lie_both_df$p,
+  adj_p     = lie_both_df$adj_p,
+  DIF_flag  = ifelse(!is.na(lie_both_df$adj_p) & lie_both_df$adj_p < .05, "Flagged", "No")
+)
+
+lie_anchor_items <- lie_both_tbl %>% filter(DIF_flag == "No") %>% pull(Item)
+lie_flagged_items <- lie_both_tbl %>% filter(DIF_flag == "Flagged") %>% pull(Item)
+
+if (length(lie_anchor_items) < 2) stop("Lie: too few anchor items.")
+
+lie_anchor_model <- multipleGroup(
+  data       = lie_dat,
+  model      = 1,
+  group      = lie_grp,
+  itemtype   = "2PL",
+  invariance = c("free_means", "free_var", lie_anchor_items),
+  SE         = FALSE,
+  verbose    = FALSE
+)
+
+lie_anchor_pars <- coef(lie_anchor_model, IRTpars = TRUE, simplify = TRUE)
+lie_group_pars_tbl <- bind_rows(
+  {
+    x <- as.data.frame(lie_anchor_pars[[levels(lie_grp)[1]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(lie_grp)[1]; x$Scale <- lie_scale; x
+  },
+  {
+    x <- as.data.frame(lie_anchor_pars[[levels(lie_grp)[2]]]$items)
+    x$Item <- rownames(x); x$Group <- levels(lie_grp)[2]; x$Scale <- lie_scale; x
+  }
+)
+
+lie_summary_tbl <- lie_both_tbl %>%
+  summarise(
+    Scale = lie_scale,
+    n_items_tested = n(),
+    n_flagged = sum(DIF_flag == "Flagged", na.rm = TRUE),
+    flagged_items = ifelse(n_flagged == 0, "", paste(Item[DIF_flag == "Flagged"], collapse = ", "))
+  )
+
+# ============================================================
+# 5. Combine outputs
+# ============================================================
+
+epq_2pl_uniform_tbl <- bind_rows(
+  psy_uniform_tbl, ext_uniform_tbl, neu_uniform_tbl, lie_uniform_tbl
+)
+
+epq_2pl_nonuniform_tbl <- bind_rows(
+  psy_nonuniform_tbl, ext_nonuniform_tbl, neu_nonuniform_tbl, lie_nonuniform_tbl
+)
+
+epq_2pl_both_tbl <- bind_rows(
+  psy_both_tbl, ext_both_tbl, neu_both_tbl, lie_both_tbl
+)
+
+epq_2pl_group_pars_tbl <- bind_rows(
+  psy_group_pars_tbl, ext_group_pars_tbl, neu_group_pars_tbl, lie_group_pars_tbl
+)
+
+epq_2pl_summary_tbl <- bind_rows(
+  psy_summary_tbl, ext_summary_tbl, neu_summary_tbl, lie_summary_tbl
+)
+
+# ============================================================
+# 6. APA-friendly tables
+# ============================================================
+
+# Table A: Subscale-level DIF summary
+dif_summary_apa <- epq_2pl_summary_tbl %>%
+  mutate(
+    `Subscale` = Scale,
+    `Items tested` = n_items_tested,
+    `Flagged items (combined DIF)` = flagged_items
+  ) %>%
+  select(`Subscale`, `Items tested`, n_flagged, `Flagged items (combined DIF)`) %>%
+  rename(`No. of DIF items` = n_flagged)
+
+# Table B: Item-level combined DIF results
+dif_item_apa <- epq_2pl_both_tbl %>%
+  transmute(
+    Subscale = Scale,
+    Item,
+    `χ²` = fmt_num(X2, 2),
+    df = df,
+    p = fmt_p(p),
+    `BH-adjusted p` = fmt_p(adj_p),
+    `Flagged` = DIF_flag
+  )
+
+# Table C: Group-specific item parameters from partially anchored models
+group_pars_apa <- epq_2pl_group_pars_tbl %>%
+  transmute(
+    Subscale = Scale,
+    Group,
+    Item,
+    a = fmt_num(a, 2),
+    b = fmt_num(b, 2)
+  )
+
+# Table D: Only flagged items with group-specific parameters
+flagged_items_all <- epq_2pl_both_tbl %>%
+  filter(DIF_flag == "Flagged") %>%
+  select(Scale, Item)
+
+flagged_group_pars_apa <- epq_2pl_group_pars_tbl %>%
+  semi_join(flagged_items_all, by = c("Scale", "Item")) %>%
+  transmute(
+    Subscale = Scale,
+    Group,
+    Item,
+    a = fmt_num(a, 2),
+    b = fmt_num(b, 2)
+  )
+
+# ============================================================
+# 7. Export CSVs
+# ============================================================
+
+write_csv(epq_2pl_uniform_tbl,       file.path(out_dir, "epq_2pl_uniform_dif.csv"))
+write_csv(epq_2pl_nonuniform_tbl,    file.path(out_dir, "epq_2pl_nonuniform_dif.csv"))
+write_csv(epq_2pl_both_tbl,          file.path(out_dir, "epq_2pl_combined_dif.csv"))
+write_csv(epq_2pl_group_pars_tbl,    file.path(out_dir, "epq_2pl_group_specific_item_pars.csv"))
+write_csv(epq_2pl_summary_tbl,       file.path(out_dir, "epq_2pl_summary.csv"))
+
+write_csv(dif_summary_apa,           file.path(out_dir, "apa_dif_summary.csv"))
+write_csv(dif_item_apa,              file.path(out_dir, "apa_dif_item_results.csv"))
+write_csv(group_pars_apa,            file.path(out_dir, "apa_group_item_parameters.csv"))
+write_csv(flagged_group_pars_apa,    file.path(out_dir, "apa_flagged_item_parameters.csv"))
+
+# ============================================================
+# 8. papaja tables
+# Run these in your R Markdown / papaja document
+# ============================================================
+
+papaja::apa_table(
+  dif_summary_apa,
+  caption = "Summary of 2PL differential item functioning results across EPQ-RS-B subscales.",
+  note = "DIF was evaluated using multiple-group 2PL models. Flagged items are based on the combined DIF test (a1 + d) with Benjamini-Hochberg adjusted p values."
+)
+
+
+
+# quick check
+print(dif_summary_apa)
 ```
 
+```{r}
+papaja::apa_table(
+  dif_summary_apa,
+  caption = "Summary of 2PL differential item functioning results across EPQ-RS-B subscales.",
+  note = "DIF was evaluated using multiple-group 2PL models. Flagged items are based on the combined DIF test (a1 + d) with Benjamini-Hochberg adjusted p values."
+)
+
+```
+
+```{r}
+papaja::apa_table(
+  dif_item_apa,
+  caption = "Item-level combined DIF results for the EPQ-RS-B subscales.",
+  note = "Combined DIF reflects simultaneous testing of discrimination (a1) and difficulty/intercept (d) parameters. BH = Benjamini-Hochberg."
+)
+
+```
+
+
+```{r}
+papaja::apa_table(
+  flagged_group_pars_apa,
+  caption = "Group-specific 2PL item parameters for flagged DIF items.",
+  note = "Parameters were extracted from partially anchored multiple-group 2PL models in which non-flagged items were constrained equal across groups."
+)
+
+```
 
 ## Concurrent Validity With BFI-2
 
